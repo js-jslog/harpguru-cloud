@@ -1,16 +1,17 @@
-# AWS-base devcontainer
+# harpguru-cloud
 
-A devcontainer with tooling for all potential AWS exercises — certification study
-(Solutions Architect, DevOps Engineer, Security) and small AWS projects.
+The AWS half of the Harp Guru project: CDK, the API, the publication pipeline and the
+analytics. It holds no harmonica domain code — see the orientation file for why that line
+matters and where it is drawn.
 
-Sibling of [devcontainer-node-base](https://github.com/js-jslog/devcontainer-node-base):
-same conventions, same scripts, different toolchain. It carries three runtimes because
-AWS work spans all three.
+**Start with [docs/orientation.md](docs/orientation.md).** It points at the roadmap and the
+findings document, which live in
+[js-jslog/harpguru](https://github.com/js-jslog/harpguru) and are the plan this repo works
+to. Read them before planning anything here.
 
-For general study you don't need to fork this. Clone work into the gitignored `/app/work/`
-directory, which the workspace volume persists.
-
-See [docs/aws-conventions.md](docs/aws-conventions.md) for credentials, cost control, the
+Built from [devcontainer-aws-base](https://github.com/js-jslog/devcontainer-aws-base), so
+the container conventions, scripts and toolchain below are inherited from it. See
+[docs/aws-conventions.md](docs/aws-conventions.md) for credentials, cost control, the
 CDK-versus-Terraform decision, Python packaging and the neovim roadmap.
 
 ## Toolchain
@@ -34,10 +35,23 @@ docker-in-docker.
 | lazygit / GCM / Claude Code | 0.63.1 / 2.4.1 / latest |
 | jq, less, tcc + libc6-dev, ripgrep, tmux | apt |
 
-## Extension
+## Upstream
 
-To fork this for a specific project, update the image name in all the following files to
-the Docker Hub resource address you want to use:
+This repository was created by cloning `devcontainer-aws-base` and re-pointing `origin`,
+rather than by forking it on GitHub — a GitHub fork would default every pull request here
+to the base repository. The base is kept as a second remote, so improvements to it can be
+pulled in:
+
+```
+git remote add upstream https://github.com/js-jslog/devcontainer-aws-base.git
+git fetch upstream && git merge upstream/main
+```
+
+Note that the base is on `main` while this repository is on `master`, to match `harpguru`,
+which it is worked on alongside.
+
+The files below carry this project's own image and volume names, and are the ones to review
+after any merge from upstream:
 
 - `.devcontainer/devcontainer.json`: the `image` prop.
 - `runcontainer.ps1`: the `docker pull` command.

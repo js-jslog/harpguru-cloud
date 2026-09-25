@@ -3,7 +3,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-image=jslog/devcontainer-aws-base:${1:-latest}
+image=jslog/devcontainer-harpguru-cloud:${1:-latest}
 
 docker build -t "$image" -f Dockerfile .
 docker push "$image"

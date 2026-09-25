@@ -7,7 +7,7 @@ if ($param1 -ne "start" -and $param1 -ne "destructive" -and $param1 -ne "purge")
 
 # The workspace volume, mounted at /app. Holds all work, and with Terraform
 # all local state, so this is the one `destructive` exists to remove.
-$workspaceVolume = "devcontainer-aws-base-volume"
+$workspaceVolume = "devcontainer-harpguru-cloud-volume"
 
 # The named volumes declared in devcontainer.json under /home/dev. These are
 # caches and credentials rather than work: Gradle and Terraform plugin
@@ -15,13 +15,13 @@ $workspaceVolume = "devcontainer-aws-base-volume"
 # rebuilding them is slow and ~/.aws and ~/.kube are hand-configured. Only
 # `purge` removes them.
 $homeVolumes = @(
-    "aws-base-aws",
-    "aws-base-kube",
-    "aws-base-gradle",
-    "aws-base-tf-cache"
+    "harpguru-cloud-aws",
+    "harpguru-cloud-kube",
+    "harpguru-cloud-gradle",
+    "harpguru-cloud-tf-cache"
 )
 
-docker pull jslog/devcontainer-aws-base:latest
+docker pull jslog/devcontainer-harpguru-cloud:latest
 
 if ($param1 -ne "start") {
     Write-Host "Destroying the existing container and the /app volume with it. Any work not committed and pushed is lost."

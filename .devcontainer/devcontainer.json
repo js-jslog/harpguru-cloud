@@ -1,13 +1,13 @@
 {
-  "name": "AWS dev container",
-  "image": "jslog/devcontainer-aws-base:latest",
+  "name": "Harp Guru Cloud dev container",
+  "image": "jslog/devcontainer-harpguru-cloud:latest",
   "remoteUser": "dev",
   "appPort": [3000],
   /* The `mount` property allows for a more readable syntax (using object notation),
     however, you then end up with a workspace mount being created in addition. This
     pair of properties ensures that the "workspace" is set to the /app directory as
     we would want, and that it is a volume, rather than a mount */
-  "workspaceMount": "source=devcontainer-aws-base-volume,target=/app,type=volume",
+  "workspaceMount": "source=devcontainer-harpguru-cloud-volume,target=/app,type=volume",
   "workspaceFolder": "/app",
   /* Everything below /home/dev lives in the container's writable layer and is
      destroyed on every image bump. These volumes keep the expensive and the
@@ -17,10 +17,10 @@
      Each target is pre-created and chowned to dev in the Dockerfile; without that
      Docker would create them root-owned and unwritable. */
   "mounts": [
-    "source=aws-base-aws,target=/home/dev/.aws,type=volume",
-    "source=aws-base-kube,target=/home/dev/.kube,type=volume",
-    "source=aws-base-gradle,target=/home/dev/.gradle,type=volume",
-    "source=aws-base-tf-cache,target=/home/dev/.terraform.d/plugin-cache,type=volume"
+    "source=harpguru-cloud-aws,target=/home/dev/.aws,type=volume",
+    "source=harpguru-cloud-kube,target=/home/dev/.kube,type=volume",
+    "source=harpguru-cloud-gradle,target=/home/dev/.gradle,type=volume",
+    "source=harpguru-cloud-tf-cache,target=/home/dev/.terraform.d/plugin-cache,type=volume"
   ],
   /* Docker-in-Docker. Needed here for `sam local invoke`, Lambda container
      images and ECR pushes - not merely "just in case" as in node-base. */
