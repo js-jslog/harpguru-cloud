@@ -50,36 +50,33 @@ git fetch upstream && git merge upstream/main
 Note that the base is on `main` while this repository is on `master`, to match `harpguru`,
 which it is worked on alongside.
 
-The files below carry this project's own image and volume names, and are the ones to review
-after any merge from upstream:
+Everything else is inherited and should be left to track upstream. What is local to this
+project is its image and volume names, which live in three files — review these after any
+merge from upstream:
 
-- `.devcontainer/devcontainer.json`: the `image` prop.
-- `runcontainer.ps1`: the `docker pull` command.
-- `buildimage.sh`: the `image` var.
+| File | Carries |
+|---|---|
+| `.devcontainer/devcontainer.json` | `image`, the `workspaceMount` source, the four `mounts` volumes |
+| `runcontainer.ps1` | the `docker pull`, `$workspaceVolume`, `$homeVolumes` |
+| `buildimage.sh` | the `image` var |
 
-Update the volume name in all the following files appropriately:
+The names themselves:
 
-- `.devcontainer/devcontainer.json`: the `workspaceMount` source name.
-- `runcontainer.ps1`: the `$workspaceVolume` variable.
+- Image `jslog/devcontainer-harpguru-cloud`
+- Workspace volume `devcontainer-harpguru-cloud-volume`
+- Under `/home/dev`: `harpguru-cloud-aws`, `harpguru-cloud-kube`, `harpguru-cloud-gradle`,
+  `harpguru-cloud-tf-cache`
 
-The named volumes in the `mounts` array are shared cache and credential stores. Rename
-them too if you want a project's caches kept separate, and mirror the new names into
-`runcontainer.ps1`'s `$homeVolumes` list so `purge` still finds them.
+Those four are **separate from the base's, not shared**, so the `~/.aws` credentials here
+belong to this project alone. They have to appear in `$homeVolumes` as well as in `mounts`,
+or `purge` silently stops finding them and leaves them behind.
 
-The docker-in-docker volume needs no attention when forking: the feature names it after
-the devcontainer id, so a fork gets its own automatically.
-
-Then follow the Launch from Windows instructions with the additional step of manually
-building and pushing your very first image immediately after cloning:
-
-```
-docker build -t <user>/<image>:latest -f Dockerfile .
-docker push <user>/<image>:latest
-```
+The docker-in-docker volume needs no attention: the feature names it after the devcontainer
+id, so this project gets its own automatically.
 
 **The build context must be a git checkout.** The Dockerfile runs `git reset --hard` to
-restore symlinks after the Windows prep change, so `docker build` fails in a directory
-with no `.git`. This is inherited from node-base.
+restore symlinks after the Windows prep change, so `docker build` fails in a directory with
+no `.git`. This is inherited from node-base.
 
 ## Usage
 
@@ -92,9 +89,12 @@ are expected.
 There is a prerequisite to have installed the devcontainer CLI.
 
 ```
-git clone https://github.com/js-jslog/devcontainer-aws-base.git
+git clone https://github.com/js-jslog/harpguru-cloud.git
 ./runcontainer.ps1 start
 ```
+
+This project's image has to exist on Docker Hub before that pull can succeed — see
+[Publish a new image](#publish-a-new-image) for the first build.
 
 Three modes, in ascending order of how much they throw away:
 
@@ -129,10 +129,10 @@ docker login
 ./buildimage.sh # optional tag id param (see below)
 ```
 
-For simplicity, testing the new container is done back in Windows. Clone a new project and
-build a test container on a different volume and with a different name. Edit all the
-locations in the Extension section above for completeness. Start the container and do
-whatever tests are required.
+For simplicity, testing the new container is done back in Windows. Clone this repository
+again to a second directory and build a test container there under a different image name
+and a different set of volume names — the same files listed in the Upstream section, which
+is where this project's names live. Start the container and do whatever tests are required.
 
 Start that test container with `purge` rather than `start`, so nothing carried over in a
 cache can mask a fault in the image.
@@ -150,4 +150,4 @@ devcontainer and be back up to date to tweak whatever mistake you made.
 
 You will need to update certain resources in order to make use of a "fallback" tag. This
 path is not seamlessly catered for, but should be simple enough if you again follow the
-file update list in the Extension section above.
+file list in the Upstream section above.
