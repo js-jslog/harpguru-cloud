@@ -25,6 +25,12 @@ RUN groupadd -g 1000 dev && \
 
 RUN mkdir -p /app && chown dev:dev /app
 
+# The app repo's checkout lives at the filesystem root, deliberately
+# outside /app, so it can never be staged into a commit here. / is
+# root-owned, so the directory is made here and the clone below runs as
+# dev. See docs/orientation.md.
+RUN mkdir -p /harpguru && chown dev:dev /harpguru
+
 # - tcc + libc6-dev: required for neovim LSP
 # - ripgrep: required for some neovim telescope functions
 # - libicu74: required by GCM. node-base pulls this in via `rpm` as a
@@ -175,6 +181,13 @@ RUN git clone https://github.com/js-jslog/neovim-config.git /home/dev/.config/nv
 # the embedded Neovim workflow's keybindings.
 RUN git clone https://github.com/js-jslog/tmux-config.git /home/dev/.config/tmux-config && \
     sudo ln -s /home/dev/.config/tmux-config/.tmux.xterm.conf /etc/tmux.conf
+
+# js-jslog/harpguru, for its roadmap and findings documents - read here,
+# and where findings from this repo are committed back. Public, so no
+# credentials are needed to clone. Image state like the neovim-config
+# clone: it is as fresh as the build (or the build cache), so pull before
+# relying on it, and a rebuild discards anything uncommitted.
+RUN git clone https://github.com/js-jslog/harpguru.git /harpguru
 
 # GCM
 RUN curl -Lo /tmp/gcm-linux_amd64.2.4.1.deb https://github.com/git-ecosystem/git-credential-manager/releases/download/v2.4.1/gcm-linux_amd64.2.4.1.deb && \
