@@ -48,21 +48,26 @@ stale. If the roadmap is wrong, fix it there.
 
 ## Working with the app repo from here
 
-Clone `js-jslog/harpguru` to **`/harpguru`** — outside `/app`, which is this repo's
-workspace. The separation is the point: a sibling at the filesystem root cannot be staged
-into a commit here by accident, and it does not depend on a gitignore rule continuing to
-hold. Do not put it under `/app`.
+The image carries a clone of `js-jslog/harpguru` at **`/harpguru`** — outside `/app`, which
+is this repo's workspace. The separation is the point: a sibling at the filesystem root
+cannot be staged into a commit here by accident, and it does not depend on a gitignore rule
+continuing to hold. Do not put it under `/app`.
 
 That gives you the roadmap and the findings document in a working tree rather than over
 HTTP — fresher, and readable without a network round trip — and, more importantly, a place
 to commit discoveries back to.
 
-**The clone is ephemeral.** `/` is the container's writable layer, not a mounted volume, so
-a rebuild loses it. Re-clone; do not accumulate uncommitted work there. If it ever needs to
-survive rebuilds it wants its own named volume in the `mounts` array, and `purge` will not
+**The clone is image state, and only as fresh as the build.** The Dockerfile makes the
+directory as root and clones into it as `dev`, the same way it handles `neovim-config`. So
+**pull before relying on anything in it**, and check out the branch that is tracking the
+current cloud work rather than assuming `master`. A stale checkout of a directing document is
+the exact failure this arrangement exists to prevent.
+
+A rebuild replaces the clone, so do not accumulate uncommitted work there. If it ever needs
+to survive rebuilds it wants its own named volume in the `mounts` array, and `purge` will not
 find that volume unless it is listed alongside the others — the same trap as the credential
-volumes. Re-cloning is the better default anyway: a stale checkout of a directing document
-is the exact failure this arrangement exists to prevent.
+volumes. A volume would also mask every later image's clone, which is the reason
+`~/.config/nvim` has none.
 
 ### Pushing from here
 
