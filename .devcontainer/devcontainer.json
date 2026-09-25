@@ -2,7 +2,11 @@
   "name": "Harp Guru Cloud dev container",
   "image": "jslog/devcontainer-harpguru-cloud:latest",
   "remoteUser": "dev",
-  "appPort": [3000],
+  /* Published as 4000 on the host, 3000 inside. `sam local start-api` binds 3000 by
+     default and keeps doing so, but port 3000 on the host is heavily contested - the
+     harpguru container publishes it, among others - and two containers cannot claim it
+     at once. Reach it from Windows at localhost:4000. */
+  "appPort": ["4000:3000"],
   /* The `mount` property allows for a more readable syntax (using object notation),
     however, you then end up with a workspace mount being created in addition. This
     pair of properties ensures that the "workspace" is set to the /app directory as
