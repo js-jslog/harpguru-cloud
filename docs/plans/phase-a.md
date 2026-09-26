@@ -85,7 +85,8 @@ Cost Anomaly Detection already runs with its default monitor, so it is not rebui
 validated through DNS in the zone. It reaches the site stack as a cross-region reference.
 
 **8 · `1-site`.**
-- A private S3 bucket behind CloudFront with OAC.
+- A private S3 bucket behind CloudFront with OAC, and a response headers policy for
+  the security headers.
 - Route 53 alias records for the apex and `www`, plus a CloudFront Function that redirects
   `www` to the apex.
 - The landing page: store links and the YouTube channel.
@@ -111,11 +112,6 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
 - 2026-09-26: `My Zero-Spend Budget` is deleted once the $10 budget is live.
 - 2026-09-26: the workload account is named `harpguru` and uses the `+harpguru` email alias.
 - 2026-09-26: mail is live, so the DNS move in #6 must carry the `MX` and `mail` records.
-
-## Open
-
-- **Security headers: response headers policy, or CloudFront Functions?** The roadmap says
-  Functions. The proposal is a response headers policy: it is the managed feature for fixed
-  headers, it costs nothing per request, and Phase B's `frame-ancestors` control already
-  plans to use one. Functions would stay for logic such as the `www` redirect. If agreed,
-  update the roadmap in `harpguru`. Needed by #8.
+- 2026-09-26: security headers use a **response headers policy**, not CloudFront Functions.
+  Functions are kept for request-dependent logic, such as the `www` redirect. The roadmap is
+  updated to match.
