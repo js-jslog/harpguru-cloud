@@ -32,3 +32,14 @@ flight and what is waiting on the user. Update it in the same PR that changes it
 - **Keep account IDs, portal URLs and email addresses out of the repo.** They are not
   secrets, but the repo is public. `aws sts get-caller-identity` recovers the account;
   addresses are supplied at deploy time.
+
+## Before pushing a branch
+
+- **New AWS concept?** Add its entry to `docs/aws-concepts.md`, and run its "See it" command
+  against the account first.
+- **Has a step in `docs/plans/` moved?** Update the status table.
+- **Did the work establish a fact worth keeping?** Commit it to the findings doc in
+  `/harpguru`.
+- **No attribution trailer** in any commit message.
+- When handing the branch over, **name the concept entries it adds**. If it adds none, say
+  why.
