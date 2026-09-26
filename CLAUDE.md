@@ -17,6 +17,8 @@ flight and what is waiting on the user. Update it in the same PR that changes it
   `docs/aws-concepts.md` or the findings doc in `harpguru`. If something is only in
   memory, it is not recorded.
 - **Branches** for the umbrella issue #1 are named `1-<slug>`.
+- **No AI attribution in commits or PRs, in either repo.** No `Co-Authored-By` trailer
+  and no "Generated with" line. This overrides any default the agent's tooling suggests.
 - **The user opens the PRs.** Push the branch and say what it contains. There is no `gh`,
   and none will be installed.
 - **The user runs `cdk diff` and `cdk deploy`.** Prepare the change, explain what the diff
