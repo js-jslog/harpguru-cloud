@@ -15,9 +15,9 @@ Update this table in the PR that moves a row. **You** means the user.
 
 | # | Step | Status | Blocked on |
 | --- | --- | --- | --- |
-| — | `1-bake-harpguru-clone`: `/harpguru` baked into the image | pushed, PR to open | — |
-| — | `1-working-agreements`: `CLAUDE.md` and this file | pushed, PR to open | — |
-| — | `1-aws-concepts`: the study companion, covering what has been touched so far | not started | — |
+| — | `1-bake-harpguru-clone`: `/harpguru` baked into the image | **merged** 2026-09-27 | — |
+| — | `1-working-agreements`: `CLAUDE.md` and this file | **merged** 2026-09-27 | — |
+| — | `1-aws-concepts`: `docs/aws-concepts.md`, covering what has been touched so far | pushed, PR to open | — |
 | 0 | *you*: `aws configure sso`, profile renamed to `[default]` | **done** 2026-09-26 | — |
 | 1 | `1-cdk-app`: CDK skeleton | not started | — |
 | 2 | `1-budget`: $10 budget | not started | #1 |
@@ -56,6 +56,8 @@ Cost Anomaly Detection already runs with its default monitor, so it is not rebui
 - Create a `Workloads` OU and the `harpguru` account inside it. The account email is a
   `+harpguru` alias of the user's address, supplied at deploy time. The account resource is
   `RETAIN`, so tearing down a stack can never close the account.
+- Assign `jslog` the `AdministratorAccess` permission set in the new account, as code, so
+  the existing login reaches both accounts. Without this, nobody can use the account.
 - SCPs on the OU:
   - deny actions outside `eu-west-2` and `us-east-1`, with global services exempted
   - deny the root user
