@@ -99,6 +99,10 @@ first. That plan becomes one or more pull requests. **No phase is planned in det
 the phase preceding it has shipped** — each one ships something real, and what it teaches
 changes the next estimate.
 
+The granular plan for each phase is kept in `docs/plans/`, one file per phase, with a status
+table updated in the PR that changes it. That table is where a new session finds out where
+work stands. `CLAUDE.md` carries the working agreements.
+
 This repo carries its own umbrella issue, which references `js-jslog/harpguru#178`. PRs for
 cloud work land against that issue, not against the one in the app repo.
 
