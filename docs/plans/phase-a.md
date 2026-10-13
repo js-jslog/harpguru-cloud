@@ -17,9 +17,9 @@ Update this table in the PR that moves a row. **You** means the user.
 | --- | --- | --- | --- |
 | — | `1-bake-harpguru-clone`: `/harpguru` baked into the image | **merged** 2026-09-27 | — |
 | — | `1-working-agreements`: `CLAUDE.md` and this file | **merged** 2026-09-27 | — |
-| — | `1-aws-concepts`: `docs/aws-concepts.md`, covering what has been touched so far | pushed, PR to open | — |
+| — | `1-aws-concepts`: `docs/aws-concepts.md`, covering what has been touched so far | **merged** 2026-09-27 | — |
 | 0 | *you*: `aws configure sso`, profile renamed to `[default]` | **done** 2026-09-26 | — |
-| 1 | `1-cdk-app`: CDK skeleton | not started | — |
+| 1 | `1-cdk-app`: CDK skeleton | pushed, PR to open | — |
 | 2 | `1-budget`: $10 budget | not started | #1 |
 | 3 | `1-org-accounts`: workload account, OU, SCPs | not started | #2 live |
 | 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | not started | #3 |
@@ -39,10 +39,11 @@ Update this table in the PR that moves a row. **You** means the user.
 
 ## Steps
 
-**1 · `1-cdk-app`.** A TypeScript CDK app under `infra/`, managed with pnpm, with jest
-assertion tests and prettier. It applies project-wide tags. The account and region come from
-the SSO login and from context supplied at deploy time, never from committed files. Nothing
-is deployed.
+**1 · `1-cdk-app`.** A TypeScript CDK app under `infra/`, managed with pnpm, with Jest
+assertion tests and prettier, following the current `cdk init` template (`tsx`, `@swc/jest`).
+It applies the tags `project`, `repository` and `managed-by` at the app root. The account
+comes from the SSO login through `CDK_DEFAULT_ACCOUNT`. Email addresses come from the
+gitignored `infra/deploy.local.json`. Nothing is deployed.
 
 **2 · `1-budget`.** A USD monthly cost budget in the management account: $10, alerting at
 50, 80 and 100% of actual spend and at 100% of forecast. It is a normal `cdk deploy`,
@@ -82,6 +83,9 @@ Cost Anomaly Detection already runs with its default monitor, so it is not rebui
 - You switch the nameservers at Heart. Delegate the domain; do not transfer it.
 - Confirm the change has propagated, then send a second test message.
 - Also check in Heart's panel that forwarding does not depend on Heart serving the zone.
+- Once the zone exists, **activate `project` as a cost allocation tag** in the management
+  account. A key can only be activated once a resource carries it, and earlier costs are
+  only split by requesting a backfill, so do it early.
 
 **7 · `1-certificate`.** An ACM certificate in `us-east-1` covering the apex and `www`,
 validated through DNS in the zone. It reaches the site stack as a cross-region reference.

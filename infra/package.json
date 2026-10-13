@@ -1,0 +1,34 @@
+{
+  "name": "harpguru-cloud-infra",
+  "private": true,
+  "packageManager": "pnpm@10.21.0",
+  "scripts": {
+    "typecheck": "tsc",
+    "test": "jest",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "synth": "cdk synth"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.271.0",
+    "constructs": "10.8.1"
+  },
+  "devDependencies": {
+    "@swc/core": "1.16.2",
+    "@swc/jest": "0.2.39",
+    "@types/jest": "30.0.0",
+    "@types/node": "24.19.0",
+    "jest": "30.5.2",
+    "prettier": "3.9.9",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2"
+  },
+  "pnpm": {
+    "ignoredBuiltDependencies": [
+      "@parcel/watcher",
+      "@swc/core",
+      "esbuild",
+      "unrs-resolver"
+    ]
+  }
+}

@@ -21,7 +21,10 @@ the account ID, it fetches it with `aws sts get-caller-identity`.
 [Organizational Unit (OU)](#organizational-unit-ou) ·
 [Service Control Policy (SCP)](#service-control-policy-scp) · [Budgets](#budgets) ·
 [Cost Anomaly Detection](#cost-anomaly-detection) ·
-[CloudFormation and CDK](#cloudformation-and-cdk) · [CDK bootstrap](#cdk-bootstrap) ·
+[CloudFormation and CDK](#cloudformation-and-cdk) ·
+[Apps, stacks and constructs](#apps-stacks-and-constructs) ·
+[Environments](#environments) · [CDK bootstrap](#cdk-bootstrap) ·
+[Tags and cost allocation tags](#tags-and-cost-allocation-tags) ·
 [CloudTrail](#cloudtrail) · [Config](#config) · [GuardDuty](#guardduty)
 
 ---
@@ -213,6 +216,44 @@ rather than on my laptop, and CloudFormation is what the exam tests."
 
 **See it:** `aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE --query 'StackSummaries[].StackName'`
 
+#### Apps, stacks and constructs
+
+**What:** CDK's three levels.
+- A **construct** is any building block, from one S3 bucket to a whole website made of
+  many resources.
+- A **stack** is a group of constructs deployed together as one CloudFormation stack, into
+  one account and one region.
+- The **app** is the root, holding every stack.
+
+**Here:** the app is `infra/bin/harpguru.ts`. It has no stacks yet; each Phase A step adds
+one. Stacks are split by **lifecycle and location**: the budget, the organisation and the
+DNS zone change rarely, and the certificate has to live in `us-east-1`. That keeps any one
+deploy small and its diff readable. *(PR `1-cdk-app`)*
+
+**Say it:** "A stack is the unit of deployment, so I split them by what changes together and
+where it has to live."
+
+**See it:** `cd infra && cdk ls` lists the stacks. `cdk synth` writes each one's template to
+`cdk.out/`, and it's worth opening one to see the CloudFormation that CDK actually produces.
+
+#### Environments
+
+**What:** in CDK, an environment is an **account plus a region**. A stack pinned to an
+environment can use account-specific features, such as looking up an existing hosted zone.
+A stack without one is "environment-agnostic": a single template that can be deployed
+anywhere, but can't do those lookups.
+
+**Here:** every stack is pinned. The region is written in the code, and the account comes
+from `CDK_DEFAULT_ACCOUNT`, which the CLI fills in from your SSO login, so no account ID is
+committed. Once step 3 creates the workload account, a second SSO profile for it supplies its
+stacks' account the same way. *(PR `1-cdk-app`)*
+
+**Say it:** "Stacks are pinned to an account and region, but the account comes from the
+signed-in identity rather than from code."
+
+**See it:** `cd infra && cdk ls --long` shows each stack's `aws://<account>/<region>`, once
+stacks exist.
+
 #### CDK bootstrap
 
 **What:** a one-off setup per account and region, done with `cdk bootstrap`. It creates the
@@ -228,6 +269,25 @@ second bootstrap."
 
 **See it:**
 `aws cloudformation describe-stack-resources --stack-name CDKToolkit --query 'StackResources[].ResourceType'`
+
+#### Tags and cost allocation tags
+
+**What:** tags are key–value labels on resources. **Cost allocation tags** are tags you
+**activate** in the management account's billing settings, so that billing can split costs
+by them. Activation isn't automatic, and a key can only be activated once a resource carries
+it. Costs before activation aren't split unless you request a **backfill**, which reaches
+back up to 12 months.
+
+**Here:** every resource gets `project=harpguru`, `repository=harpguru-cloud` and
+`managed-by=cdk`, applied once at the app root. Once tagged resources exist, `project` is
+activated, so "what does Harp Guru cost?" becomes one filter in Cost Explorer. The tagging is
+in PR `1-cdk-app`; the activation happens after step 6.
+
+**Say it:** "Tag at the app root so nothing is missed, and activate the cost allocation tag
+early; anything earlier needs a backfill."
+
+**See it:** `aws ce list-cost-allocation-tags --region us-east-1 --query 'CostAllocationTags[].[TagKey,Status]'`.
+For now it shows only CloudFormation's own automatic tags.
 
 ### Audit and detection
 

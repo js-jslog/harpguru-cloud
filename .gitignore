@@ -15,3 +15,10 @@ __pycache__/
 
 # Node
 node_modules/
+# pnpm puts its store on the same filesystem as the project so it can hard
+# link, and /app is its own volume, so the store lands here rather than in
+# ~/.local/share/pnpm. It survives rebuilds with the workspace volume.
+.pnpm-store/
+
+# Deploy-time values kept out of this public repo
+infra/deploy.local.json
