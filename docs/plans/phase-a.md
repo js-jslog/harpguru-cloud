@@ -21,7 +21,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | 0 | *you*: `aws configure sso`, profile renamed to `[default]` | **done** 2026-09-26 | — |
 | 1 | `1-cdk-app`: CDK skeleton | **merged** 2026-10-13 | — |
 | 2 | `1-budget`: $10 budget | **merged** and deployed 2026-10-13; zero-spend budget deleted | — |
-| 3 | `1-org-accounts`: workload account, OU, SCPs | not started | — |
+| 3 | `1-org-accounts`: workload account, OU, SCPs | pushed, PR to open | *you*: the concepts discussion, then the deploy steps in #3 below |
 | 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | not started | #3 |
 | 5 | *you*: bootstrap the workload account | not started | #3 |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | not started | #5 |
@@ -52,21 +52,42 @@ alert address is supplied at deploy time. Once this is live, **delete the consol
 `My Zero-Spend Budget`**: from #6 onwards the hosted zone alone would set it off every month.
 Cost Anomaly Detection already runs with its default monitor, so it is not rebuilt.
 
-**3 · `1-org-accounts`.**
-- Enable the SCP policy type on the root, which is not yet done.
-- Create a `Workloads` OU and the `harpguru` account inside it. The account email is a
-  `+harpguru` alias of the user's address, supplied at deploy time. The account resource is
-  `RETAIN`, so tearing down a stack can never close the account.
-- Assign `jslog` the `AdministratorAccess` permission set in the new account, as code, so
-  the existing login reaches both accounts. Without this, nobody can use the account.
-- SCPs on the OU:
-  - deny actions outside `eu-west-2` and `us-east-1`, with global services exempted
-  - deny the root user
-  - deny leaving the Organization
-  - deny disabling CloudTrail or Config
+**3 · `1-org-accounts`.** Two stacks in the management account, in `eu-west-2`, both with
+termination protection.
+- **`HarpguruGuardrails`**: a `Workloads` OU under the root, with three SCPs attached:
+  - `harpguru-region-lock`: deny actions outside `eu-west-2` and `us-east-1`, exempting
+    the global services in AWS's own example
+  - `harpguru-deny-root`: deny the root user
+  - `harpguru-deny-leave-org`: deny leaving the Organization
+- **`HarpguruAccounts`**: the `harpguru` account, created inside `Workloads`, and an
+  Identity Center assignment giving `jslog` the `AdministratorAccess` permission set there,
+  so the existing login reaches both accounts. The account email is a `+harpguru` alias of
+  the user's address. The account is `RETAIN`, so tearing down a stack can never close it.
+  The OU's ID arrives as a cross-stack import, which also makes the guardrails deploy first.
+  The account is therefore governed from the moment it exists.
+- Values kept out of the repo go in `infra/deploy.local.json`: the account email, the root
+  ID, and the Identity Center instance, permission set and user IDs.
+  `infra/scripts/identity-center-values.sh` prints the last four.
+
+Deploying it, all *you*:
+1. Run `aws organizations enable-policy-type --policy-type SERVICE_CONTROL_POLICY --root-id <root>`.
+   No CloudFormation resource enables a policy type. This also attaches `FullAWSAccess` to
+   every target, so nothing is restricted yet.
+2. Run `scripts/identity-center-values.sh` and merge its output into `deploy.local.json`,
+   alongside the real `workloadAccountEmail`.
+3. `cdk diff` then `cdk deploy HarpguruGuardrails`.
+4. `cdk diff` then `cdk deploy HarpguruAccounts`. **This is the point of no return.** Account
+   creation takes a few minutes, and closing an account afterwards takes 90 days.
+5. Add a `[profile harpguru]` to `~/.aws/config` using the `WorkloadAccountId` output, and
+   check that both the portal and `aws sts get-caller-identity --profile harpguru` reach the
+   new account.
 
 **4 · `1-org-audit`.**
 - An organisation CloudTrail trail to S3.
+- An SCP denying anyone from turning off CloudTrail or Config in `Workloads`, moved here from #3.
+  The trail lives in the management account, where SCPs never apply, and a member
+  account can't alter an org trail anyway. Config's exemption depends on how this step
+  deploys it.
 - Config limited to the two regions, with periodic rather than continuous recording. Config
   charges for each change it records, so it is the item most likely to creep.
 - GuardDuty, which is free for 30 days and then pennies at this volume.
@@ -118,6 +139,16 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
 - 2026-09-26: `My Zero-Spend Budget` is deleted once the $10 budget is live.
 - 2026-09-26: the workload account is named `harpguru` and uses the `+harpguru` email alias.
 - 2026-09-26: mail is live, so the DNS move in #6 must carry the `MX` and `mail` records.
+- 2026-10-14: SCPs are enabled on the root with a one-off CLI command rather than a custom
+  resource. Deleting a custom resource would disable SCPs across the Organization.
+- 2026-10-14: the CloudTrail/Config protection SCP moves from #3 to #4, so its exemption is
+  designed alongside the Config deployment it has to allow.
+- 2026-10-14: the Identity Center and root identifiers live in `deploy.local.json`, not the
+  repo. Keeping them out can be undone later; committing them can't, because the repo is public.
+- 2026-10-14: centralised root access is deferred to a small step of its own. The SCP already
+  blocks the root user, and the feature changes two Organization-wide settings.
+- 2026-10-14: #3 is two stacks, `HarpguruGuardrails` then `HarpguruAccounts`, so the account
+  is created inside an already-governed OU, and changes to SCPs never share a diff with the account.
 - 2026-09-26: security headers use a **response headers policy**, not CloudFront Functions.
   Functions are kept for request-dependent logic, such as the `www` redirect. The roadmap is
   updated to match.
