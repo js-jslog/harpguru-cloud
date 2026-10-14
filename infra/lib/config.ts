@@ -13,6 +13,13 @@ export const EDGE_REGION = 'us-east-1'
 export type DeployConfig = {
   alertEmail?: string
   workloadAccountEmail?: string
+  // Identifiers for the Organization and Identity Center. Not secrets, but
+  // the same kind of identifier as the account ID, so kept out of the repo
+  // too. scripts/identity-center-values.sh prints them.
+  organizationRootId?: string
+  identityCenterInstanceArn?: string
+  adminPermissionSetArn?: string
+  adminPrincipalId?: string
 }
 
 export const DEPLOY_CONFIG_PATH = join(__dirname, '..', 'deploy.local.json')
