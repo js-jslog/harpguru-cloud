@@ -22,6 +22,7 @@ the account ID, it fetches it with `aws sts get-caller-identity`.
 [Service Control Policy (SCP)](#service-control-policy-scp) · [Budgets](#budgets) ·
 [Cost Anomaly Detection](#cost-anomaly-detection) ·
 [CloudFormation and CDK](#cloudformation-and-cdk) ·
+[Change sets, stack events and logical IDs](#change-sets-stack-events-and-logical-ids) ·
 [Apps, stacks and constructs](#apps-stacks-and-constructs) ·
 [L1 and L2 constructs](#l1-and-l2-constructs) ·
 [Environments](#environments) · [CDK bootstrap](#cdk-bootstrap) ·
@@ -220,6 +221,34 @@ rather than on my laptop, and CloudFormation is what the exam tests."
 
 **See it:** `aws cloudformation list-stacks --stack-status-filter CREATE_COMPLETE UPDATE_COMPLETE --query 'StackSummaries[].StackName'`
 
+#### Change sets, stack events and logical IDs
+
+**What:** what happens inside a deploy.
+- A **change set** is CloudFormation's list of proposed changes to a stack. It's worked out
+  first and then run, and it disappears once it has been run.
+- Each step of the deploy is recorded as a **stack event**. When a deploy fails, the first
+  `FAILED` event from the bottom gives the reason, and the `ROLLBACK` events above it are
+  CloudFormation undoing the rest.
+- Each resource has a **logical ID**, its name in the template, and a **physical ID**, the
+  real thing's name in AWS. CloudFormation tracks resources by logical ID.
+
+**Here:** `cdk diff` builds a read-only change set; `cdk deploy` builds one and runs it. The
+first deploy, `HarpguruBudget` on 2026-10-13, took 13 seconds from `REVIEW_IN_PROGRESS` to
+`CREATE_COMPLETE`. The budget's logical ID is `Monthly`, taken from
+`new CfnBudget(this, 'Monthly', …)`, and its physical ID is `harpguru-monthly`. Renaming
+`'Monthly'` in the code would make the next deploy delete the budget and create a new one.
+*(PR `1-budget`)*
+
+**Say it:** "CloudFormation tracks resources by logical ID, so renaming a construct means
+replacing the resource; I read the diff for replacements before every deploy."
+
+**See it:** read the events oldest first, and match logical IDs to physical ones:
+`aws cloudformation describe-stack-events --stack-name HarpguruBudget --query 'reverse(StackEvents)[].[Timestamp,LogicalResourceId,ResourceStatus]' --output table`
+and
+`aws cloudformation describe-stack-resources --stack-name HarpguruBudget --query 'StackResources[].[LogicalResourceId,PhysicalResourceId,ResourceType]' --output table`.
+In the console, the same views are the **Events** and **Resources** tabs of the stack in
+CloudFormation, in London.
+
 #### Apps, stacks and constructs
 
 **What:** CDK's three levels.
@@ -229,8 +258,8 @@ rather than on my laptop, and CloudFormation is what the exam tests."
   one account and one region.
 - The **app** is the root, holding every stack.
 
-**Here:** the app is `infra/bin/harpguru.ts`. It has no stacks yet; each Phase A step adds
-one. Stacks are split by **lifecycle and location**: the budget, the organisation and the
+**Here:** the app is `infra/bin/harpguru.ts`. Each Phase A step adds a stack, starting with
+`HarpguruBudget` in step 2. Stacks are split by **lifecycle and location**: the budget, the organisation and the
 DNS zone change rarely, and the certificate has to live in `us-east-1`. That keeps any one
 deploy small and its diff readable. *(PR `1-cdk-app`)*
 
