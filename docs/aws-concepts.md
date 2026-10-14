@@ -23,6 +23,7 @@ the account ID, it fetches it with `aws sts get-caller-identity`.
 [Cost Anomaly Detection](#cost-anomaly-detection) ·
 [CloudFormation and CDK](#cloudformation-and-cdk) ·
 [Apps, stacks and constructs](#apps-stacks-and-constructs) ·
+[L1 and L2 constructs](#l1-and-l2-constructs) ·
 [Environments](#environments) · [CDK bootstrap](#cdk-bootstrap) ·
 [Tags and cost allocation tags](#tags-and-cost-allocation-tags) ·
 [CloudTrail](#cloudtrail) · [Config](#config) · [GuardDuty](#guardduty)
@@ -173,10 +174,13 @@ anywhere wins."
 not stop spending.** It only tells you. Billing data refreshes a few times a day, so alerts
 lag behind the spending itself.
 
-**Here:** a console-made `My Zero-Spend Budget` already exists. Step 2 adds a $10 budget as
-code, alerting at 50, 80 and 100% of actual spend and at 100% of forecast. The zero-spend
-budget is then deleted, because the hosted zone's $0.50 a month would set it off every month.
-The rule is: **budget before the first deploy.**
+**Here:** a console-made `My Zero-Spend Budget` already exists. Step 2 adds
+`harpguru-monthly`, a $10 budget as code in the `HarpguruBudget` stack, alerting at 50, 80
+and 100% of actual spend and at 100% of forecast. It sits in the management account, which
+pays every member account's bill, so it covers the whole Organization. It ignores credits and
+refunds, so a promotional credit can't hide real usage. The zero-spend budget is then
+deleted, because the hosted zone's $0.50 a month would set it off every month. The rule is:
+**budget before the first deploy.** *(PR `1-budget`)*
 
 **Say it:** "Budgets alert rather than cap, so the alarm goes in before anything that can
 spend."
@@ -236,6 +240,28 @@ where it has to live."
 **See it:** `cd infra && cdk ls` lists the stacks. `cdk synth` writes each one's template to
 `cdk.out/`, and it's worth opening one to see the CloudFormation that CDK actually produces.
 
+#### L1 and L2 constructs
+
+**What:** CDK constructs come in levels.
+- **L1** constructs are named `Cfn*`, such as `CfnBudget`. Each maps one-to-one onto a
+  CloudFormation resource and is generated from its schema. You set every property yourself,
+  in CloudFormation's own shape.
+- **L2** constructs, such as `s3.Bucket`, are hand-written. They add sensible defaults, helper
+  methods such as `bucket.grantRead(role)`, and support for tagging.
+- **L3** constructs, or patterns, combine several resources into one, such as a whole
+  static site.
+
+**Here:** Budgets has no L2, so `HarpguruBudget` uses `CfnBudget`. One consequence: CDK's
+`Tags.of()` skips it, so the app-root tags never reach it. The stack sets `resourceTags` by
+hand, and a test checks that the tags are there. Step 8 is the first L2-heavy stack.
+*(PR `1-budget`)*
+
+**Say it:** "When a service has no L2, I drop to the `Cfn` construct. It's the raw
+CloudFormation resource with types, and I lose the defaults and the tagging."
+
+**See it:** `cd infra && cdk synth HarpguruBudget`. The properties in the template have the
+same shape as the `CfnBudget` props in `lib/budget-stack.ts`, which is what makes it L1.
+
 #### Environments
 
 **What:** in CDK, an environment is an **account plus a region**. A stack pinned to an
@@ -279,7 +305,9 @@ it. Costs before activation aren't split unless you request a **backfill**, whic
 back up to 12 months.
 
 **Here:** every resource gets `project=harpguru`, `repository=harpguru-cloud` and
-`managed-by=cdk`, applied once at the app root. Once tagged resources exist, `project` is
+`managed-by=cdk`, applied once at the app root. The exceptions are L1 resources that CDK
+can't tag, such as the budget, which set them by hand (see
+[L1 and L2 constructs](#l1-and-l2-constructs)). Once tagged resources exist, `project` is
 activated, so "what does Harp Guru cost?" becomes one filter in Cost Explorer. The tagging is
 in PR `1-cdk-app`; the activation happens after step 6.
 
