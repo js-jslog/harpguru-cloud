@@ -20,7 +20,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | — | `1-aws-concepts`: `docs/aws-concepts.md`, covering what has been touched so far | **merged** 2026-09-27 | — |
 | 0 | *you*: `aws configure sso`, profile renamed to `[default]` | **done** 2026-09-26 | — |
 | 1 | `1-cdk-app`: CDK skeleton | **merged** 2026-10-13 | — |
-| 2 | `1-budget`: $10 budget | **deployed** 2026-10-13, PR #6 open; zero-spend budget deleted | — |
+| 2 | `1-budget`: $10 budget | **merged** and deployed 2026-10-13; zero-spend budget deleted | — |
 | 3 | `1-org-accounts`: workload account, OU, SCPs | not started | — |
 | 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | not started | #3 |
 | 5 | *you*: bootstrap the workload account | not started | #3 |
