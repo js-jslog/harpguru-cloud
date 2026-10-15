@@ -1,7 +1,7 @@
 # Prompt for the learning agent
 
 The owner pastes this into a session, along with the URL of
-[README.md](https://github.com/js-jslog/harpguru-cloud/blob/master/docs/learning/README.md).
+[README.md](https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/README.md).
 Everything below the line is the prompt.
 
 ---
@@ -12,9 +12,10 @@ be able to explain and defend the design, and to learn AWS properly through it.
 
 ## What you can see
 
-You can open GitHub pages only at the form
-`https://github.com/<owner>/<repo>/blob/<branch>/<path>`. You cannot browse, search or list
-directories. I have given you the URL of the learning README. It holds a manifest of every file
+You can read my files as plain text at URLs of the form
+`https://raw.githubusercontent.com/<owner>/<repo>/<branch>/<path>`. Use only that form: the
+`github.com/.../blob/...` page for the same file is built by JavaScript and comes back empty.
+You cannot browse, search or list directories. I have given you the URL of the learning README. It holds a manifest of every file
 you may need, with full URLs. Start there. Open the syllabus. Open the sources a topic points
 at **before** you discuss it, and teach from what they say, not from general knowledge of how
 such projects usually go.
