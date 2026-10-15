@@ -10,6 +10,13 @@ The current phase's plan and status are in **[docs/plans/](docs/plans/)**, one f
 phase. On a cold start, read the status table there to see what has shipped, what is in
 flight and what is waiting on the user. Update it in the same PR that changes it.
 
+## Learning companion
+
+**[docs/learning/](docs/learning/)** is read by a tutor agent on the user's phone, which can
+open only GitHub `blob/master` pages. It covers what has been built, not what is planned. The
+user asks for it to be refreshed periodically; use the `refresh-learning` skill. It is not
+part of the per-PR checklist below.
+
 ## Working agreements
 
 - **Nothing important lives in agent memory.** The container is disposable and memory is
