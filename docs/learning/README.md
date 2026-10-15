@@ -46,10 +46,8 @@ below with its full URL. If a file you need is not listed, say so; do not guess 
 | [infra/bin/harpguru.ts](https://github.com/js-jslog/harpguru-cloud/blob/master/infra/bin/harpguru.ts) | The app: creates the stacks, applies tags |
 | [infra/lib/config.ts](https://github.com/js-jslog/harpguru-cloud/blob/master/infra/lib/config.ts) | Regions, deploy-time values, the management account environment |
 | [infra/lib/tags.ts](https://github.com/js-jslog/harpguru-cloud/blob/master/infra/lib/tags.ts) | The tags every resource carries |
-| [infra/lib/budget-stack.ts](https://github.com/js-jslog/harpguru-cloud/blob/master/infra/lib/budget-stack.ts) | `HarpguruBudget` |
-| [infra/lib/guardrails-stack.ts](https://github.com/js-jslog/harpguru-cloud/blob/master/infra/lib/guardrails-stack.ts) | `HarpguruGuardrails`: the Workloads OU and its SCPs |
-| [infra/lib/accounts-stack.ts](https://github.com/js-jslog/harpguru-cloud/blob/master/infra/lib/accounts-stack.ts) | `HarpguruAccounts`: the workload account and its access |
-| [infra/test/guardrails-stack.test.ts](https://github.com/js-jslog/harpguru-cloud/blob/master/infra/test/guardrails-stack.test.ts) | Example of how the stacks are tested |
+| [infra/lib/budget-stack.ts](https://github.com/js-jslog/harpguru-cloud/blob/master/infra/lib/budget-stack.ts) | `HarpguruBudget`: the $10 monthly budget, the only stack deployed so far |
+| [infra/test/budget-stack.test.ts](https://github.com/js-jslog/harpguru-cloud/blob/master/infra/test/budget-stack.test.ts) | Example of how the stacks are tested |
 
 ### The plan this repo works to (a different repository)
 
