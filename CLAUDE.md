@@ -13,7 +13,8 @@ flight and what is waiting on the user. Update it in the same PR that changes it
 ## Learning companion
 
 **[docs/learning/](docs/learning/)** is read by a tutor agent on the user's phone, which can
-open only GitHub `blob/master` pages. It covers what has been built, not what is planned. The
+read only plain-text `raw.githubusercontent.com/.../master/...` URLs. GitHub's `blob` pages
+are built by JavaScript and come back empty to it. It covers what has been built, not what is planned. The
 user asks for it to be refreshed periodically; use the `refresh-learning` skill. It is not
 part of the per-PR checklist below.
 

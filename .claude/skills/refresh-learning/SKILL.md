@@ -6,9 +6,12 @@ description: Refresh docs/learning/ so the owner's mobile tutor agent teaches fr
 # Refresh the learning companion
 
 `docs/learning/` is read by an agent that can open only
-`https://github.com/<owner>/<repo>/blob/<branch>/<path>` pages. It cannot browse or list
-directories. Everything it needs must be reachable from `docs/learning/README.md`. Read that
-file and `docs/learning/agent-prompt.md` before changing anything, so you keep their intent.
+`https://raw.githubusercontent.com/<owner>/<repo>/<branch>/<path>` URLs, which return the file
+as plain text. GitHub's `blob` pages are built by JavaScript and come back empty to it, so never
+link to one. Raw files have no section anchors, so link text naming a concept entry must match
+its heading exactly. The agent cannot browse or list directories. Everything it needs must be
+reachable from `docs/learning/README.md`. Read that file and `docs/learning/agent-prompt.md`
+before changing anything, so you keep their intent.
 
 ## Steps
 
@@ -25,7 +28,7 @@ file and `docs/learning/agent-prompt.md` before changing anything, so you keep t
    - Move anything that now exists out of "Not yet built".
    - Update the "As of" date and whether each step is deployed or only merged.
 3. **Update the manifest in `README.md`.** Every file a topic points at needs its full
-   `blob/master` URL in the manifest. Add new stacks and docs. Remove deleted ones.
+   raw `master` URL in the manifest. Add new stacks and docs. Remove deleted ones.
 4. **Check the links.** Every URL must point at a file that exists in the tree. For this repo,
    check the path with `git ls-files`. For the `harpguru` roadmap URLs, check the path in
    `/harpguru` after pulling. Report any that do not resolve.
