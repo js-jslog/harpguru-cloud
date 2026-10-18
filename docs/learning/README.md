@@ -16,6 +16,10 @@ is built by JavaScript, and without it you get an empty page. You cannot list di
 search, so every file you may need is listed in the manifest below with its full URL. If a file
 you need is not listed, say so; do not guess a URL.
 
+**If a fetch is refused** as a URL that has not been seen, copy the URL exactly as written here,
+with no edits and no `#section`, and ask the owner to paste it into the chat. That makes it seen.
+Ask for that before asking for the file's content.
+
 Raw files have no links to sections. When a topic names an entry in `aws-concepts.md`, such as
 "Budgets", find the heading with that name in the file.
 
