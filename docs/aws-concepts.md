@@ -175,12 +175,13 @@ anywhere wins."
 not stop spending.** It only tells you. Billing data refreshes a few times a day, so alerts
 lag behind the spending itself.
 
-**Here:** a console-made `My Zero-Spend Budget` already exists. Step 2 adds
-`harpguru-monthly`, a $10 budget as code in the `HarpguruBudget` stack, alerting at 50, 80
+**Here:** `harpguru-monthly` is a $10 budget as code in the `HarpguruBudget` stack, deployed
+on 2026-10-13 as this project's first deploy, alerting at 50, 80
 and 100% of actual spend and at 100% of forecast. It sits in the management account, which
 pays every member account's bill, so it covers the whole Organization. It ignores credits and
-refunds, so a promotional credit can't hide real usage. The zero-spend budget is then
-deleted, because the hosted zone's $0.50 a month would set it off every month. The rule is:
+refunds, so a promotional credit can't hide real usage. It replaced a console-made
+`My Zero-Spend Budget`, which was deleted once it was live, because from step 6 the hosted
+zone's $0.50 a month would set it off every month. The rule is:
 **budget before the first deploy.** *(PR `1-budget`)*
 
 **Say it:** "Budgets alert rather than cap, so the alarm goes in before anything that can
@@ -226,9 +227,9 @@ rather than on my laptop, and CloudFormation is what the exam tests."
 **What:** what happens inside a deploy.
 - A **change set** is CloudFormation's list of proposed changes to a stack. It's worked out
   first and then run, and it disappears once it has been run.
-- Each step of the deploy is recorded as a **stack event**. When a deploy fails, the first
-  `FAILED` event from the bottom gives the reason, and the `ROLLBACK` events above it are
-  CloudFormation undoing the rest.
+- Each step of the deploy is recorded as a **stack event**. When a deploy fails, the earliest
+  `FAILED` event gives the reason, and the `ROLLBACK` events after it are CloudFormation undoing
+  the rest. The console lists events newest first, so there it is the lowest `FAILED` line.
 - Each resource has a **logical ID**, its name in the template, and a **physical ID**, the
   real thing's name in AWS. CloudFormation tracks resources by logical ID.
 

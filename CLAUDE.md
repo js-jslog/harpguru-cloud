@@ -12,11 +12,11 @@ flight and what is waiting on the user. Update it in the same PR that changes it
 
 ## Learning companion
 
-**[docs/learning/](docs/learning/)** is read by a tutor agent on the user's phone, which can
-read only plain-text `raw.githubusercontent.com/.../master/...` URLs. GitHub's `blob` pages
-are built by JavaScript and come back empty to it. It covers what has been built, not what is planned. The
-user asks for it to be refreshed periodically; use the `refresh-learning` skill. It is not
-part of the per-PR checklist below.
+**[docs/learning/README.md](docs/learning/README.md)** is the entry point for a tutor agent
+on the user's phone, which the user sends its raw URL. It is the tutor's whole prompt and its
+only list of sources; the syllabus beside it holds the topics. It covers what has been built,
+not what is planned. The user asks for it to be refreshed periodically; use the
+`refresh-learning` skill. It is not part of the per-PR checklist below.
 
 ## Working agreements
 
