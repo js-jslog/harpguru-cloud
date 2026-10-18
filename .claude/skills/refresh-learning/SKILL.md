@@ -63,19 +63,30 @@ Read both files before changing anything, so you keep their intent.
    reference to something that is not a heading says where it sits, such as "Steps" (item 2).
    Check that each named section actually answers the questions that cite it. Report any that
    do not resolve.
-5. **Dry-run a session from the README**, as the tutor would, knowing nothing but what each
-   file says.
-   - Read the README and follow it: open every source it lists, mapping each URL to the same
-     path in the working tree, and nothing else. A file you want that is not listed is a defect.
-   - Run the freshness check. Then pick one *must own* topic and answer its questions from its
-     named sources alone. A question you can answer only from your own knowledge of the repo
-     means a source is missing or too thin.
-   - Fix what you find.
-   - Once merged, repeat against the real URLs with a fetch tool, starting from the README's raw
-     URL alone. Until then `master` serves the old content, so say the live check is not done.
+5. **Dry-run a session from the README, with a fresh agent.** You know what the files mean,
+   so your own reading hides their gaps; the first fresh dry run, on 2026-10-18, found a cited
+   section that did not exist on the fetched branch, a stale concept entry and five bad
+   references, all missed by the author. Commit the branch first, then spawn an agent with no
+   context of this work and have it:
+   - Role-play the tutor from the owner's one-line message ("Please read <README raw URL> and
+     follow its instructions"), with each URL mapped to `git show <branch>:<path>`, or to the
+     named branch in `/harpguru` after a fetch, and any other URL counted as a failed fetch.
+   - Run the first turn and the freshness check, show the syllabus, then answer every question
+     of at least two *must own* topics from their named sources alone, citing file and heading,
+     and saying plainly where a source does not answer.
+   - Report, ranked by harm: instructions that are ambiguous or impossible; facts that
+     contradict each other or the status table, including in sources the syllabus only cites;
+     names that do not resolve; and links in sources that would tempt a tutor to fetch
+     something that fails.
+   Verify its main claims before acting on them. Fix what is wrong here; a stale statement in a
+   `harpguru` doc is fixed at source there, following the orientation file's push rules. Then
+   send the same agent the fixed branch and ask what is fixed, what is new, and whether every
+   question is now answerable.
+   - Once merged, a live check against the real URLs, starting from the README's raw URL alone,
+     is the final test. Until then `master` serves the old content, so say it is not done.
 6. **Hand over.** Follow `CLAUDE.md`: branch `1-<slug>`, no attribution trailer, push and say
-   what the branch contains. Say what the dry run found and fixed, and whether the live check
-   was done. Say which topics were added or changed and how they were tiered, so the owner can
+   what the branch contains. Say what the dry run found and fixed, what it left and why, and
+   whether the live check was done. Say which topics were added or changed and how they were tiered, so the owner can
    argue with the tiering.
 
 ## Rules
