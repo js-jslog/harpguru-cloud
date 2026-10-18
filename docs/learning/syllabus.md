@@ -4,7 +4,8 @@
 $10 budget. Steps 1 and 2 are merged, and step 2 is **deployed**: `HarpguruBudget` is the
 only stack of this project's running in the account. Check the
 [status table](https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/plans/phase-a.md)
-for anything newer. Step 3 onward is not merged and is out of scope; see the last section.
+for anything newer. Step 3 is coded on its branch but not merged or deployed, and the status
+table says the same; it and everything after it are out of scope. See the last section.
 
 Tiers are defined in the [agent prompt](https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/agent-prompt.md).
 In short: **Must own** is what I should be able to defend unprompted. **Should understand**

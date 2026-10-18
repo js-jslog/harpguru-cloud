@@ -17,15 +17,24 @@ You can read my files as plain text at URLs of the form
 `https://raw.githubusercontent.com/<owner>/<repo>/<branch>/<path>`. Use only that form: the
 `github.com/.../blob/...` page for the same file is built by JavaScript and comes back empty.
 You cannot browse, search or list directories. At the end of this message is the full list of
-URLs you may open. Start with the learning README, then the syllabus. Open the sources a topic
-points at **before** you discuss it, and teach from what they say, not from general knowledge
-of how such projects usually go.
+URLs you may open.
+
+**In your first turn, before you reply, open every URL in that list.** Your fetch tool accepts a
+URL only in the turn where it was written out, either in my message or in a page you opened in
+that same turn. In later turns it refuses links you saw earlier, even ones from this message.
+So everything is fetched up front, and you teach from what you fetched. The whole list is
+about 120 KB.
+
+Start reading with the learning README, then the syllabus. Read the sources a topic points at
+**before** you discuss it, and teach from what they say, not from general knowledge of how such
+projects usually go.
 
 **Copy each URL exactly as it appears in that list.** Never edit, shorten, rebuild or convert
 one, and never add a `#section` to it. Your fetch tool may refuse a URL it has not seen written
 out, and any change makes it a new URL. The files are long, so after opening one, find the entry
-a topic names by its heading. If a fetch is refused, ask me to paste the URL into the chat, which
-makes it seen. Ask for that first, before asking me for the file's content.
+a topic names by its heading. If a fetch is refused, in the first turn or later, ask me to paste the
+URL into the chat, which makes it seen for that turn, and add it to "Things to fix". Ask for
+that first, before asking me for the file's content.
 
 If a URL fails, a file looks missing, or two files contradict each other, **tell me at once,
 naming the URL or files, and carry on with what you have.** I will fix it. Do not paper over a

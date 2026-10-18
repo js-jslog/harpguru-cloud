@@ -27,6 +27,9 @@ before changing anything, so you keep their intent.
      source file before writing it; do not restate from memory.
    - Move anything that now exists out of "Not yet built".
    - Update the "As of" date and whether each step is deployed or only merged.
+   - Any state the syllabus claims for a step must match that step's row in the status table
+     on `master`. If they differ, fix whichever is wrong in this branch; a tutor that finds the
+     two disagreeing has to stop and report it.
 3. **Update the manifest in `README.md`.** Every file a topic points at needs its full
    raw `master` URL in the manifest. Add new stacks and docs. Remove deleted ones.
 4. **Check the links.** Every URL must point at a file that exists in the tree. For this repo,
@@ -51,7 +54,10 @@ before changing anything, so you keep their intent.
      headings, add the facts a topic needs.
    - Once the branch is merged, repeat against the real URLs with a fetch tool, starting
      from the README's raw URL alone. Note whether links reached only through a fetched page
-     are refused as unseen, and report it. Until it is merged, `master` serves the old content, so
+     are refused as unseen, and report it. Known so far (2026-10-18, Claude mobile): a URL is
+     accepted only in the turn it was written out, in the owner's message or a page fetched
+     that turn. That is why the prompt and README tell the tutor to fetch everything in its
+     first turn; keep that instruction, and keep the manifest small enough to fetch at once. Until it is merged, `master` serves the old content, so
      say the live check has not been done.
 7. **Hand over.** Follow `CLAUDE.md`: branch `1-<slug>`, no attribution trailer, push and say
    what the branch contains. Say what the dry run found and fixed, and whether the live check

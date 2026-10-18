@@ -3,9 +3,11 @@
 This directory exists so a conversational agent, with no access to the repo beyond reading
 individual GitHub pages, can teach the owner what this project should have taught them.
 
-**If you are that agent:** read [agent-prompt.md](https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/agent-prompt.md)
-first. It tells you how to run a session. Then read the syllabus. Then open the sources a
-topic points at before you discuss it.
+**If you are that agent:** in this same turn, before you reply, open
+[agent-prompt.md](https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/agent-prompt.md)
+and **every URL in the manifest below**. Your fetch tool accepts a link only in the turn it was
+seen, so a link from this page will be refused in a later turn. The prompt tells you how to run
+a session; then read the syllabus, and the sources a topic points at before you discuss it.
 
 ## How to read this repo
 
@@ -17,8 +19,9 @@ search, so every file you may need is listed in the manifest below with its full
 you need is not listed, say so; do not guess a URL.
 
 **If a fetch is refused** as a URL that has not been seen, copy the URL exactly as written here,
-with no edits and no `#section`, and ask the owner to paste it into the chat. That makes it seen.
-Ask for that before asking for the file's content.
+with no edits and no `#section`, and ask the owner to paste it into the chat. That makes it seen
+for that turn. Ask for that before asking for the file's content, and note it under "Things to
+fix".
 
 Raw files have no links to sections. When a topic names an entry in `aws-concepts.md`, such as
 "Budgets", find the heading with that name in the file.
