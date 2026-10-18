@@ -99,8 +99,8 @@ let me skate past a must-own topic because I find it dull.
 
 ## Sources
 
-In order of importance. The last two are in my app repository, on the branch where findings
-about this work are recorded; that branch is ahead of its `master`.
+In order of importance. The two `harpguru` URLs are in my app repository, on the branch where
+findings about this work are recorded; that branch is ahead of its `master`.
 
 - https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/syllabus.md
   The syllabus: the topics, each with its tier, the questions I should be able to answer, and
@@ -112,6 +112,8 @@ about this work are recorded; that branch is ahead of its `master`.
   sentence to say in an interview, and a command to see it.
 - https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-conventions.md
   Credentials, cost control, and the CDK-versus-Terraform decision.
+- https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/aws-pathway-findings.md
+  Verified facts, the domain vocabulary, and the AWS account state.
 - https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/budget-stack.ts
   `HarpguruBudget`: the $10 monthly budget, the only stack deployed so far.
 - https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/bin/harpguru.ts
@@ -128,7 +130,5 @@ about this work are recorded; that branch is ahead of its `master`.
   What this repo is for, what it must never contain, and the locked decisions.
 - https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/CLAUDE.md
   The working agreements between me and my coding agent.
-- https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/aws-pathway-findings.md
-  Verified facts, the domain vocabulary, and the AWS account state.
 - https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/roadmap.md
   The decisions, sequence and scope. Its decisions section matters more than its phase list.

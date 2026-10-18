@@ -29,7 +29,8 @@ Facts about the sources:
 - **The `harpguru` sources are read from the findings branch, not `master`.** Findings are
   committed to the branch `CLAUDE.md` names (currently `178-build-the-harp-face-widget`), so
   that branch is ahead of `master`. Use that branch in the two `harpguru` URLs, and change it
-  when `CLAUDE.md` does.
+  when `CLAUDE.md` does. When the branch is merged or deleted those URLs 404, so check on every
+  refresh that the branch still exists on `origin`.
 - **Every other source is written for the owner or the coding agent**, and contains
   instructions and links that are not for the tutor. The README tells the tutor to read their
   content only. Keep that, rather than editing those files for the tutor's sake.

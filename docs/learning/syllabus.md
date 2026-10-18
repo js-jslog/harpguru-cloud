@@ -10,7 +10,8 @@ Each topic gives its tier and why, what I should be able to answer, and its sour
 sources hold the facts; this file deliberately does not restate them. Sources are named by
 path, as listed in the README's Sources section, and a quoted name is a heading inside that
 file. Some concept entries describe step 3 as if it were done, for example in their "Say it"
-lines; check them against the status table before teaching them as fact. The tiers are defined in the README, and the tiering here is a proposal, to be argued with.
+lines; check them against the status table before teaching them as fact. The tiers are defined
+in the README, and the tiering here is a proposal, to be argued with.
 
 ---
 
