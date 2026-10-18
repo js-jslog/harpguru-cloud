@@ -1,19 +1,15 @@
 # Syllabus
 
-**As of 2026-10-15.** Covers Phase A steps 0–2: the SSO login, the CDK app skeleton, and the
+**As of 2026-10-18.** Covers Phase A steps 0–2: the SSO login, the CDK app skeleton, and the
 $10 budget. Steps 1 and 2 are merged, and step 2 is **deployed**: `HarpguruBudget` is the
-only stack of this project's running in the account. Check the
-[status table](https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/plans/phase-a.md)
-for anything newer. Step 3 onward is not merged and is out of scope; see the last section.
+only stack of this project's running in the account. Step 3 is coded on its branch but not
+merged or deployed, and the status table in `docs/plans/phase-a.md` says the same. It and
+everything after it are out of scope; see the last section.
 
-Tiers are defined in the [agent prompt](https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/agent-prompt.md).
-In short: **Must own** is what I should be able to defend unprompted. **Should understand**
-is what I should follow. **Curiosity** is mine to explore at leisure. The tiering below is a
-proposal, to be argued with.
-
-Links to `aws-concepts.md` go to the entry for each concept. "Code" links are to files in `infra/`
-(see the [README manifest](https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/README.md)
-for full URLs).
+Each topic gives its tier and why, what I should be able to answer, and its sources. The
+sources hold the facts; this file deliberately does not restate them. Sources are named by
+path, as listed in the README's Sources section, and a quoted name is a heading inside that
+file. The tiers are defined in the README, and the tiering here is a proposal, to be argued with.
 
 ---
 
@@ -21,59 +17,44 @@ for full URLs).
 
 ### 1. Identity: root, IAM Identity Center, and no IAM users
 
-- **Core idea:** the root user signs in with the account's email address, can do everything,
-  and is used for almost nothing; it has MFA. There are no IAM users and no access keys.
-  Day-to-day access, in the console and the CLI, goes through IAM Identity Center: I sign in
-  once at the access portal, and a **permission set** (`AdministratorAccess`) becomes a role in
-  the account, giving me credentials that expire within hours.
-- **Why it is must-own:** it is a security property I chose, and the most common way AWS
-  credentials leak is a long-lived access key.
+- **Covers:** who I am when I call AWS, and why no long-lived credentials exist anywhere.
+- **Why must own:** it is a security property I chose, and long-lived access keys are the most
+  common way AWS credentials leak.
 - **Be able to answer:** why short-lived credentials are safer than access keys; what a
   permission set is, and what it turns into inside an account; why the three-field sign-in page
   can never work for my Identity Center user, and which page does; what
   `aws sso login --use-device-code` does, and why the device-code flow is needed in this
   container.
-- **Sources:** concepts [Root user](https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md),
-  [IAM users](https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md),
-  [IAM Identity Center](https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md);
-  `docs/aws-conventions.md` "First-run setup"; the findings doc's "AWS account state" section.
+- **Sources:** `docs/aws-concepts.md` "Root user", "IAM users" and "IAM Identity Center";
+  `docs/aws-conventions.md` "First-run setup"; `aws-pathway-findings.md` "AWS account state".
 
 ### 2. How CDK becomes AWS resources
 
-- **Core idea:** CDK code synthesises a CloudFormation template. CloudFormation works out a
-  **change set** against what is deployed and then applies it, recording each step as a stack
-  event. `cdk diff` builds that change set without applying it. Resources are tracked by
-  **logical ID**, so renaming one in code means replacing the real thing.
-- **Why it is must-own:** reading a diff before every deploy is my safety check, and I have
-  done one real deploy to reason from: `HarpguruBudget` on 2026-10-13.
+- **Covers:** the path from TypeScript to a running resource, through the one real deploy so
+  far, `HarpguruBudget` on 2026-10-13.
+- **Why must own:** reading a diff before every deploy is my safety check, and I can only read
+  it if I know what CloudFormation will do with it.
 - **Be able to answer:** walk through `cdk deploy` from source file to resource; what the
-  `Monthly` logical ID and the `harpguru-monthly` physical ID are, and what renaming
-  `'Monthly'` in the code would do; what app, stack and construct mean, and why stacks are split
-  by lifecycle and location; what an L1 construct is and why the budget had to use one; how to
-  find out why a failed deploy failed.
-- **Sources:** concepts [CloudFormation and CDK](https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md),
-  [Change sets, stack events and logical IDs](https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md),
-  [Apps, stacks and constructs](https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md),
-  [L1 and L2 constructs](https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md);
-  code `infra/bin/harpguru.ts` and `infra/lib/budget-stack.ts`.
+  budget's logical and physical IDs are, and what renaming its construct in the code would do;
+  what app, stack and construct mean, and why stacks are split by lifecycle and location; what
+  an L1 construct is and why the budget had to use one; how to find out why a deploy failed.
+- **Sources:** `docs/aws-concepts.md` "CloudFormation and CDK",
+  "Change sets, stack events and logical IDs", "Apps, stacks and constructs" and
+  "L1 and L2 constructs"; `infra/bin/harpguru.ts`; `infra/lib/budget-stack.ts`.
 
 ### 3. Cost control as a design constraint
 
-- **Core idea:** "budget alarm before the first deploy" is a locked decision, and it was kept:
-  the budget was the first thing deployed. `harpguru-monthly` is $10 a month and alerts by
-  email at 50, 80 and 100% of actual spend and at 100% of forecast. It lives in the management
-  account, which pays every account's bill, so it covers the whole Organization. Budgets alert;
-  they never stop spending. Cost Anomaly Detection runs separately and catches a sudden change
-  in the rate of spending.
-- **Why it is must-own:** it is the one control between a mistake and a bill, and it only
-  works if I understand what it cannot do.
-- **Be able to answer:** why the alarm came first; why a budget is not a cap, and why its alerts
-  lag; why credits and refunds are excluded from it; why the console-made zero-spend budget was
-  deleted rather than kept; what anomaly detection catches that a budget does not.
-- **Sources:** concepts [Budgets](https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md),
-  [Cost Anomaly Detection](https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md);
-  `docs/orientation.md` "Where the money leaks"; `docs/plans/phase-a.md` step 2 and its
-  decisions; code `infra/lib/budget-stack.ts`.
+- **Covers:** the budget, what it watches and what it can't do, and Cost Anomaly Detection
+  alongside it.
+- **Why must own:** it is the one control between a mistake and a bill, and it only works if I
+  understand what it cannot do.
+- **Be able to answer:** why the alarm was deployed before anything else; why a budget is not a
+  cap, and why its alerts lag; why one budget in the management account covers the whole
+  Organization; why credits and refunds are excluded; why the console-made zero-spend budget
+  was deleted rather than kept; what anomaly detection catches that a budget does not.
+- **Sources:** `docs/aws-concepts.md` "Budgets" and "Cost Anomaly Detection";
+  `docs/orientation.md` "Where the money leaks"; `docs/plans/phase-a.md` step 2 and
+  "Decisions"; `infra/lib/budget-stack.ts`.
 
 ---
 
@@ -81,37 +62,30 @@ for full URLs).
 
 ### 4. Regions, environments and bootstrap
 
-- Most of the project lives in `eu-west-2`, but CloudFront's certificate must be issued in
-  `us-east-1`. A CDK environment is an account plus a region; stacks are pinned to one, with the
-  account taken from my SSO login rather than from the code. Bootstrap prepares one environment
-  for CDK. The management account is bootstrapped in `eu-west-2` only.
-- **Why not must-own:** it is mechanical. Know why the workload account will later need two
+- **Covers:** where things run, how a stack is pinned to an account and region without the
+  account ID being in the code, and what bootstrap prepares.
+- **Why not must own:** it is mechanical. Know why the workload account will later need two
   bootstraps.
-- **Sources:** concepts [Regions](https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md),
-  [Environments](https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md),
-  [CDK bootstrap](https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md);
+- **Sources:** `docs/aws-concepts.md` "Regions", "Environments" and "CDK bootstrap";
   `infra/lib/config.ts`.
 
 ### 5. Tags and cost allocation
 
-- Tags are applied once at the app root, so every resource CDK can tag carries them. The budget
-  is an exception: CDK's tagging does not reach it, so it sets its tags by hand, and a test
-  checks they are there. A cost allocation tag must be activated in billing before cost reports
-  can split costs by it, and only once a resource carries it.
-- **Sources:** concept [Tags and cost allocation tags](https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md);
-  `infra/lib/tags.ts`, `infra/lib/budget-stack.ts`.
+- **Covers:** tagging once at the app root, the budget's exception to it, and why a cost
+  allocation tag needs activating.
+- **Sources:** `docs/aws-concepts.md` "Tags and cost allocation tags" and
+  "L1 and L2 constructs"; `infra/lib/tags.ts`; `infra/lib/budget-stack.ts`.
 
 ### 6. Testing infrastructure code
 
-- Jest assertions run against the synthesised template, with no AWS access. They check what a
-  stack would create, not that AWS will accept it.
+- **Covers:** what assertions against a synthesised template can and cannot prove.
 - **Sources:** `infra/README.md`; `infra/test/budget-stack.test.ts`.
 
 ### 7. Account IDs, ARNs and keeping them out of a public repo
 
-- What an ARN is made of; why an account ID is not a secret but is still kept out of the repo;
-  how `deploy.local.json` and `CDK_DEFAULT_ACCOUNT` mean one is never committed.
-- **Sources:** concept [Account ID and ARNs](https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md);
+- **Covers:** what an ARN is made of, why an account ID is not a secret but is still kept out,
+  and how the repo avoids ever committing one.
+- **Sources:** `docs/aws-concepts.md` "Account ID and ARNs";
   `infra/README.md` "Deploy-time values"; `infra/lib/config.ts`.
 
 ---
@@ -120,25 +94,21 @@ for full URLs).
 
 These are worth your time if they interest you. Skipping them leaves no gap.
 
-- **CDK versus Terraform.** Why CDK is primary and Terraform is reserved for deliberate labs.
-  `docs/aws-conventions.md` and the roadmap's decisions.
-- **Why the repo must never gain harmonica domain code.** The boundary between this repo and
-  the app. `docs/orientation.md`.
-- **The toolchain.** Pinned versions, `tsx`, `@swc/jest`, pnpm, the devcontainer.
+- **CDK versus Terraform.** `docs/aws-conventions.md`, and the roadmap's decisions.
+- **Why the repo must never gain harmonica domain code.** `docs/orientation.md`.
+- **The toolchain**: pinned versions, `tsx`, `@swc/jest`, pnpm, the devcontainer.
   `infra/README.md` and `docs/aws-conventions.md`.
-- **How the project is run with a coding agent.** The working agreements in `CLAUDE.md`.
+- **How the project is run with a coding agent.** `CLAUDE.md`.
 
 ---
 
 ## Not yet built, so not for study
 
-- **Step 3: the workload account, the `Workloads` OU and its SCPs.** Designed and coded, but
-  not merged or deployed. The Organization itself exists, with only the management account in
-  it. The concept entries for
-  [Organizations](https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md),
-  [Organizational Unit (OU)](https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md)
-  and [Service Control Policy (SCP)](https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md)
-  describe the plan for it. Read them as reading ahead; do not test me on them.
+- **Step 3: the workload account, the `Workloads` OU and its SCPs.** Coded on its branch, not
+  merged or deployed. The Organization itself exists, with only the management account in it.
+  The "Organizations", "Organizational Unit (OU)" and "Service Control Policy (SCP)" entries in
+  `docs/aws-concepts.md` describe the plan for it. Read them as reading ahead; do not test me on
+  them.
 - CloudTrail, Config and GuardDuty (step 4); DNS, ACM, S3 and CloudFront (steps 6–8); and
   everything in phases B–F. Some of these also have concept entries already, for the same
   reason.
