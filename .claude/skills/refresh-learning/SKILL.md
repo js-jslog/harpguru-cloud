@@ -32,11 +32,32 @@ before changing anything, so you keep their intent.
 4. **Check the links.** Every URL must point at a file that exists in the tree. For this repo,
    check the path with `git ls-files`. For the `harpguru` roadmap URLs, check the path in
    `/harpguru` after pulling. Report any that do not resolve.
-5. **Keep `agent-prompt.md` consistent** with any change in how sessions should run. Change it
-   only for a reason; the owner has it pasted elsewhere and will need to repaste.
-6. **Hand over.** Follow `CLAUDE.md`: branch `1-<slug>`, no attribution trailer, push and say
-   what the branch contains. Say which topics were added or changed and how they were tiered,
-   so the owner can argue with the tiering. State whether `agent-prompt.md` changed.
+5. **Keep `agent-prompt.md` consistent.** Its closing "URLs you may open" list must be the
+   README manifest's URLs plus the README's own, in the same strings, because the agent's fetch
+   tool may refuse a URL it has not seen written out in the owner's message. Regenerate it from
+   the manifest and diff the two. The list is the fallback entry, used if the README alone does
+   not work; the usual entry is the README's URL. Change the prompt beyond the list only for a
+   reason, and tell the owner when a changed prompt needs repasting.
+6. **Dry-run the session from the README.** The owner enters by giving the tutor only the
+   README's URL, so test that route as the tutor would, knowing nothing but what each file says.
+   - Open `docs/learning/README.md` and follow it. Then `agent-prompt.md` and the syllabus. Reach
+     every other file only through a URL in the README manifest, mapping a `master` URL to the
+     same path in the working tree. If a file you want is not in the manifest, that is a defect.
+   - Run the tutor's first steps: the freshness check, then pick one *must own* topic and
+     try to answer its "Be able to answer" questions from its listed sources alone. A question
+     you can only answer from your own knowledge of the repo means a source is missing or too
+     thin. For each concept entry the syllabus names, find its heading in `aws-concepts.md`.
+   - Fix what you find: add missing files to the manifest and the prompt's URL list, correct
+     headings, add the facts a topic needs.
+   - Once the branch is merged, repeat against the real URLs with a fetch tool, starting
+     from the README's raw URL alone. Note whether links reached only through a fetched page
+     are refused as unseen, and report it. Until it is merged, `master` serves the old content, so
+     say the live check has not been done.
+7. **Hand over.** Follow `CLAUDE.md`: branch `1-<slug>`, no attribution trailer, push and say
+   what the branch contains. Say what the dry run found and fixed, and whether the live check
+   was done. Say which topics were added or changed and how they were tiered, so the owner can
+   argue with the tiering. State whether `agent-prompt.md` changed, and so whether it needs
+   repasting.
 
 ## Rules
 
