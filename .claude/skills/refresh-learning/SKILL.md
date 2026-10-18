@@ -32,11 +32,14 @@ before changing anything, so you keep their intent.
 4. **Check the links.** Every URL must point at a file that exists in the tree. For this repo,
    check the path with `git ls-files`. For the `harpguru` roadmap URLs, check the path in
    `/harpguru` after pulling. Report any that do not resolve.
-5. **Keep `agent-prompt.md` consistent** with any change in how sessions should run. Change it
-   only for a reason; the owner has it pasted elsewhere and will need to repaste.
+5. **Keep `agent-prompt.md` consistent.** Its closing "URLs you may open" list must be the
+   README manifest's URLs plus the README's own, in the same strings, because the agent's fetch
+   tool may refuse a URL it has not seen written out in the owner's message. Regenerate it from
+   the manifest and diff the two. Beyond that list, change the prompt only for a reason, since
+   the owner has it pasted elsewhere. Whenever the list changes, the owner must repaste it.
 6. **Hand over.** Follow `CLAUDE.md`: branch `1-<slug>`, no attribution trailer, push and say
    what the branch contains. Say which topics were added or changed and how they were tiered,
-   so the owner can argue with the tiering. State whether `agent-prompt.md` changed.
+   so the owner can argue with the tiering. State whether `agent-prompt.md` changed, and so whether it needs repasting.
 
 ## Rules
 
