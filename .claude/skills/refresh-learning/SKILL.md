@@ -24,6 +24,18 @@ Facts the tutor's fetch tool imposes, which the README's design depends on:
   source in its first turn. Keep that instruction, and keep the sources small enough to fetch
   at once; they are about 120 KB.
 
+Facts about the sources:
+
+- **The `harpguru` sources are read from the findings branch, not `master`.** Findings are
+  committed to the branch `CLAUDE.md` names (currently `178-build-the-harp-face-widget`), so
+  that branch is ahead of `master`. Use that branch in the two `harpguru` URLs, and change it
+  when `CLAUDE.md` does.
+- **Every other source is written for the owner or the coding agent**, and contains
+  instructions and links that are not for the tutor. The README tells the tutor to read their
+  content only. Keep that, rather than editing those files for the tutor's sake.
+- **Sources are listed most important first**, so a tutor whose tool limits fetches per turn
+  still gets what matters.
+
 Read both files before changing anything, so you keep their intent.
 
 ## Steps
@@ -45,8 +57,11 @@ Read both files before changing anything, so you keep their intent.
    `master` URL and one line on what it is. Add new stacks and docs; remove deleted ones. Change
    the rest of the README only for a reason, and say so in the hand-over.
 4. **Check the links and names.** Every URL must point at a file that exists: check this repo's
-   paths with `git ls-files`, and the `harpguru` paths in `/harpguru` after pulling. Every
-   quoted heading in the syllabus must exist in the file it names. Report any that do not.
+   paths with `git ls-files`, and the `harpguru` paths on the findings branch in `/harpguru`
+   after fetching. Every quoted name in the syllabus must be a heading in the file it names; a
+   reference to something that is not a heading says where it sits, such as "Steps" (item 2).
+   Check that each named section actually answers the questions that cite it. Report any that
+   do not resolve.
 5. **Dry-run a session from the README**, as the tutor would, knowing nothing but what each
    file says.
    - Read the README and follow it: open every source it lists, mapping each URL to the same

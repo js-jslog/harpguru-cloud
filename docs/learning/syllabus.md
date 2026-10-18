@@ -9,7 +9,8 @@ everything after it are out of scope; see the last section.
 Each topic gives its tier and why, what I should be able to answer, and its sources. The
 sources hold the facts; this file deliberately does not restate them. Sources are named by
 path, as listed in the README's Sources section, and a quoted name is a heading inside that
-file. The tiers are defined in the README, and the tiering here is a proposal, to be argued with.
+file. Some concept entries describe step 3 as if it were done, for example in their "Say it"
+lines; check them against the status table before teaching them as fact. The tiers are defined in the README, and the tiering here is a proposal, to be argued with.
 
 ---
 
@@ -20,13 +21,15 @@ file. The tiers are defined in the README, and the tiering here is a proposal, t
 - **Covers:** who I am when I call AWS, and why no long-lived credentials exist anywhere.
 - **Why must own:** it is a security property I chose, and long-lived access keys are the most
   common way AWS credentials leak.
-- **Be able to answer:** why short-lived credentials are safer than access keys; what a
+- **Be able to answer:** what the root user is for here, and how it is protected; why
+  short-lived credentials are safer than access keys; what a
   permission set is, and what it turns into inside an account; why the three-field sign-in page
   can never work for my Identity Center user, and which page does; what
   `aws sso login --use-device-code` does, and why the device-code flow is needed in this
   container.
 - **Sources:** `docs/aws-concepts.md` "Root user", "IAM users" and "IAM Identity Center";
-  `docs/aws-conventions.md` "First-run setup"; `aws-pathway-findings.md` "AWS account state".
+  `docs/aws-conventions.md` "First-run setup"; `roadmap-planning/aws-pathway-findings.md`
+  "AWS account state".
 
 ### 2. How CDK becomes AWS resources
 
@@ -48,13 +51,13 @@ file. The tiers are defined in the README, and the tiering here is a proposal, t
   alongside it.
 - **Why must own:** it is the one control between a mistake and a bill, and it only works if I
   understand what it cannot do.
-- **Be able to answer:** why the alarm was deployed before anything else; why a budget is not a
+- **Be able to answer:** why the budget was this project's first deploy; why a budget is not a
   cap, and why its alerts lag; why one budget in the management account covers the whole
   Organization; why credits and refunds are excluded; why the console-made zero-spend budget
   was deleted rather than kept; what anomaly detection catches that a budget does not.
 - **Sources:** `docs/aws-concepts.md` "Budgets" and "Cost Anomaly Detection";
-  `docs/orientation.md` "Where the money leaks"; `docs/plans/phase-a.md` step 2 and
-  "Decisions"; `infra/lib/budget-stack.ts`.
+  `docs/orientation.md` "Locked decisions you are most likely to trip over";
+  `docs/plans/phase-a.md` "Steps" (item 2) and "Decisions"; `infra/lib/budget-stack.ts`.
 
 ---
 
@@ -94,10 +97,11 @@ file. The tiers are defined in the README, and the tiering here is a proposal, t
 
 These are worth your time if they interest you. Skipping them leaves no gap.
 
-- **CDK versus Terraform.** `docs/aws-conventions.md`, and the roadmap's decisions.
+- **CDK versus Terraform.** `docs/aws-conventions.md`, and `roadmap-planning/roadmap.md`
+  "Locked decisions".
 - **Why the repo must never gain harmonica domain code.** `docs/orientation.md`.
-- **The toolchain**: pinned versions, `tsx`, `@swc/jest`, pnpm, the devcontainer.
-  `infra/README.md` and `docs/aws-conventions.md`.
+- **The toolchain**: the pinned CDK CLI, `tsx`, Jest, pnpm, the devcontainer.
+  `infra/README.md`, `docs/plans/phase-a.md` "Steps" (item 1) and `docs/aws-conventions.md`.
 - **How the project is run with a coding agent.** `CLAUDE.md`.
 
 ---
