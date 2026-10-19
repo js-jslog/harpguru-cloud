@@ -24,8 +24,8 @@ Facts the tutor's fetch tool imposes, which the README's design depends on:
   source in its first turn, before it writes anything. A tutor on 2026-10-19 still replied
   first, asking which topic to start on, so the instruction and the list now open the README,
   ahead of everything else. Keep them there, keep the count in the heading ("all 14 sources")
-  equal to the list's length, and keep the first step of "How a session runs" as the fetch. Keep that instruction, and keep the sources small enough to fetch
-  at once; they are about 120 KB.
+  equal to the list's length, and keep the first step of "How a session runs" as the fetch.
+  Keep the sources small enough to fetch at once; they are about 120 KB.
 
 Facts about the sources:
 
@@ -57,9 +57,16 @@ Read both files before changing anything, so you keep their intent.
    - Move anything now on `master` out of "Not yet built".
    - Update the "As of" date and what is deployed versus only merged. Any state claimed for a
      step must match its row in the status table on `master`; fix whichever is wrong.
-3. **Update the README's source list.** Every path the syllabus names must be listed, with its raw
-   `master` URL and one line on what it is. Add new stacks and docs; remove deleted ones. Change
-   the rest of the README only for a reason, and say so in the hand-over.
+3. **Update the README's source list.** It is the only place the tutor gets URLs from, so it
+   must match the syllabus exactly: no more, no less.
+   - **Add** every path the syllabus names that is missing, with its full raw URL (on `master`,
+     or on the findings branch for `harpguru` files) and one line on what it is. Place it by
+     importance: sources for *must own* topics above those only cited by lower tiers.
+   - **Remove** every entry the syllabus no longer names, not only files that were deleted.
+     The list is fetched in full every session, so an unused entry costs every session.
+   - **Update** the count in the opening heading to the list's new length, and the size figure
+     if the total has moved by more than about 10 KB.
+   - Change the rest of the README only for a reason, and say so in the hand-over.
 4. **Check the links and names.** Every URL must point at a file that exists: check this repo's
    paths with `git ls-files`, and the `harpguru` paths on the findings branch in `/harpguru`
    after fetching. Every quoted name in the syllabus must be a heading in the file it names; a
