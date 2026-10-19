@@ -21,7 +21,10 @@ Facts the tutor's fetch tool imposes, which the README's design depends on:
   so a section is named by its heading, exactly as written.
 - A URL is accepted only in the turn it was seen, in the owner's message or a page fetched
   that turn (found 2026-10-18, Claude mobile). So the README tells the tutor to fetch every
-  source in its first turn. Keep that instruction, and keep the sources small enough to fetch
+  source in its first turn, before it writes anything. A tutor on 2026-10-19 still replied
+  first, asking which topic to start on, so the instruction and the list now open the README,
+  ahead of everything else. Keep them there, keep the count in the heading ("all 14 sources")
+  equal to the list's length, and keep the first step of "How a session runs" as the fetch. Keep that instruction, and keep the sources small enough to fetch
   at once; they are about 120 KB.
 
 Facts about the sources:
@@ -54,7 +57,7 @@ Read both files before changing anything, so you keep their intent.
    - Move anything now on `master` out of "Not yet built".
    - Update the "As of" date and what is deployed versus only merged. Any state claimed for a
      step must match its row in the status table on `master`; fix whichever is wrong.
-3. **Update the README's Sources.** Every path the syllabus names must be listed, with its raw
+3. **Update the README's source list.** Every path the syllabus names must be listed, with its raw
    `master` URL and one line on what it is. Add new stacks and docs; remove deleted ones. Change
    the rest of the README only for a reason, and say so in the hand-over.
 4. **Check the links and names.** Every URL must point at a file that exists: check this repo's
