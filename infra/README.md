@@ -19,14 +19,16 @@ cdk deploy <stack> # the user runs this, after reading the diff
 ## Deploy-time values
 
 Some stacks need values that are fine to know but shouldn't be published, because this
-repo is public: email addresses, for now. They live in `deploy.local.json` beside
-`cdk.json`, which is gitignored:
+repo is public: email addresses, and the Organization and Identity Center identifiers. They
+live in `deploy.local.json` beside `cdk.json`, which is gitignored:
 
 ```
 cp deploy.local.example.json deploy.local.json   # then fill it in
+scripts/identity-center-values.sh                # prints the identifier values
 ```
 
-A stack that needs a value it can't find fails at synth time and names the missing key.
+Every stack is built on every `cdk` command, so the whole app fails at synth time if any value
+is missing, naming the key, even when you only asked about one stack.
 The file lives in the `/app` workspace volume, so it survives image rebuilds, but not
 `runcontainer.ps1 destructive` or `purge`.
 
@@ -35,10 +37,13 @@ through `CDK_DEFAULT_ACCOUNT`, which the CLI fills in from the SSO login.
 
 ## Layout
 
-| Path                  | Holds                                                               |
-| --------------------- | ------------------------------------------------------------------- |
-| `bin/harpguru.ts`     | the app: creates each stack and applies the project tags            |
-| `lib/config.ts`       | regions, the deploy-time values, the management account environment |
-| `lib/tags.ts`         | the tags every resource carries                                     |
-| `lib/budget-stack.ts` | `HarpguruBudget`: the $10 monthly budget, in the management account |
-| `test/`               | one test file per module or stack                                   |
+| Path                      | Holds                                                                     |
+| ------------------------- | ------------------------------------------------------------------------- |
+| `bin/harpguru.ts`         | the app: creates each stack and applies the project tags                  |
+| `lib/config.ts`           | regions, the deploy-time values, the management account environment       |
+| `lib/tags.ts`             | the tags every resource carries                                           |
+| `lib/budget-stack.ts`     | `HarpguruBudget`: the $10 monthly budget, in the management account       |
+| `lib/guardrails-stack.ts` | `HarpguruGuardrails`: the `Workloads` OU and its SCPs                     |
+| `lib/accounts-stack.ts`   | `HarpguruAccounts`: the `harpguru` account and its Identity Center access |
+| `scripts/`                | read-only helpers, such as printing values for `deploy.local.json`        |
+| `test/`                   | one test file per module or stack                                         |
