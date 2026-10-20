@@ -109,8 +109,9 @@ in the README, and the tiering here is a proposal, to be argued with.
   it.
 - **Be able to answer:** why merging the step 3 code changes nothing in AWS, and the one thing
   it does change locally; what makes creating
-  an account hard to undo, including the 90 days and the 10-account limit; why the account's
-  name and email cannot be changed through CloudFormation afterwards; why renaming the
+  an account hard to undo, including the 90 days and the account quota; why the account's
+  name and email cannot be changed through CloudFormation afterwards, and how they still could
+  be; why renaming the
   account's construct in the code would try to create a second account, and what in the repo
   guards against it; what `Retain` and termination protection each protect against.
 - **Sources:** `docs/plans/phase-a.md` "Steps" (item 3) and "Decisions";

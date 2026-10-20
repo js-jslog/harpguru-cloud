@@ -30,10 +30,10 @@ Update this table in the PR that moves a row. **You** means the user.
 
 ## Accounts
 
-- **Management account**, which already exists. It holds the Organization, IAM Identity
-  Center (an organization instance in `eu-west-2`), billing and budgets, and the org trail.
-  It is not where workloads run. SCPs never apply to the management account, which is the
-  main reason to keep workloads out of it.
+- **Management account**, which already exists. It holds the Organization, IAM Identity Center
+  (an organization instance in `eu-west-2`), billing and budgets, and, from step 4, the org
+  trail. It is not where workloads run. SCPs never apply to the management account, which is
+  the main reason to keep workloads out of it.
 - **Workload account `harpguru`**, created in #3 inside a `Workloads` OU. Everything that
   serves harpguru.com lives here.
 
@@ -65,7 +65,8 @@ termination protection.
   the user's address. The account is `RETAIN`, so tearing down a stack can never close it.
   The OU's ID arrives as a cross-stack import, which also makes the guardrails deploy first.
   The account is therefore governed from the moment it exists.
-- Values kept out of the repo go in `infra/deploy.local.json`: the account email, the root
+- Values kept out of the repo (a provisional decision; see Decisions) go in
+  `infra/deploy.local.json`: the account email, the root
   ID, and the Identity Center instance, permission set and user IDs.
   `infra/scripts/identity-center-values.sh` prints the last four.
 
@@ -149,15 +150,16 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
   Functions are kept for request-dependent logic, such as the `www` redirect. The roadmap is
   updated to match.
 - 2026-10-14, **provisional**: SCPs are enabled on the root with a one-off CLI command rather
-  than a custom resource. Deleting a custom resource would disable SCPs across the
-  Organization.
+  than a custom resource. The trade is one manual command, run once, against a Lambda and a
+  role in the management account. A custom resource's delete would disable SCPs across the
+  Organization unless designed not to; see "Custom resources" in `docs/aws-concepts.md`.
 - 2026-10-14, **provisional**: the CloudTrail/Config protection SCP moves from #3 to #4, so
   its exemption is designed alongside the Config deployment it has to allow.
 - 2026-10-14, **provisional**: the Identity Center and root identifiers live in
   `deploy.local.json`, not the repo. Keeping them out can be undone later; committing them
   can't, because the repo is public.
 - 2026-10-14, **provisional**: centralised root access is deferred to a small step of its own.
-  The SCP already blocks the root user, and the feature changes two Organization-wide
+  The SCP already blocks the root user, and the feature changes three Organization-wide
   settings.
 - 2026-10-14: #3 is two stacks, `HarpguruGuardrails` then `HarpguruAccounts`, so the account
   is created inside an already-governed OU, and changes to SCPs never share a diff with the account.

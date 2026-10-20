@@ -158,8 +158,11 @@ management account keeps only billing, identity and audit, and runs no workloads
 **Creating an account is the hard-to-undo step:** closing one takes a 90-day post-closure
 period, during which it still counts against the Organization's account quota (10 by default).
 Its name and email can't be changed through CloudFormation afterwards: AWS's resource docs say
-an update fails, rollback included, and only the account's own root user can change them,
-from the console. *(PR `1-org-accounts`)*
+such an update fails, and so does its rollback. They can still be changed outside the stack:
+the management account can rename a member account and start an email change with the
+Account Management API (`aws account put-account-name` and `start-primary-email-update`),
+once that API's trusted access is switched on. The stack's template then no longer matches the
+account, so the plan is to get both right first time. *(PR `1-org-accounts`)*
 
 **Say it:** "Workloads go in member accounts. That limits how much damage one mistake can do,
 and it's the only way SCPs can apply to them."
