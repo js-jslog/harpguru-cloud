@@ -21,7 +21,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | 0 | *you*: `aws configure sso`, profile renamed to `[default]` | **done** 2026-09-26 | — |
 | 1 | `1-cdk-app`: CDK skeleton | **merged** 2026-10-13 | — |
 | 2 | `1-budget`: $10 budget | **merged** and deployed 2026-10-13; zero-spend budget deleted | — |
-| 3 | `1-org-accounts`: workload account, OU, SCPs | merged; not deployed | *you*: the deploy steps in #3 below |
+| 3 | `1-org-accounts`: workload account, OU, SCPs | merged; not deployed | *you*: settle the four provisional decisions, then the deploy steps in #3 below |
 | 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | not started | #3 |
 | 5 | *you*: bootstrap the workload account | not started | #3 |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | not started | #5 |
@@ -140,16 +140,34 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
 - 2026-09-26: `My Zero-Spend Budget` is deleted once the $10 budget is live.
 - 2026-09-26: the workload account is named `harpguru` and uses the `+harpguru` email alias.
 - 2026-09-26: mail is live, so the DNS move in #6 must carry the `MX` and `mail` records.
-- 2026-10-14: SCPs are enabled on the root with a one-off CLI command rather than a custom
-  resource. Deleting a custom resource would disable SCPs across the Organization.
-- 2026-10-14: the CloudTrail/Config protection SCP moves from #3 to #4, so its exemption is
-  designed alongside the Config deployment it has to allow.
-- 2026-10-14: the Identity Center and root identifiers live in `deploy.local.json`, not the
-  repo. Keeping them out can be undone later; committing them can't, because the repo is public.
-- 2026-10-14: centralised root access is deferred to a small step of its own. The SCP already
-  blocks the root user, and the feature changes two Organization-wide settings.
+- 2026-10-14, **provisional**: SCPs are enabled on the root with a one-off CLI command rather
+  than a custom resource. Deleting a custom resource would disable SCPs across the
+  Organization.
+- 2026-10-14, **provisional**: the CloudTrail/Config protection SCP moves from #3 to #4, so
+  its exemption is designed alongside the Config deployment it has to allow.
+- 2026-10-14, **provisional**: the Identity Center and root identifiers live in
+  `deploy.local.json`, not the repo. Keeping them out can be undone later; committing them
+  can't, because the repo is public.
+- 2026-10-14, **provisional**: centralised root access is deferred to a small step of its own.
+  The SCP already blocks the root user, and the feature changes two Organization-wide
+  settings.
 - 2026-10-14: #3 is two stacks, `HarpguruGuardrails` then `HarpguruAccounts`, so the account
   is created inside an already-governed OU, and changes to SCPs never share a diff with the account.
+- 2026-10-14: **the four provisional decisions above were accepted by the user before they had
+  studied them**, on the basis that each is easy to change, and are to be confirmed or changed
+  once they have. None is deployed until #3 is. Changing each later:
+  - SCP enablement: `aws organizations disable-policy-type` reverses it, but detaches every SCP
+    in the Organization as it does. Moving to a custom resource later is new code, nothing more.
+  - The CloudTrail/Config SCP: it is one more policy on `Workloads`, so it can go into #3 or #4
+    at any time.
+  - The identifiers: they can be committed at any time; once committed, the public history
+    keeps them for good, which is why the reversible choice was taken first.
+  - Centralised root access: it can be switched on at any time, and it covers accounts that
+    already exist.
+
+  What is hard to undo is the account itself, created by the first
+  `cdk deploy HarpguruAccounts`: see #3, and the "Organizations" entry in
+  `docs/aws-concepts.md`.
 - 2026-09-26: security headers use a **response headers policy**, not CloudFront Functions.
   Functions are kept for request-dependent logic, such as the `www` redirect. The roadmap is
   updated to match.

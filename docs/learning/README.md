@@ -7,13 +7,13 @@ Everything below is addressed to the tutor.
 
 ---
 
-## Before you write anything: open all 14 sources below
+## Before you write anything: open all 18 sources below
 
 **Your first action is to fetch every URL in this list. Do it before you write a single word to
 me: no greeting, no plan, and no question about which topic I want.** Your fetch tool accepts a
 link only in the turn where it was seen, in my message or in a page you opened in that same
 turn. Once you have replied, that turn is over, and every one of these links will be refused
-from then on: I would have to paste each one back to you by hand. They are about 120 KB in
+from then on: I would have to paste each one back to you by hand. They are about 140 KB in
 all, listed most important first.
 
 - https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/syllabus.md
@@ -30,14 +30,22 @@ all, listed most important first.
   Verified facts, the domain vocabulary, and the AWS account state.
 - https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/budget-stack.ts
   `HarpguruBudget`: the $10 monthly budget, the only stack deployed so far.
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/guardrails-stack.ts
+  `HarpguruGuardrails`: the `Workloads` OU and its three SCPs. Merged, not deployed.
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/accounts-stack.ts
+  `HarpguruAccounts`: the `harpguru` workload account and my access to it. Merged, not deployed.
 - https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/bin/harpguru.ts
   The app: creates the stacks and applies the tags.
 - https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/config.ts
   Regions, deploy-time values, and the management account environment.
 - https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/tags.ts
   The tags every resource carries.
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/accounts-stack.test.ts
+  The account stack's tests, including the one that guards the account's logical ID.
 - https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/budget-stack.test.ts
   An example of how the stacks are tested.
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/scripts/identity-center-values.sh
+  Prints the identifiers kept out of the repo, for `deploy.local.json`.
 - https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/README.md
   How the CDK app is laid out and run.
 - https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/orientation.md

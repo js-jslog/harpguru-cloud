@@ -23,9 +23,9 @@ Facts the tutor's fetch tool imposes, which the README's design depends on:
   that turn (found 2026-10-18, Claude mobile). So the README tells the tutor to fetch every
   source in its first turn, before it writes anything. A tutor on 2026-10-19 still replied
   first, asking which topic to start on, so the instruction and the list now open the README,
-  ahead of everything else. Keep them there, keep the count in the heading ("all 14 sources")
+  ahead of everything else. Keep them there, keep the count in the heading ("all N sources")
   equal to the list's length, and keep the first step of "How a session runs" as the fetch.
-  Keep the sources small enough to fetch at once; they are about 120 KB.
+  Keep the sources small enough to fetch at once; they are about 140 KB.
 
 Facts about the sources:
 
