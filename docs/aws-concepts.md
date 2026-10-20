@@ -25,7 +25,7 @@ the account ID, it fetches it with `aws sts get-caller-identity`.
 [CloudFormation and CDK](#cloudformation-and-cdk) ·
 [Change sets, stack events and logical IDs](#change-sets-stack-events-and-logical-ids) ·
 [Apps, stacks and constructs](#apps-stacks-and-constructs) ·
-[L1 and L2 constructs](#l1-and-l2-constructs) ·
+[L1 and L2 constructs](#l1-and-l2-constructs) · [Custom resources](#custom-resources) ·
 [Deletion policy and termination protection](#deletion-policy-and-termination-protection) ·
 [Cross-stack references](#cross-stack-references) ·
 [Environments](#environments) · [CDK bootstrap](#cdk-bootstrap) ·
@@ -80,9 +80,14 @@ account. It can't be restricted by IAM.
 Identity Center instead. An account created through Organizations, like `harpguru`, starts
 with a root user that has no password, although one can be set through "forgot password"
 on its email address. So the `harpguru-deny-root` SCP denies the root user every action in
-the workload account. AWS's newer **centralised root access** goes further and removes
-member accounts' root credentials altogether; it's deferred to a later step of its own.
-*(PR `1-org-accounts`)*
+the workload account, once step 3 is deployed. AWS's newer **centralised root access** goes
+further. It takes three settings in the management account: trusted access for IAM in
+Organizations, then **root credentials management**, which lets the management account
+delete member accounts' root credentials, and **privileged root actions**, which lets it do
+the few tasks that need root without anyone signing in as root. With it on, new member accounts
+are created with no root credentials and can't recover them. It is deferred to a step of its
+own, a provisional decision in the Phase A plan; switched on after `harpguru` exists, it can
+still delete that account's credentials. *(PR `1-org-accounts`)*
 
 **Say it:** "Root has MFA and isn't used day to day; member accounts have their root user
 blocked by an SCP."
@@ -116,8 +121,8 @@ credentials for that role.
 `AdministratorAccess` permission set and its assignment to the management account were made
 in the console. Its assignment to the workload account is code: an
 `AWS::SSO::Assignment` in `HarpguruAccounts`, which also creates the
-`AWSReservedSSO_AdministratorAccess_*` role in the new account. There is still one login,
-now covering two accounts. *(PR `1-org-accounts`)*
+`AWSReservedSSO_AdministratorAccess_*` role in the new account. Once step 3 is deployed, there
+is still one login, covering two accounts. *(PR `1-org-accounts`)*
 
 **Say it:** "People never have credentials in an account. They sign in once and assume a
 role, and the credentials expire in hours."
@@ -151,8 +156,10 @@ unless they are deliberately allowed to.
 account. Step 3 adds a `harpguru` workload account in the `HarpguruAccounts` stack. The
 management account keeps only billing, identity and audit, and runs no workloads.
 **Creating an account is the hard-to-undo step:** closing one takes a 90-day post-closure
-period, during which it still counts against the Organization's 10-account limit. Its name
-and email can't be changed through CloudFormation afterwards. *(PR `1-org-accounts`)*
+period, during which it still counts against the Organization's account quota (10 by default).
+Its name and email can't be changed through CloudFormation afterwards: AWS's resource docs say
+an update fails, rollback included, and only the account's own root user can change them,
+from the console. *(PR `1-org-accounts`)*
 
 **Say it:** "Workloads go in member accounts. That limits how much damage one mistake can do,
 and it's the only way SCPs can apply to them."
@@ -185,14 +192,18 @@ management account.
 CloudFormation resource does it. Switching them on also attaches AWS's `FullAWSAccess` policy
 everywhere, because every target needs at least one SCP; the deny policies then cut
 holes in it. `HarpguruGuardrails` attaches three to `Workloads`, each a separate policy so
-each is readable on its own (the limit is 10 per target):
-- `harpguru-region-lock` denies actions outside `eu-west-2` and `us-east-1`, exempting the
-  global services AWS's own example exempts
+each is readable on its own (the limit is 10 per target, checked against AWS's quotas page on
+2026-10-14; it was once 5):
+- `harpguru-region-lock` denies actions outside `eu-west-2` and `us-east-1`, exempting the five
+  global services in the IAM guide's example (CloudFront, IAM, Organizations, Route 53 and
+  Support). The Organizations guide's version exempts far more. Most global services are
+  served from `us-east-1`, which is allowed anyway, so the list is a safety margin
 - `harpguru-deny-root` denies the root user
 - `harpguru-deny-leave-org` denies leaving the organisation
 
 Denying anyone from turning off CloudTrail or Config comes in step 4, alongside the services it
-protects. *(PR `1-org-accounts`)*
+protects, a provisional decision in the Phase A plan. Switching SCPs on by CLI rather than as
+code is another; see [Custom resources](#custom-resources). *(PR `1-org-accounts`)*
 
 **Say it:** "An action is only allowed if IAM allows it and no SCP denies it. An explicit deny
 anywhere wins."
@@ -350,6 +361,27 @@ CloudFormation resource with types, and I lose the defaults and the tagging."
 **See it:** `cd infra && cdk synth HarpguruBudget`. The properties in the template have the
 same shape as the `CfnBudget` props in `lib/budget-stack.ts`, which is what makes it L1.
 
+#### Custom resources
+
+**What:** a way to make CloudFormation do something it has no resource type for. You supply
+code, usually a Lambda function, that CloudFormation calls on create, update and delete. CDK's
+`AwsCustomResource` builds one that makes a single AWS API call, with the Lambda and its IAM
+role generated for you.
+
+**Here:** none are used. One was the alternative to switching SCPs on by hand: a custom
+resource calling `EnablePolicyType` on create. The case for it is that everything is code, with
+no manual step to forget. The case against, and the provisional decision, is that a delete
+calling `DisablePolicyType` would detach every SCP in the Organization, and that it adds a Lambda
+and a role to the management account for a call made once. The delete risk can be designed out
+with a `Retain` policy or a delete that does nothing, so the real trade is one manual command
+against two extra resources. *(PR `1-org-accounts`)*
+
+**Say it:** "When CloudFormation has no resource for something, a custom resource runs code
+for it; I weigh that against a one-off command when the thing only ever happens once."
+
+**See it:** nothing to see yet. `aws organizations list-roots --query 'Roots[0].PolicyTypes'`
+shows the policy type it would have switched on, once it is switched on by hand.
+
 #### Deletion policy and termination protection
 
 **What:** two different safety catches.
@@ -371,7 +403,7 @@ stack from a careless delete. Anything stateful or irreplaceable gets both."
 
 **See it:**
 `aws cloudformation describe-stacks --query 'Stacks[].[StackName,EnableTerminationProtection]' --output table`.
-Only the step 3 stacks show `True`.
+Once step 3 is deployed, only its two stacks show `True`.
 
 #### Cross-stack references
 

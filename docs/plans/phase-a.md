@@ -56,7 +56,7 @@ Cost Anomaly Detection already runs with its default monitor, so it is not rebui
 termination protection.
 - **`HarpguruGuardrails`**: a `Workloads` OU under the root, with three SCPs attached:
   - `harpguru-region-lock`: deny actions outside `eu-west-2` and `us-east-1`, exempting
-    the global services in AWS's own example
+    the five global services in the IAM guide's example
   - `harpguru-deny-root`: deny the root user
   - `harpguru-deny-leave-org`: deny leaving the Organization
 - **`HarpguruAccounts`**: the `harpguru` account, created inside `Workloads`, and an
@@ -77,17 +77,22 @@ Deploying it, all *you*:
    alongside the real `workloadAccountEmail`.
 3. `cdk diff` then `cdk deploy HarpguruGuardrails`.
 4. `cdk diff` then `cdk deploy HarpguruAccounts`. **This is the point of no return.** Account
-   creation takes a few minutes, and closing an account afterwards takes 90 days.
+   creation takes a few minutes. A closed account spends 90 days in a post-closure period,
+   still counting against the account quota.
 5. Add a `[profile harpguru]` to `~/.aws/config` using the `WorkloadAccountId` output, and
    check that both the portal and `aws sts get-caller-identity --profile harpguru` reach the
    new account.
 
 **4 · `1-org-audit`.**
 - An organisation CloudTrail trail to S3.
-- An SCP denying anyone from turning off CloudTrail or Config in `Workloads`, moved here from #3.
-  The trail lives in the management account, where SCPs never apply, and a member
-  account can't alter an org trail anyway. Config's exemption depends on how this step
-  deploys it.
+- An SCP denying anyone from turning off CloudTrail or Config in `Workloads`, moved here from #3
+  (provisional; see Decisions).
+  - **Config:** the recorder will run in the workload account, and whatever role deploys and
+    updates it must be allowed to stop or change it. So the SCP needs an exemption naming that
+    role, and the role is not known until this step designs the Config deployment.
+  - **CloudTrail:** the org trail lives in the management account, where SCPs never apply, and
+    a member account can't alter an org trail anyway. The CloudTrail half would only protect a
+    trail made inside the workload account, and none is planned; this step may drop it.
 - Config limited to the two regions, with periodic rather than continuous recording. Config
   charges for each change it records, so it is the item most likely to creep.
 - GuardDuty, which is free for 30 days and then pennies at this volume.
@@ -140,6 +145,9 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
 - 2026-09-26: `My Zero-Spend Budget` is deleted once the $10 budget is live.
 - 2026-09-26: the workload account is named `harpguru` and uses the `+harpguru` email alias.
 - 2026-09-26: mail is live, so the DNS move in #6 must carry the `MX` and `mail` records.
+- 2026-09-26: security headers use a **response headers policy**, not CloudFront Functions.
+  Functions are kept for request-dependent logic, such as the `www` redirect. The roadmap is
+  updated to match.
 - 2026-10-14, **provisional**: SCPs are enabled on the root with a one-off CLI command rather
   than a custom resource. Deleting a custom resource would disable SCPs across the
   Organization.
@@ -155,19 +163,21 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
   is created inside an already-governed OU, and changes to SCPs never share a diff with the account.
 - 2026-10-14: **the four provisional decisions above were accepted by the user before they had
   studied them**, on the basis that each is easy to change, and are to be confirmed or changed
-  once they have. None is deployed until #3 is. Changing each later:
+  once they have. Changing each later:
   - SCP enablement: `aws organizations disable-policy-type` reverses it, but detaches every SCP
     in the Organization as it does. Moving to a custom resource later is new code, nothing more.
+    The strongest case for that alternative, and why its delete risk can be designed out, is in
+    the "Custom resources" entry in `docs/aws-concepts.md`.
   - The CloudTrail/Config SCP: it is one more policy on `Workloads`, so it can go into #3 or #4
     at any time.
   - The identifiers: they can be committed at any time; once committed, the public history
     keeps them for good, which is why the reversible choice was taken first.
-  - Centralised root access: it can be switched on at any time, and it covers accounts that
-    already exist.
+  - Centralised root access: it can be switched on at any time, and its root credentials
+    management can then delete the root credentials of accounts that already exist. Switched on
+    before #3's deploy, `harpguru` would be created with none at all. The settings involved are
+    in the "Root user" entry in `docs/aws-concepts.md`.
 
-  What is hard to undo is the account itself, created by the first
-  `cdk deploy HarpguruAccounts`: see #3, and the "Organizations" entry in
-  `docs/aws-concepts.md`.
-- 2026-09-26: security headers use a **response headers policy**, not CloudFront Functions.
-  Functions are kept for request-dependent logic, such as the `www` redirect. The roadmap is
-  updated to match.
+  Merging #3 deploys nothing, but it does make every `cdk` command, even one for
+  `HarpguruBudget`, need all of #3's values in `deploy.local.json`. What is hard to undo is
+  the account itself, created by the first `cdk deploy HarpguruAccounts`: see #3, and the
+  "Organizations" entry in `docs/aws-concepts.md`.

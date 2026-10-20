@@ -35,7 +35,7 @@ in the README, and the tiering here is a proposal, to be argued with.
   container.
 - **Sources:** `docs/aws-concepts.md` "Root user", "IAM users" and "IAM Identity Center";
   `docs/aws-conventions.md` "First-run setup"; `roadmap-planning/aws-pathway-findings.md`
-  "AWS account state".
+  "AWS account state, checked 2026-09-26".
 
 ### 2. How CDK becomes AWS resources
 
@@ -77,8 +77,9 @@ in the README, and the tiering here is a proposal, to be argued with.
   some services; what happens to the new account's root user; why the account is created
   inside an OU that is already governed.
 - **Sources:** `docs/aws-concepts.md` "Organizations", "Organizational Unit (OU)",
-  "Service Control Policy (SCP)" and "Root user"; `docs/plans/phase-a.md` "Accounts" and
-  "Steps" (item 3); `infra/lib/guardrails-stack.ts`.
+  "Service Control Policy (SCP)", "Root user" and "Account ID and ARNs";
+  `docs/plans/phase-a.md` "Accounts" and "Steps" (item 3); `infra/lib/guardrails-stack.ts`;
+  `infra/test/guardrails-stack.test.ts`.
 
 ### 5. The four provisional decisions, which are mine to settle
 
@@ -96,7 +97,8 @@ in the README, and the tiering here is a proposal, to be argued with.
   whether I now agree, and why.
 - **Sources:** `docs/plans/phase-a.md` "Decisions" (the entries marked provisional, and the
   note after them) and "Steps" (items 3 and 4); `docs/aws-concepts.md`
-  "Service Control Policy (SCP)", "Root user" and "CloudTrail"; `infra/README.md`
+  "Service Control Policy (SCP)", "Custom resources", "Root user", "CloudTrail" and "Config";
+  `infra/README.md`
   "Deploy-time values"; `infra/scripts/identity-center-values.sh`.
 
 ### 6. The point of no return
@@ -105,7 +107,8 @@ in the README, and the tiering here is a proposal, to be argued with.
   `cdk deploy HarpguruAccounts` cannot, and what protects the account once it exists.
 - **Why must own:** it is the one irreversible step in Phase A so far, and I am the one who runs
   it.
-- **Be able to answer:** why merging the step 3 code commits me to nothing; what makes creating
+- **Be able to answer:** why merging the step 3 code changes nothing in AWS, and the one thing
+  it does change locally; what makes creating
   an account hard to undo, including the 90 days and the 10-account limit; why the account's
   name and email cannot be changed through CloudFormation afterwards; why renaming the
   account's construct in the code would try to create a second account, and what in the repo
@@ -113,7 +116,7 @@ in the README, and the tiering here is a proposal, to be argued with.
 - **Sources:** `docs/plans/phase-a.md` "Steps" (item 3) and "Decisions";
   `docs/aws-concepts.md` "Organizations", "Change sets, stack events and logical IDs" and
   "Deletion policy and termination protection"; `infra/lib/accounts-stack.ts`;
-  `infra/test/accounts-stack.test.ts`.
+  `infra/test/accounts-stack.test.ts`; `infra/README.md` "Deploy-time values".
 
 ---
 
@@ -140,7 +143,7 @@ in the README, and the tiering here is a proposal, to be argued with.
 - **Covers:** what assertions against a synthesised template can and cannot prove, including a
   test that exists to stop an expensive mistake rather than to check behaviour.
 - **Sources:** `infra/README.md`; `infra/test/budget-stack.test.ts`;
-  `infra/test/accounts-stack.test.ts`.
+  `infra/test/accounts-stack.test.ts`; `infra/test/guardrails-stack.test.ts`.
 
 ### 10. Account IDs, ARNs and keeping them out of a public repo
 

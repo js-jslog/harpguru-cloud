@@ -27,7 +27,8 @@ cp deploy.local.example.json deploy.local.json   # then fill it in
 scripts/identity-center-values.sh                # prints the identifier values
 ```
 
-A stack that needs a value it can't find fails at synth time and names the missing key.
+Every stack is built on every `cdk` command, so the whole app fails at synth time if any value
+is missing, naming the key, even when you only asked about one stack.
 The file lives in the `/app` workspace volume, so it survives image rebuilds, but not
 `runcontainer.ps1 destructive` or `purge`.
 
