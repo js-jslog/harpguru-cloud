@@ -116,6 +116,18 @@ role, and the credentials expire in hours."
 `aws iam list-roles --query "Roles[?starts_with(RoleName,'AWSReservedSSO')].RoleName"`
 lists the role your permission set became.
 
+**How long things last.** There are two lifetimes. The role credentials last as long as the
+permission set's session duration, which for `AdministratorAccess` is one hour; the CLI
+renews them silently while you are signed in. Being signed in is the second lifetime: the
+token `aws sso login` caches, which lasts for Identity Center's session duration (AWS's
+default is 8 hours; this instance's setting hasn't been checked). When it runs out, every
+command fails with "Token has expired and refresh failed", and the fix is to sign in again.
+`jq -r 'select(.startUrl) | .expiresAt' ~/.aws/sso/cache/*.json` shows when the token
+expires, and works even when signed out. Print only that field: the same files hold the token
+itself.
+`aws sso-admin describe-permission-set --instance-arn <arn> --permission-set-arn <arn> --query PermissionSet.SessionDuration`
+shows the role lifetime, as an ISO 8601 duration such as `PT1H`.
+
 ### Accounts and guardrails
 
 #### Organizations

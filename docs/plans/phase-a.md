@@ -78,7 +78,8 @@ Cost Anomaly Detection already runs with its default monitor, so it is not rebui
 - Create the hosted zone in the workload account, with its nameservers as stack outputs.
 - **Mail is live.** `contact@harpguru.com` forwards through Heart's mail hosting. So the zone
   has to carry `MX 10 mail.harpguru.com` and `mail.harpguru.com A 79.170.44.72` before
-  anything moves.
+  anything moves. That is Heart's mail host, a different machine from `79.170.40.4`, the
+  parked web address the apex and `www` point at today.
 - Send a test message to `contact@`.
 - You switch the nameservers at Heart. Delegate the domain; do not transfer it.
 - Confirm the change has propagated, then send a second test message.
