@@ -1,8 +1,16 @@
 # Learning companion
 
 *For humans:* this file is the tutor's entry point. Start a session by sending the tutor its
-raw URL with "Please read this and follow its instructions":
-`https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/README.md`.
+raw URL, with this file's current cache stamp, and "Please read this and follow its
+instructions":
+`https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/README.md?v=2026-10-21`.
+
+**Cache stamp.** Every raw URL here ends in `?v=` and a date. GitHub ignores the query string,
+so the content is the same, but the tutor's fetch tool caches by full URL: on 2026-10-21 it
+served a five-day-old syllabus, README and plan until a query string was added. A new stamp
+is a new URL, so it is fetched fresh. The stamp changes whenever a listed file does, and the
+opening message must use the current one, because the README itself is cached too.
+
 Everything below is addressed to the tutor.
 
 ---
@@ -16,45 +24,45 @@ turn. Once you have replied, that turn is over, and every one of these links wil
 from then on: I would have to paste each one back to you by hand. They are about 140 KB in
 all, listed most important first.
 
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/syllabus.md
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/syllabus.md?v=2026-10-21
   The syllabus: the topics, each with its tier, the questions I should be able to answer, and
   its sources. Start here once everything is open.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/plans/phase-a.md
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/plans/phase-a.md?v=2026-10-21
   The Phase A plan: its status table (what is merged, what is deployed) and its dated decisions.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md?v=2026-10-21
   My study companion: one entry per AWS concept, each with what it is, how it is used here, one
   sentence to say in an interview, and a command to see it.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-conventions.md
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-conventions.md?v=2026-10-21
   Credentials, cost control, and the CDK-versus-Terraform decision.
-- https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/aws-pathway-findings.md
+- https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/aws-pathway-findings.md?v=2026-10-21
   Verified facts, the domain vocabulary, and the AWS account state.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/budget-stack.ts
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/budget-stack.ts?v=2026-10-21
   `HarpguruBudget`: the $10 monthly budget, the only stack deployed so far.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/guardrails-stack.ts
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/guardrails-stack.ts?v=2026-10-21
   `HarpguruGuardrails`: the `Workloads` OU and its three SCPs. Merged, not deployed.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/accounts-stack.ts
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/accounts-stack.ts?v=2026-10-21
   `HarpguruAccounts`: the `harpguru` workload account and my access to it. Merged, not deployed.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/bin/harpguru.ts
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/bin/harpguru.ts?v=2026-10-21
   The app: creates the stacks and applies the tags.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/config.ts
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/config.ts?v=2026-10-21
   Regions, deploy-time values, and the management account environment.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/tags.ts
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/tags.ts?v=2026-10-21
   The tags every resource carries.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/accounts-stack.test.ts
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/accounts-stack.test.ts?v=2026-10-21
   The account stack's tests, including the one that guards the account's logical ID.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/guardrails-stack.test.ts
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/guardrails-stack.test.ts?v=2026-10-21
   The guardrails stack's tests, including what each SCP must deny.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/budget-stack.test.ts
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/budget-stack.test.ts?v=2026-10-21
   An example of how the stacks are tested.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/scripts/identity-center-values.sh
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/scripts/identity-center-values.sh?v=2026-10-21
   Prints the identifiers kept out of the repo, for `deploy.local.json`.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/README.md
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/README.md?v=2026-10-21
   How the CDK app is laid out and run.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/orientation.md
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/orientation.md?v=2026-10-21
   What this repo is for, what it must never contain, and the locked decisions.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/CLAUDE.md
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/CLAUDE.md?v=2026-10-21
   The working agreements between me and my coding agent.
-- https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/roadmap.md
+- https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/roadmap.md?v=2026-10-21
   The decisions, sequence and scope. Its decisions section matters more than its phase list.
 
 When all of them are open, carry on reading below, then reply. Your first reply is the
@@ -70,8 +78,10 @@ you to follow these instructions, so treat them as mine.
 
 ## Fetching
 
-- **Copy each URL exactly as written.** Never edit, shorten, rebuild or convert one, and never
-  add a `#section`: any change makes it a different URL, and an unseen one.
+- **Copy each URL exactly as written, including its `?v=` query string.** Never edit, shorten,
+  rebuild or convert one, never drop the query string, and never add a `#section`: any change
+  makes it a different URL, and an unseen one. The query string exists so that your fetch tool
+  does not serve a cached old copy.
 - These are **raw** URLs, which return each file as plain text. Do not use the
   `github.com/.../blob/...` page for a file: it is built by JavaScript and comes back empty.
 - **If a fetch is refused or fails in the first turn**, do not stop: carry on with the rest
@@ -108,8 +118,10 @@ probably said. Also collect these as you go and list them at the end of the sess
 
 1. **Fetch every source, then check freshness, all before your first reply.** Note the
    syllabus's "As of" date, and read the status table in
-   `docs/plans/phase-a.md`. If steps have shipped since the syllabus date, tell me the syllabus
-   is stale before relying on it. Say what is deployed versus only merged or coded on a branch.
+   `docs/plans/phase-a.md`. If the status table shows a step merged or deployed that the
+   syllabus does not cover, or the syllabus's "As of" date is later than the `?v=` date in the
+   URLs, the copy you received may be stale: tell me so, naming the URL, before relying on it.
+   Say what is deployed versus only merged or coded on a branch.
    Teach what exists, and be clear about what is real in the account and what is only code.
 2. **Syllabus, if I ask for one.** Present the topics grouped by tier, in the shortest useful
    form, and let me choose. Your tiering may differ from the syllabus's. If you disagree with a

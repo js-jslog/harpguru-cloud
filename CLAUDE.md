@@ -16,7 +16,8 @@ flight and what is waiting on the user. Update it in the same PR that changes it
 on the user's phone, which the user sends its raw URL. It is the tutor's whole prompt and its
 only list of sources; the syllabus beside it holds the topics. It covers what has been built,
 not what is planned. The user asks for it to be refreshed periodically; use the
-`refresh-learning` skill. It is not part of the per-PR checklist below.
+`refresh-learning` skill. A refresh is not part of the per-PR checklist below, but bumping the
+cache stamp is, because the tutor's fetch tool caches by URL.
 
 ## Working agreements
 
@@ -46,6 +47,9 @@ not what is planned. The user asks for it to be refreshed periodically; use the
 - **New AWS concept?** Add its entry to `docs/aws-concepts.md`, and run its "See it" command
   against the account first.
 - **Has a step in `docs/plans/` moved?** Update the status table.
+- **Changed a file listed in `docs/learning/README.md`'s sources?** Bump the `?v=` cache stamp
+  on every raw URL there to today's date, so the tutor fetches the new copy rather than a
+  cached old one. Then tell the user the new opening URL.
 - **Did the work establish a fact worth keeping?** Commit it to the findings doc in
   `/harpguru`.
 - **No attribution trailer** in any commit message.
