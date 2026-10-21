@@ -27,6 +27,12 @@ Facts the tutor's fetch tool imposes, which the README's design depends on:
   equal to the list's length, and keep the first step of "How a session runs" as the fetch.
   Keep the sources small enough to fetch at once; they are about 140 KB.
 
+- **The tutor's fetch tool caches by full URL** (found 2026-10-21: it served a syllabus five
+  days old, under the same URL, until a query string was added). So every raw URL in the
+  README, including the one in its note for humans, ends in a cache stamp, `?v=YYYY-MM-DD`,
+  the same on all of them. GitHub ignores the query string. A new stamp is a new URL, fetched
+  fresh. **Every refresh bumps the stamp; it is not optional.**
+
 Facts about the sources:
 
 - **The `harpguru` sources are read from the findings branch, not `master`.** Findings are
@@ -67,19 +73,25 @@ Read both files before changing anything, so you keep their intent.
    - **Update** the count in the opening heading to the list's new length, and the size figure
      if the total has moved by more than about 10 KB.
    - Change the rest of the README only for a reason, and say so in the hand-over.
-4. **Check the links and names.** Every URL must point at a file that exists: check this repo's
+4. **Bump the cache stamp.** Set every `?v=` in `docs/learning/README.md` to today's date,
+   including the opening URL in the note for humans, and check that no raw URL in
+   `docs/learning/` lacks it or carries a different one:
+   `grep -oE 'https://raw\.githubusercontent\.com/[^ )\`]+' docs/learning/*.md | grep -v '?v=<today>'`
+   must print nothing. Give the owner the new opening message in the hand-over.
+5. **Check the links and names.** Every URL must point at a file that exists: check this repo's
    paths with `git ls-files`, and the `harpguru` paths on the findings branch in `/harpguru`
    after fetching. Every quoted name in the syllabus must be a heading in the file it names; a
    reference to something that is not a heading says where it sits, such as "Steps" (item 2).
    Check that each named section actually answers the questions that cite it. Report any that
    do not resolve.
-5. **Dry-run a session from the README, with a fresh agent.** You know what the files mean,
+6. **Dry-run a session from the README, with a fresh agent.** You know what the files mean,
    so your own reading hides their gaps; the first fresh dry run, on 2026-10-18, found a cited
    section that did not exist on the fetched branch, a stale concept entry and five bad
    references, all missed by the author. Commit the branch first, then spawn an agent with no
    context of this work and have it:
    - Role-play the tutor from the owner's one-line message ("Please read <README raw URL> and
-     follow its instructions"), with each URL mapped to `git show <branch>:<path>`, or to the
+     follow its instructions"), with each URL mapped to `git show <branch>:<path>`, dropping its
+     `?v=` query string, or to the
      named branch in `/harpguru` after a fetch, and any other URL counted as a failed fetch.
    - Run the first turn and the freshness check, show the syllabus, then answer every question
      of at least two *must own* topics from their named sources alone, citing file and heading,
@@ -94,7 +106,7 @@ Read both files before changing anything, so you keep their intent.
    question is now answerable.
    - Once merged, a live check against the real URLs, starting from the README's raw URL alone,
      is the final test. Until then `master` serves the old content, so say it is not done.
-6. **Hand over.** Follow `CLAUDE.md`: branch `1-<slug>`, no attribution trailer, push and say
+7. **Hand over.** Follow `CLAUDE.md`: branch `1-<slug>`, no attribution trailer, push and say
    what the branch contains. Say what the dry run found and fixed, what it left and why, and
    whether the live check was done. Say which topics were added or changed and how they were tiered, so the owner can
    argue with the tiering.
