@@ -80,7 +80,8 @@ Read both files before changing anything, so you keep their intent.
    including the opening URL in the note for humans, and check that no raw URL in
    `docs/learning/` lacks it or carries a different one:
    `grep -oE 'https://raw\.githubusercontent\.com/[^ )\`]+' docs/learning/*.md | grep -v '?v=<stamp>'`
-   must print nothing. Give the owner the new opening message in the hand-over.
+   must print nothing. The owner opens a session with any `?v=` never used before, so the
+   hand-over need not give them a new URL; say instead that the refresh reaches the tutor once merged.
 5. **Check the links and names.** Every URL must point at a file that exists: check this repo's
    paths with `git ls-files`, and the `harpguru` paths on the findings branch in `/harpguru`
    after fetching. Every quoted name in the syllabus must be a heading in the file it names; a

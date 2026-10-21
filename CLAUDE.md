@@ -55,8 +55,9 @@ cache stamp is, because the tutor's fetch tool caches by URL.
 - **Has a step in `docs/plans/` moved?** Update the status table.
 - **Changed a file listed in `docs/learning/README.md`'s sources?** Bump the `?v=` cache stamp
   on every raw URL there to the current UTC time (`date -u +%Y-%m-%dT%H%MZ`), so the tutor
-  fetches the new copy rather than a cached old one. Then tell the user the new opening URL,
-  and that it only works once the PR is merged.
+  fetches the new copy rather than a cached old one. Then tell the user that the new copies
+  only reach the tutor once the PR is merged. They open with any `?v=` never used before, so
+  they need no new URL from you.
 - **Did the work establish a fact worth keeping?** Commit it to the findings doc in
   `/harpguru`.
 - **No attribution trailer** in any commit message.
