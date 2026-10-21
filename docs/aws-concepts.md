@@ -86,7 +86,7 @@ Organizations, then **root credentials management**, which lets the management a
 delete member accounts' root credentials, and **privileged root actions**, which lets it do
 the few tasks that need root without anyone signing in as root. With it on, new member accounts
 are created with no root credentials and can't recover them. It is deferred to a step of its
-own, a provisional decision in the Phase A plan; switched on after `harpguru` exists, it can
+own, a decision in the Phase A plan; switched on after `harpguru` exists, it can
 still delete that account's credentials. *(PR `1-org-accounts`)*
 
 **Say it:** "Root has MFA and isn't used day to day; member accounts have their root user
@@ -191,8 +191,9 @@ governed from the moment it's filed."
 only limits.** Even `AdministratorAccess` can't exceed it. SCPs never apply to the
 management account.
 
-**Here:** SCPs aren't switched on until you run `enable-policy-type` on the root: no
-CloudFormation resource does it. Switching them on also attaches AWS's `FullAWSAccess` policy
+**Here:** SCPs aren't switched on until something calls `EnablePolicyType` on the root: no
+CloudFormation resource does it, so `HarpguruPolicyTypes` does it through a custom resource.
+Switching them on also attaches AWS's `FullAWSAccess` policy
 everywhere, because every target needs at least one SCP; the deny policies then cut
 holes in it. `HarpguruGuardrails` attaches three to `Workloads`, each a separate policy so
 each is readable on its own (the limit is 10 per target, checked against AWS's quotas page on
@@ -205,8 +206,8 @@ each is readable on its own (the limit is 10 per target, checked against AWS's q
 - `harpguru-deny-leave-org` denies leaving the organisation
 
 Denying anyone from turning off CloudTrail or Config comes in step 4, alongside the services it
-protects, a provisional decision in the Phase A plan. Switching SCPs on by CLI rather than as
-code is another; see [Custom resources](#custom-resources). *(PR `1-org-accounts`)*
+protects, a decision in the Phase A plan. How SCPs are switched on is in
+[Custom resources](#custom-resources). *(PRs `1-org-accounts`, `1-scp-custom-resource`)*
 
 **Say it:** "An action is only allowed if IAM allows it and no SCP denies it. An explicit deny
 anywhere wins."
@@ -371,19 +372,22 @@ code, usually a Lambda function, that CloudFormation calls on create, update and
 `AwsCustomResource` builds one that makes a single AWS API call, with the Lambda and its IAM
 role generated for you.
 
-**Here:** none are used. One was the alternative to switching SCPs on by hand: a custom
-resource calling `EnablePolicyType` on create. The case for it is that everything is code, with
-no manual step to forget. The case against, and the provisional decision, is that a delete
-calling `DisablePolicyType` would detach every SCP in the Organization, and that it adds a Lambda
-and a role to the management account for a call made once. The delete risk can be designed out
-with a `Retain` policy or a delete that does nothing, so the real trade is one manual command
-against two extra resources. *(PR `1-org-accounts`)*
+**Here:** `HarpguruPolicyTypes` holds one, which calls `EnablePolicyType` to switch SCPs on for
+the root. The danger is the reverse call: `DisablePolicyType` would detach every SCP in the
+Organization. So that can never happen, there are three layers. The resource has no delete
+call, and no update call either. It is `Retain`, so CloudFormation never even asks it to
+delete. And it sits alone in a termination-protected stack, so no change to the guardrails can
+reach it. It ignores `PolicyTypeAlreadyEnabledException`, so it does no harm if SCPs were
+already switched on by hand. The alternative was a one-off CLI command, which avoids the Lambda
+and role in the management account. *(PRs `1-org-accounts`, `1-scp-custom-resource`)*
 
 **Say it:** "When CloudFormation has no resource for something, a custom resource runs code
-for it; I weigh that against a one-off command when the thing only ever happens once."
+for it. If the reverse of that action is dangerous, I give it no delete handler and retain it."
 
-**See it:** nothing to see yet. `aws organizations list-roots --query 'Roots[0].PolicyTypes'`
-shows the policy type it would have switched on, once it is switched on by hand.
+**See it:** once `HarpguruPolicyTypes` is deployed,
+`aws cloudformation describe-stack-resources --stack-name HarpguruPolicyTypes --query 'StackResources[].[LogicalResourceId,ResourceType]' --output table`
+shows the custom resource beside its Lambda and role, and
+`aws organizations list-roots --query 'Roots[0].PolicyTypes'` shows what it switched on.
 
 #### Deletion policy and termination protection
 
@@ -399,14 +403,15 @@ shows the policy type it would have switched on, once it is switched on by hand.
 `applyRemovalPolicy(RemovalPolicy.RETAIN)`, although `Retain` is already CloudFormation's
 default for accounts. `HarpguruGuardrails` and `HarpguruAccounts` both have termination
 protection, because deleting the first would strip the guardrails off the OU.
-`HarpguruBudget` doesn't. *(PR `1-org-accounts`)*
+`HarpguruPolicyTypes` has it too, and its custom resource is `Retain`. `HarpguruBudget` has
+neither. *(PR `1-org-accounts`)*
 
 **Say it:** "Retain protects a resource from its stack; termination protection protects the
 stack from a careless delete. Anything stateful or irreplaceable gets both."
 
 **See it:**
 `aws cloudformation describe-stacks --query 'Stacks[].[StackName,EnableTerminationProtection]' --output table`.
-Once step 3 is deployed, only its two stacks show `True`.
+Once step 3 is deployed, only its three stacks show `True`.
 
 #### Cross-stack references
 

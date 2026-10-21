@@ -21,7 +21,8 @@ Update this table in the PR that moves a row. **You** means the user.
 | 0 | *you*: `aws configure sso`, profile renamed to `[default]` | **done** 2026-09-26 | — |
 | 1 | `1-cdk-app`: CDK skeleton | **merged** 2026-10-13 | — |
 | 2 | `1-budget`: $10 budget | **merged** and deployed 2026-10-13; zero-spend budget deleted | — |
-| 3 | `1-org-accounts`: workload account, OU, SCPs | merged; not deployed | *you*: settle the four provisional decisions, then the deploy steps in #3 below |
+| 3 | `1-org-accounts`: workload account, OU, SCPs | merged; not deployed | `1-scp-custom-resource`, then *you*: the deploy steps in #3 below |
+| 3a | `1-scp-custom-resource`: SCPs switched on by a custom resource in its own stack | pushed 2026-10-21 | *you*: open the PR |
 | 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | not started | #3 |
 | 5 | *you*: bootstrap the workload account | not started | #3 |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | not started | #5 |
@@ -52,8 +53,12 @@ alert address is supplied at deploy time. Once this is live, **delete the consol
 `My Zero-Spend Budget`**: from #6 onwards the hosted zone alone would set it off every month.
 Cost Anomaly Detection already runs with its default monitor, so it is not rebuilt.
 
-**3 · `1-org-accounts`.** Two stacks in the management account, in `eu-west-2`, both with
+**3 · `1-org-accounts`.** Three stacks in the management account, in `eu-west-2`, all with
 termination protection.
+- **`HarpguruPolicyTypes`** (added by `1-scp-custom-resource`): a custom resource that switches
+  SCPs on for the root. It has no delete or update call, and the resource is `Retain`. It
+  is a stack of its own so that no change to the guardrails or the accounts can reach it.
+  The guardrails stack depends on it, so it deploys first.
 - **`HarpguruGuardrails`**: a `Workloads` OU under the root, with three SCPs attached:
   - `harpguru-region-lock`: deny actions outside `eu-west-2` and `us-east-1`, exempting
     the five global services in the IAM guide's example
@@ -65,17 +70,16 @@ termination protection.
   the user's address. The account is `RETAIN`, so tearing down a stack can never close it.
   The OU's ID arrives as a cross-stack import, which also makes the guardrails deploy first.
   The account is therefore governed from the moment it exists.
-- Values kept out of the repo (a provisional decision; see Decisions) go in
+- Values kept out of the repo (see Decisions) go in
   `infra/deploy.local.json`: the account email, the root
   ID, and the Identity Center instance, permission set and user IDs.
   `infra/scripts/identity-center-values.sh` prints the last four.
 
 Deploying it, all *you*:
-1. Run `aws organizations enable-policy-type --policy-type SERVICE_CONTROL_POLICY --root-id <root>`.
-   No CloudFormation resource enables a policy type. This also attaches `FullAWSAccess` to
-   every target, so nothing is restricted yet.
-2. Run `scripts/identity-center-values.sh` and merge its output into `deploy.local.json`,
+1. Run `scripts/identity-center-values.sh` and merge its output into `deploy.local.json`,
    alongside the real `workloadAccountEmail`.
+2. `cdk diff` then `cdk deploy HarpguruPolicyTypes`. This switches SCPs on, which also
+   attaches `FullAWSAccess` to every target, so nothing is restricted yet.
 3. `cdk diff` then `cdk deploy HarpguruGuardrails`.
 4. `cdk diff` then `cdk deploy HarpguruAccounts`. **This is the point of no return.** Account
    creation takes a few minutes. A closed account spends 90 days in a post-closure period,
@@ -87,7 +91,7 @@ Deploying it, all *you*:
 **4 · `1-org-audit`.**
 - An organisation CloudTrail trail to S3.
 - An SCP denying anyone from turning off CloudTrail or Config in `Workloads`, moved here from #3
-  (provisional; see Decisions).
+  (see Decisions).
   - **Config:** the recorder will run in the workload account, and whatever role deploys and
     updates it must be allowed to stop or change it. So the SCP needs an exemption naming that
     role, and the role is not known until this step designs the Config deployment.
@@ -149,23 +153,28 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
 - 2026-09-26: security headers use a **response headers policy**, not CloudFront Functions.
   Functions are kept for request-dependent logic, such as the `www` redirect. The roadmap is
   updated to match.
-- 2026-10-14, **provisional**: SCPs are enabled on the root with a one-off CLI command rather
-  than a custom resource. The trade is one manual command, run once, against a Lambda and a
-  role in the management account. A custom resource's delete would disable SCPs across the
-  Organization unless designed not to; see "Custom resources" in `docs/aws-concepts.md`.
-- 2026-10-14, **provisional**: the CloudTrail/Config protection SCP moves from #3 to #4, so
+- 2026-10-14, **superseded 2026-10-21**: SCPs are enabled on the root with a one-off CLI command
+  rather than a custom resource. The trade is one manual command, run once, against a Lambda
+  and a role in the management account. A custom resource's delete would disable SCPs across
+  the Organization unless designed not to; see "Custom resources" in `docs/aws-concepts.md`.
+- 2026-10-21: **SCPs are switched on by a custom resource**, in a stack of its own,
+  `HarpguruPolicyTypes`. The user's choice, made after studying the trade: while learning, it
+  is worth having the step as code. The delete risk is designed out three ways: no delete call,
+  a `Retain` policy, and an isolated, termination-protected stack.
+- 2026-10-14, **confirmed 2026-10-21**: the CloudTrail/Config protection SCP moves from #3 to #4, so
   its exemption is designed alongside the Config deployment it has to allow.
-- 2026-10-14, **provisional**: the Identity Center and root identifiers live in
+- 2026-10-14, **confirmed 2026-10-21**: the Identity Center and root identifiers live in
   `deploy.local.json`, not the repo. Keeping them out can be undone later; committing them
   can't, because the repo is public.
-- 2026-10-14, **provisional**: centralised root access is deferred to a small step of its own.
+- 2026-10-14, **confirmed 2026-10-21**: centralised root access is deferred to a small step of its own.
   The SCP already blocks the root user, and the feature changes three Organization-wide
   settings.
-- 2026-10-14: #3 is two stacks, `HarpguruGuardrails` then `HarpguruAccounts`, so the account
+- 2026-10-14: #3 is two stacks, `HarpguruGuardrails` then `HarpguruAccounts` (three since
+  2026-10-21, with `HarpguruPolicyTypes` first), so the account
   is created inside an already-governed OU, and changes to SCPs never share a diff with the account.
 - 2026-10-14: **the four provisional decisions above were accepted by the user before they had
   studied them**, on the basis that each is easy to change, and are to be confirmed or changed
-  once they have. Changing each later:
+  once they have. **Settled 2026-10-21:** the first was changed and the other three confirmed. Changing each later:
   - SCP enablement: `aws organizations disable-policy-type` reverses it, but detaches every SCP
     in the Organization as it does. Moving to a custom resource later is new code, nothing more.
     The strongest case for that alternative, and why its delete risk can be designed out, is in

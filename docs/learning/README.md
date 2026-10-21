@@ -38,6 +38,8 @@ all, listed most important first.
   Verified facts, the domain vocabulary, and the AWS account state.
 - https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/budget-stack.ts?v=2026-10-21
   `HarpguruBudget`: the $10 monthly budget, the only stack deployed so far.
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/policy-types-stack.ts?v=2026-10-21
+  `HarpguruPolicyTypes`: the custom resource that switches SCPs on. Not yet merged.
 - https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/guardrails-stack.ts?v=2026-10-21
   `HarpguruGuardrails`: the `Workloads` OU and its three SCPs. Merged, not deployed.
 - https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/accounts-stack.ts?v=2026-10-21
@@ -52,6 +54,8 @@ all, listed most important first.
   The account stack's tests, including the one that guards the account's logical ID.
 - https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/guardrails-stack.test.ts?v=2026-10-21
   The guardrails stack's tests, including what each SCP must deny.
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/policy-types-stack.test.ts?v=2026-10-21
+  The policy types stack's tests, including the ones that prove SCPs are never switched off.
 - https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/budget-stack.test.ts?v=2026-10-21
   An example of how the stacks are tested.
 - https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/scripts/identity-center-values.sh?v=2026-10-21
