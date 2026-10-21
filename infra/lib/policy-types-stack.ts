@@ -5,7 +5,6 @@ import {
   PhysicalResourceId,
 } from 'aws-cdk-lib/custom-resources'
 import type { Construct } from 'constructs'
-import { EDGE_REGION } from './config'
 
 export type PolicyTypesStackProps = StackProps & {
   organizationRootId: string
@@ -31,7 +30,7 @@ export class PolicyTypesStack extends Stack {
       },
       // Organizations' API is served from us-east-1 whatever region the
       // stack is in.
-      region: EDGE_REGION,
+      region: 'us-east-1',
       physicalResourceId: PhysicalResourceId.of(
         `${props.organizationRootId}/SERVICE_CONTROL_POLICY`
       ),

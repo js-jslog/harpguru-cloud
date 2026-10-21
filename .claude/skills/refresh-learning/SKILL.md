@@ -25,7 +25,7 @@ Facts the tutor's fetch tool imposes, which the README's design depends on:
   first, asking which topic to start on, so the instruction and the list now open the README,
   ahead of everything else. Keep them there, keep the count in the heading ("all N sources")
   equal to the list's length, and keep the first step of "How a session runs" as the fetch.
-  Keep the sources small enough to fetch at once; they are about 140 KB.
+  Keep the sources small enough to fetch at once; they are about 170 KB.
 
 - **The tutor's fetch tool caches by full URL** (found 2026-10-21: it served a syllabus five
   days old, under the same URL, until a query string was added). So every raw URL in the

@@ -172,13 +172,17 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
 - 2026-10-14: #3 is two stacks, `HarpguruGuardrails` then `HarpguruAccounts` (three since
   2026-10-21, with `HarpguruPolicyTypes` first), so the account
   is created inside an already-governed OU, and changes to SCPs never share a diff with the account.
-- 2026-10-14: **the four provisional decisions above were accepted by the user before they had
-  studied them**, on the basis that each is easy to change, and are to be confirmed or changed
-  once they have. **Settled 2026-10-21:** the first was changed and the other three confirmed. Changing each later:
-  - SCP enablement: `aws organizations disable-policy-type` reverses it, but detaches every SCP
-    in the Organization as it does. Moving to a custom resource later is new code, nothing more.
-    The strongest case for that alternative, and why its delete risk can be designed out, is in
-    the "Custom resources" entry in `docs/aws-concepts.md`.
+- 2026-10-14: **the four provisional decisions above, the entries dated 2026-10-14, were accepted
+  by the user before they had studied them**, on the basis that each is easy to change, and
+  were to be confirmed or changed once they had. **Settled 2026-10-21:** the first was changed
+  and the other three confirmed. Changing each later:
+  - SCP enablement, now a custom resource: `aws organizations disable-policy-type` would switch
+    SCPs off, but it detaches every SCP in the Organization as it does, and nothing in this repo
+    ever calls it. Going back to a one-off command would mean switching termination protection
+    off and deleting `HarpguruPolicyTypes`. Its resource is `Retain`, so SCPs stay on; only the
+    Lambda and its role go. Then `HarpguruGuardrails` would no longer need to depend on it. How
+    the delete risk is designed out is in the "Custom resources" entry in
+    `docs/aws-concepts.md`.
   - The CloudTrail/Config SCP: it is one more policy on `Workloads`, so it can go into #3 or #4
     at any time.
   - The identifiers: they can be committed at any time; once committed, the public history

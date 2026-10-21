@@ -377,8 +377,11 @@ the root. The danger is the reverse call: `DisablePolicyType` would detach every
 Organization. So that can never happen, there are three layers. The resource has no delete
 call, and no update call either. It is `Retain`, so CloudFormation never even asks it to
 delete. And it sits alone in a termination-protected stack, so no change to the guardrails can
-reach it. It ignores `PolicyTypeAlreadyEnabledException`, so it does no harm if SCPs were
-already switched on by hand. The alternative was a one-off CLI command, which avoids the Lambda
+reach it. Termination protection adds little to the first two, but it keeps the Lambda in
+place, and it makes a deliberate delete take two steps. Its Lambda's role may call
+`organizations:EnablePolicyType` and nothing else. It ignores
+`PolicyTypeAlreadyEnabledException`, so it does no harm if SCPs were already switched on by
+hand. The alternative was a one-off CLI command, which avoids the Lambda
 and role in the management account. *(PRs `1-org-accounts`, `1-scp-custom-resource`)*
 
 **Say it:** "When CloudFormation has no resource for something, a custom resource runs code
@@ -404,7 +407,7 @@ shows the custom resource beside its Lambda and role, and
 default for accounts. `HarpguruGuardrails` and `HarpguruAccounts` both have termination
 protection, because deleting the first would strip the guardrails off the OU.
 `HarpguruPolicyTypes` has it too, and its custom resource is `Retain`. `HarpguruBudget` has
-neither. *(PR `1-org-accounts`)*
+neither. *(PRs `1-org-accounts`, `1-scp-custom-resource`)*
 
 **Say it:** "Retain protects a resource from its stack; termination protection protects the
 stack from a careless delete. Anything stateful or irreplaceable gets both."
