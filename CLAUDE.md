@@ -41,6 +41,12 @@ cache stamp is, because the tutor's fetch tool caches by URL.
 - **Keep account IDs, portal URLs and email addresses out of the repo.** They are not
   secrets, but the repo is public. `aws sts get-caller-identity` recovers the account;
   addresses are supplied at deploy time.
+- **Open with a table of terms.** Any response that uses an AWS acronym (OU, SCP, ARN) or
+  a product name (GuardDuty, CloudTrail) begins with a very short table of those terms:
+  each one expanded, with a few words on what it does, such as "SCP: Service Control
+  Policy, a ceiling on what member accounts' principals may do". It covers only the terms
+  in that response. The user is learning, and new ground arrives quickly. A list of terms
+  that no longer need translating may be added here later, if the tables grow too long.
 
 ## Before pushing a branch
 
