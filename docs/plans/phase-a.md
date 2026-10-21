@@ -21,8 +21,8 @@ Update this table in the PR that moves a row. **You** means the user.
 | 0 | *you*: `aws configure sso`, profile renamed to `[default]` | **done** 2026-09-26 | — |
 | 1 | `1-cdk-app`: CDK skeleton | **merged** 2026-10-13 | — |
 | 2 | `1-budget`: $10 budget | **merged** and deployed 2026-10-13; zero-spend budget deleted | — |
-| 3 | `1-org-accounts`: workload account, OU, SCPs | merged; not deployed | `1-scp-custom-resource`, then *you*: the deploy steps in #3 below |
-| 3a | `1-scp-custom-resource`: SCPs switched on by a custom resource in its own stack | pushed 2026-10-21 | *you*: open the PR |
+| 3 | `1-org-accounts`: workload account, OU, SCPs | merged; not deployed | *you*: the deploy steps in #3 below |
+| 3a | `1-scp-custom-resource`: SCPs switched on by a custom resource in its own stack; the four decisions settled | merged; not deployed | *you*: deployed as part of #3 |
 | 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | not started | #3 |
 | 5 | *you*: bootstrap the workload account | not started | #3 |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | not started | #5 |

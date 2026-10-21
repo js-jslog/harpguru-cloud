@@ -1,14 +1,16 @@
 # Syllabus
 
-**As of 2026-10-20.** Covers Phase A steps 0–3: the SSO login, the CDK app skeleton, the $10
-budget, and the workload account with its OU and guardrails. Steps 1 to 3 are merged. Only
-step 2 is **deployed**: `HarpguruBudget` is the only stack of this project's running in the
-account. Step 3 is code only, waiting on me, and the status table in `docs/plans/phase-a.md`
+**As of 2026-10-21.** Covers Phase A steps 0–3: the SSO login, the CDK app skeleton, the $10
+budget, and the workload account with its OU and guardrails, including step 3a, which switches
+SCPs on through a custom resource. Steps 1 to 3a are merged. Only step 2 is **deployed**:
+`HarpguruBudget` is the only stack of this project's running in the account. Step 3 is three
+stacks of code, waiting on me to deploy them, and the status table in `docs/plans/phase-a.md`
 says the same. Everything after step 3 is out of scope; see the last section.
 
-**Priority now: topics 5 and 6.** I accepted four step 3 decisions before I had studied them,
-on the basis that each is easy to change. Step 3's deploy waits on me confirming or changing
-them, and on me understanding the one step that cannot be undone.
+**Priority now: topics 6 and 7.** On 2026-10-21 I settled the four step 3 decisions: I changed
+one, so SCPs are now switched on by a custom resource, and confirmed the other three. What is
+left before the deploy is understanding that custom resource, and the one step that cannot be
+undone.
 
 Each topic gives its tier and why, what I should be able to answer, and its sources. The
 sources hold the facts; this file deliberately does not restate them. Sources are named by
@@ -81,27 +83,44 @@ in the README, and the tiering here is a proposal, to be argued with.
   `docs/plans/phase-a.md` "Accounts" and "Steps" (item 3); `infra/lib/guardrails-stack.ts`;
   `infra/test/guardrails-stack.test.ts`.
 
-### 5. The four provisional decisions, which are mine to settle
+### 5. The four step 3 decisions, and how I settled them
 
 - **Covers:** four choices in step 3 that I accepted on 2026-10-14 without having studied them,
-  on the basis that each is easy to change:
-  - SCPs switched on by a one-off CLI command, not a CloudFormation custom resource
-  - the SCP protecting CloudTrail and Config moved to step 4
-  - the Identity Center and root identifiers kept in `deploy.local.json`, out of the repo
-  - centralised root access deferred to a later step
-- **Why must own:** they are my decisions, not the coding agent's, and the aim of this topic is
-  that I can confirm or change each one with a reason before step 3 is deployed. Help me reach
-  my own view; do not just defend the recommendation.
-- **Be able to answer, for each one:** what was decided and what the alternative was; the reason
-  given for the choice; what it would take to change later, and what that would cost; and
-  whether I now agree, and why.
-- **Sources:** `docs/plans/phase-a.md` "Decisions" (the entries marked provisional, and the
-  note after them) and "Steps" (items 3 and 4); `docs/aws-concepts.md`
-  "Service Control Policy (SCP)", "Custom resources", "Root user", "CloudTrail" and "Config";
-  `infra/README.md`
+  and settled on 2026-10-21 after studying them:
+  - how SCPs are switched on: **changed** from a one-off CLI command to a custom resource
+  - the SCP protecting CloudTrail and Config moved to step 4: confirmed
+  - the Identity Center and root identifiers kept in `deploy.local.json`, out of the repo:
+    confirmed
+  - centralised root access deferred to a later step: confirmed
+- **Why must own:** they are my decisions, not the coding agent's, and I should be able to
+  defend each one with a reason, including the one I changed against the agent's
+  recommendation. Test my reasons; do not just restate them.
+- **Be able to answer, for each one:** what was decided and what the alternative was; why I
+  chose as I did; what it would take to change later, and what that would cost.
+- **Sources:** `docs/plans/phase-a.md` "Decisions" (the entries dated 2026-10-14 and 2026-10-21)
+  and "Steps" (items 3 and 4); `docs/aws-concepts.md` "Service Control Policy (SCP)",
+  "Custom resources", "Root user", "CloudTrail" and "Config"; `infra/README.md`
   "Deploy-time values"; `infra/scripts/identity-center-values.sh`.
 
-### 6. The point of no return
+### 6. A custom resource that can never undo itself
+
+- **Covers:** `HarpguruPolicyTypes`, the stack that switches SCPs on for the Organization's
+  root, and the three layers that stop it ever switching them off.
+- **Why must own:** switching SCPs off would detach every SCP in the Organization at once, so
+  the design that prevents it is a security property I chose, and the stack is the first thing
+  step 3 deploys.
+- **Be able to answer:** what a custom resource is, and why one is needed here at all; what
+  CloudFormation asks a custom resource to do on create, update and delete, and what this one
+  does for each; what `Retain` changes about a delete; why it is a stack of its own, and why
+  that stack is termination protected; what happens if SCPs were already switched on by hand;
+  what its Lambda's role may call; what the agent's original alternative was, and what it would
+  have saved.
+- **Sources:** `docs/aws-concepts.md` "Custom resources" and
+  "Deletion policy and termination protection"; `infra/lib/policy-types-stack.ts`;
+  `infra/test/policy-types-stack.test.ts`; `infra/bin/harpguru.ts`; `docs/plans/phase-a.md`
+  "Steps" (item 3) and "Decisions".
+
+### 7. The point of no return
 
 - **Covers:** why merging and most of the deploy can be undone, but the first
   `cdk deploy HarpguruAccounts` cannot, and what protects the account once it exists.
@@ -123,7 +142,7 @@ in the README, and the tiering here is a proposal, to be argued with.
 
 ## Should understand
 
-### 7. Regions, environments and bootstrap
+### 8. Regions, environments and bootstrap
 
 - **Covers:** where things run, how a stack is pinned to an account and region without the
   account ID being in the code, and what bootstrap prepares.
@@ -132,35 +151,39 @@ in the README, and the tiering here is a proposal, to be argued with.
 - **Sources:** `docs/aws-concepts.md` "Regions", "Environments" and "CDK bootstrap";
   `infra/lib/config.ts`.
 
-### 8. Tags and cost allocation
+### 9. Tags and cost allocation
 
 - **Covers:** tagging once at the app root, the budget's exception to it, and why a cost
   allocation tag needs activating.
 - **Sources:** `docs/aws-concepts.md` "Tags and cost allocation tags" and
   "L1 and L2 constructs"; `infra/lib/tags.ts`; `infra/lib/budget-stack.ts`.
 
-### 9. Testing infrastructure code
+### 10. Testing infrastructure code
 
 - **Covers:** what assertions against a synthesised template can and cannot prove, including a
-  test that exists to stop an expensive mistake rather than to check behaviour.
+  test that exists to stop an expensive mistake rather than to check behaviour, and tests that
+  prove something is absent, such as a custom resource's delete call.
 - **Sources:** `infra/README.md`; `infra/test/budget-stack.test.ts`;
-  `infra/test/accounts-stack.test.ts`; `infra/test/guardrails-stack.test.ts`.
+  `infra/test/accounts-stack.test.ts`; `infra/test/guardrails-stack.test.ts`;
+  `infra/test/policy-types-stack.test.ts`.
 
-### 10. Account IDs, ARNs and keeping them out of a public repo
+### 11. Account IDs, ARNs and keeping them out of a public repo
 
 - **Covers:** what an ARN is made of, why an account ID is not a secret but is still kept out,
   and how the repo avoids ever committing one.
 - **Sources:** `docs/aws-concepts.md` "Account ID and ARNs";
   `infra/README.md` "Deploy-time values"; `infra/lib/config.ts`.
 
-### 11. Two stacks, cross-stack references and deploy order
+### 12. Three stacks, cross-stack references and deploy order
 
-- **Covers:** why step 3 is two stacks, how the OU's ID gets from one to the other, and how
-  that forces the guardrails to deploy first.
+- **Covers:** why step 3 is three stacks; how the OU's ID gets from the guardrails to the
+  accounts stack, and how that forces the guardrails to deploy first; and how the guardrails
+  are made to wait for `HarpguruPolicyTypes`, which they take no value from.
 - **Sources:** `docs/aws-concepts.md` "Cross-stack references" and
-  "Apps, stacks and constructs"; `docs/plans/phase-a.md` "Decisions"; `infra/bin/harpguru.ts`.
+  "Apps, stacks and constructs"; `docs/plans/phase-a.md` "Decisions" and "Steps" (item 3);
+  `infra/bin/harpguru.ts`.
 
-### 12. How I will get into the new account
+### 13. How I will get into the new account
 
 - **Covers:** the Identity Center assignment that gives my existing login access to the new
   account, and `OrganizationAccountAccessRole` as the way back in if that ever breaks.
