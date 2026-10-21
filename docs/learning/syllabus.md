@@ -108,7 +108,7 @@ in the README, and the tiering here is a proposal, to be argued with.
   root, and the three layers that stop it ever switching them off.
 - **Why must own:** switching SCPs off would detach every SCP in the Organization at once, so
   the design that prevents it is a security property I chose, and the stack is the first thing
-  step 3 deploys.
+  step 3 deploys. Know which of the three layers does the real work, and what the third adds.
 - **Be able to answer:** what a custom resource is, and why one is needed here at all; what
   CloudFormation asks a custom resource to do on create, update and delete, and what this one
   does for each; what `Retain` changes about a delete; why it is a stack of its own, and why
