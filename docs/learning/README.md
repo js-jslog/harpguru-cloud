@@ -1,19 +1,22 @@
 # Learning companion
 
 *For humans:* this file is the tutor's entry point. Start a session by sending the tutor its
-raw URL, with this file's current cache stamp, and "Please read this and follow its
-instructions":
-`https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/README.md?v=2026-10-21T2028Z`.
+raw URL, ending in a `?v=` you have never used before, and "Please read this and follow its
+instructions". Today's date with a letter works, such as `?v=2026-10-22a`. This file's own stamp
+works too, until you have used it once:
+`https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/README.md?v=2026-10-21T2042Z`.
 
 **Cache stamp.** Every raw URL here ends in `?v=` and a UTC date and time, such as
 `2026-10-21T1405Z`. GitHub ignores the query string, so the content is the same, but the
 tutor's fetch tool caches by full URL: on 2026-10-21 it served a five-day-old syllabus, README
 and plan until a query string was added. A new stamp is a new URL, so it is fetched fresh. The
-stamp changes whenever a listed file does, and the opening message must use the current one,
-because the README itself is cached too. It carries the time as well as the date because a
-date alone repeats when two changes merge on the same day. **Only send the opening message
-once the PR is merged.** The URLs point at `master`, so a fetch before the merge would cache
-the old content under the new stamp.
+stamp changes whenever a listed file does. The README's own URL is cached too, so the opening
+message needs a `?v=` never sent before. It need not match the stamp, because the README's
+fresh copy carries the current stamp on every other URL. Never reuse one: a second send of the
+same URL can be answered with the README cached the first time, old URLs and all. The stamp
+carries the time as well as the date because a date alone repeats when two changes merge on
+the same day. The URLs point at `master`, so a change reaches the tutor only once its PR is
+merged; a session before that is taught the old content.
 
 Everything below is addressed to the tutor.
 
@@ -28,49 +31,49 @@ turn. Once you have replied, that turn is over, and every one of these links wil
 from then on: I would have to paste each one back to you by hand. They are about 170 KB in
 all, listed most important first.
 
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/syllabus.md?v=2026-10-21T2028Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/syllabus.md?v=2026-10-21T2042Z
   The syllabus: the topics, each with its tier, the questions I should be able to answer, and
   its sources. Start here once everything is open.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/plans/phase-a.md?v=2026-10-21T2028Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/plans/phase-a.md?v=2026-10-21T2042Z
   The Phase A plan: its status table (what is merged, what is deployed) and its dated decisions.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md?v=2026-10-21T2028Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md?v=2026-10-21T2042Z
   My study companion: one entry per AWS concept, each with what it is, how it is used here, one
   sentence to say in an interview, and a command to see it.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-conventions.md?v=2026-10-21T2028Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-conventions.md?v=2026-10-21T2042Z
   Credentials, cost control, and the CDK-versus-Terraform decision.
-- https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/aws-pathway-findings.md?v=2026-10-21T2028Z
+- https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/aws-pathway-findings.md?v=2026-10-21T2042Z
   Verified facts, the domain vocabulary, and the AWS account state.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/budget-stack.ts?v=2026-10-21T2028Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/budget-stack.ts?v=2026-10-21T2042Z
   `HarpguruBudget`: the $10 monthly budget, the only stack deployed so far.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/policy-types-stack.ts?v=2026-10-21T2028Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/policy-types-stack.ts?v=2026-10-21T2042Z
   `HarpguruPolicyTypes`: the custom resource that switches SCPs on. Merged, not deployed.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/guardrails-stack.ts?v=2026-10-21T2028Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/guardrails-stack.ts?v=2026-10-21T2042Z
   `HarpguruGuardrails`: the `Workloads` OU and its three SCPs. Merged, not deployed.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/accounts-stack.ts?v=2026-10-21T2028Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/accounts-stack.ts?v=2026-10-21T2042Z
   `HarpguruAccounts`: the `harpguru` workload account and my access to it. Merged, not deployed.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/bin/harpguru.ts?v=2026-10-21T2028Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/bin/harpguru.ts?v=2026-10-21T2042Z
   The app: creates the stacks and applies the tags.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/config.ts?v=2026-10-21T2028Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/config.ts?v=2026-10-21T2042Z
   Regions, deploy-time values, and the management account environment.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/tags.ts?v=2026-10-21T2028Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/tags.ts?v=2026-10-21T2042Z
   The tags every resource carries.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/accounts-stack.test.ts?v=2026-10-21T2028Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/accounts-stack.test.ts?v=2026-10-21T2042Z
   The account stack's tests, including the one that guards the account's logical ID.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/guardrails-stack.test.ts?v=2026-10-21T2028Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/guardrails-stack.test.ts?v=2026-10-21T2042Z
   The guardrails stack's tests, including what each SCP must deny.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/policy-types-stack.test.ts?v=2026-10-21T2028Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/policy-types-stack.test.ts?v=2026-10-21T2042Z
   The policy types stack's tests, including the ones that prove SCPs are never switched off.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/budget-stack.test.ts?v=2026-10-21T2028Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/budget-stack.test.ts?v=2026-10-21T2042Z
   An example of how the stacks are tested.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/scripts/identity-center-values.sh?v=2026-10-21T2028Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/scripts/identity-center-values.sh?v=2026-10-21T2042Z
   Prints the identifiers kept out of the repo, for `deploy.local.json`.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/README.md?v=2026-10-21T2028Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/README.md?v=2026-10-21T2042Z
   How the CDK app is laid out and run.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/orientation.md?v=2026-10-21T2028Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/orientation.md?v=2026-10-21T2042Z
   What this repo is for, what it must never contain, and the locked decisions.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/CLAUDE.md?v=2026-10-21T2028Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/CLAUDE.md?v=2026-10-21T2042Z
   The working agreements between me and my coding agent.
-- https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/roadmap.md?v=2026-10-21T2028Z
+- https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/roadmap.md?v=2026-10-21T2042Z
   The decisions, sequence and scope. Its decisions section matters more than its phase list.
 
 When all of them are open, carry on reading below, then reply. Your first reply is the
