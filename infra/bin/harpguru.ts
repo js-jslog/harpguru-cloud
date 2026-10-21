@@ -4,6 +4,7 @@ import { AccountsStack } from '../lib/accounts-stack'
 import { BudgetStack } from '../lib/budget-stack'
 import { managementEnv, readDeployConfig, requireSetting } from '../lib/config'
 import { GuardrailsStack } from '../lib/guardrails-stack'
+import { PolicyTypesStack } from '../lib/policy-types-stack'
 import { applyProjectTags } from '../lib/tags'
 
 const app = new App()
@@ -19,6 +20,15 @@ new BudgetStack(app, 'HarpguruBudget', {
   alertEmail: requireSetting(config, 'alertEmail'),
 })
 
+// SCPs must be switched on before any can be attached. This gets a stack of
+// its own, so that nothing done to the guardrails can ever switch them off.
+const policyTypes = new PolicyTypesStack(app, 'HarpguruPolicyTypes', {
+  env: managementEnv(),
+  description: "Switches SCPs on for the Organization's root",
+  terminationProtection: true,
+  organizationRootId: requireSetting(config, 'organizationRootId'),
+})
+
 // Deploy the guardrails first, so the account is born inside a governed OU.
 // Both are termination protected: deleting either would remove the
 // guardrails, and the account stack should never need deleting.
@@ -28,6 +38,7 @@ const guardrails = new GuardrailsStack(app, 'HarpguruGuardrails', {
   terminationProtection: true,
   organizationRootId: requireSetting(config, 'organizationRootId'),
 })
+guardrails.addDependency(policyTypes)
 
 new AccountsStack(app, 'HarpguruAccounts', {
   env: managementEnv(),

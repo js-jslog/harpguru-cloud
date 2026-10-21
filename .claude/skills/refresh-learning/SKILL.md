@@ -25,12 +25,14 @@ Facts the tutor's fetch tool imposes, which the README's design depends on:
   first, asking which topic to start on, so the instruction and the list now open the README,
   ahead of everything else. Keep them there, keep the count in the heading ("all N sources")
   equal to the list's length, and keep the first step of "How a session runs" as the fetch.
-  Keep the sources small enough to fetch at once; they are about 140 KB.
+  Keep the sources small enough to fetch at once; they are about 170 KB.
 
 - **The tutor's fetch tool caches by full URL** (found 2026-10-21: it served a syllabus five
   days old, under the same URL, until a query string was added). So every raw URL in the
-  README, including the one in its note for humans, ends in a cache stamp, `?v=YYYY-MM-DD`,
-  the same on all of them. GitHub ignores the query string. A new stamp is a new URL, fetched
+  README, including the one in its note for humans, ends in a cache stamp,
+  `?v=YYYY-MM-DDTHHMMZ` in UTC, the same on all of them. A date alone was not enough: two
+  changes merged on 2026-10-21 shared one stamp, so the second would have been served from
+  the cache. GitHub ignores the query string. A new stamp is a new URL, fetched
   fresh. **Every refresh bumps the stamp; it is not optional.**
 
 Facts about the sources:
@@ -73,10 +75,11 @@ Read both files before changing anything, so you keep their intent.
    - **Update** the count in the opening heading to the list's new length, and the size figure
      if the total has moved by more than about 10 KB.
    - Change the rest of the README only for a reason, and say so in the hand-over.
-4. **Bump the cache stamp.** Set every `?v=` in `docs/learning/README.md` to today's date,
+4. **Bump the cache stamp.** Set every `?v=` in `docs/learning/README.md` to the current UTC
+   time, from `date -u +%Y-%m-%dT%H%MZ`,
    including the opening URL in the note for humans, and check that no raw URL in
    `docs/learning/` lacks it or carries a different one:
-   `grep -oE 'https://raw\.githubusercontent\.com/[^ )\`]+' docs/learning/*.md | grep -v '?v=<today>'`
+   `grep -oE 'https://raw\.githubusercontent\.com/[^ )\`]+' docs/learning/*.md | grep -v '?v=<stamp>'`
    must print nothing. Give the owner the new opening message in the hand-over.
 5. **Check the links and names.** Every URL must point at a file that exists: check this repo's
    paths with `git ls-files`, and the `harpguru` paths on the findings branch in `/harpguru`
