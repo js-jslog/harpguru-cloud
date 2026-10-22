@@ -111,7 +111,7 @@ beside its SCP switch, nor in `HarpguruAccounts`, beside the account that can't 
 
 An import doesn't apply the template to the resource, so the code had to match the console
 exactly, which meant the permission set went in **without** the project tags. They were added
-afterwards by an ordinary deploy, which is a real change and shows in its diff. Both resources
+afterwards by an ordinary deploy, which is a real change and shows in its diff.
 Its assignment names the permission set by the ARN in `deploy.local.json`, as the workload
 account's assignment in `HarpguruAccounts` already does, rather than by a reference to the
 resource beside it.
@@ -267,7 +267,8 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
   the permission set. The Organization and the Identity Center instance stay outside, by
   choice: both existed before the app, nothing about them changes, and a stack owning them
   would carry a delete risk like the one designed out of `HarpguruPolicyTypes`. The anomaly
-  monitor stays outside, as decided 2026-09-26 in "Steps" item 2. The full list, with each "can't" and "chose
+  monitor stays outside, as "Steps" item 2 says (planned 2026-09-25, against the account state
+  checked 2026-09-26). The full list, with each "can't" and "chose
   not", is `docs/outside-cdk.md`.
 - 2026-10-22: **the test for what goes in a stack: every piece of manual work is on record,
   and AWS defaults are left alone.** Configuration made by hand that may change goes into a
