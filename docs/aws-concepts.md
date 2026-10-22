@@ -16,7 +16,7 @@ The "See it" commands assume you are signed in with `aws sso login`. Where a com
 the account ID, it fetches it with `aws sts get-caller-identity`.
 
 **Index:** [Regions](#regions) · [Account ID and ARNs](#account-id-and-arns) ·
-[Root user](#root-user) · [IAM users](#iam-users) ·
+[Default VPC](#default-vpc) · [Root user](#root-user) · [IAM users](#iam-users) ·
 [IAM Identity Center](#iam-identity-center) · [Organizations](#organizations) ·
 [Organizational Unit (OU)](#organizational-unit-ou) ·
 [Service Control Policy (SCP)](#service-control-policy-scp) ·
@@ -27,6 +27,7 @@ the account ID, it fetches it with `aws sts get-caller-identity`.
 [Apps, stacks and constructs](#apps-stacks-and-constructs) ·
 [L1 and L2 constructs](#l1-and-l2-constructs) · [Custom resources](#custom-resources) ·
 [Deletion policy and termination protection](#deletion-policy-and-termination-protection) ·
+[Resource import and drift](#resource-import-and-drift) ·
 [Cross-stack references](#cross-stack-references) ·
 [Environments](#environments) · [CDK bootstrap](#cdk-bootstrap) ·
 [Tags and cost allocation tags](#tags-and-cost-allocation-tags) ·
@@ -67,6 +68,27 @@ credentials."
 
 **See it:** `aws sts get-caller-identity`. The `Arn` it prints shows you as an assumed role
 rather than a user.
+
+#### Default VPC
+
+**What:** a VPC (Virtual Private Cloud) is a private network inside one region. AWS creates a
+**default VPC** in every region of every new account, with a public subnet in each
+availability zone and an internet gateway, so that an EC2 instance launched without any
+networking choices can still reach the internet. It costs nothing while nothing runs in it.
+
+**Here:** nothing uses one. The `harpguru` account got one in each region when it was created;
+the region lock stops anything being launched outside the two allowed regions, but the VPCs
+there still exist. No stack mentions them, which makes them the clearest example of
+something real that no template shows: see `docs/outside-cdk.md`. Phase F's VPC is to be
+designed from scratch, without NAT gateways.
+
+**Say it:** "Every account starts with a default VPC in every region. It's free, but it's a
+public network nobody designed, so a hardened account either deletes it or makes sure
+nothing lands in it."
+
+**See it:**
+`aws ec2 describe-vpcs --profile harpguru --filters Name=is-default,Values=true --query 'Vpcs[].CidrBlock'`
+shows `172.31.0.0/16`, the range every default VPC uses. Add `--region us-east-1` for the other.
 
 ### Identity: who you are when you call AWS
 
@@ -437,6 +459,31 @@ stack from a careless delete. Anything stateful or irreplaceable gets both."
 **See it:**
 `aws cloudformation describe-stacks --query 'Stacks[].[StackName,EnableTerminationProtection]' --output table`.
 Since step 3's deploy on 2026-10-22, only its three stacks show `True`.
+
+#### Resource import and drift
+
+**What:** **resource import** adopts something that already exists into a stack, without
+recreating it. You write the resource in the template as it really is, give CloudFormation its
+identifiers, and it makes an `IMPORT` change set. **An import never changes the resource**,
+and every imported resource must carry a deletion policy; both here are `Retain`. **Drift** is any difference between what a
+template says and what is really there, and **drift detection** compares them on demand. A
+diff can't help here: it compares templates, not reality, and it shows an import as an addition.
+
+**Here:** `HarpguruIdentity` (step 3b) adopts the console-made `AdministratorAccess`
+permission set and its management account assignment, with `cdk import` and a resource
+mapping printed by `infra/scripts/identity-import-mapping.sh`. Because an import changes
+nothing, the code leaves off the project tags the console never set. They go on afterwards in
+an ordinary deploy, so the drift check in between can come back clean. A plain `cdk deploy`
+of the new stack would instead try to create a second permission set with the same name.
+*(PR `1-identity-import`)*
+
+**Say it:** "Import adopts a resource as it is, and only then do I change it, in a normal
+deploy; drift detection, not a diff, is what tells me the template matches reality."
+
+**See it:** drift detection on a stack that already exists:
+`aws cloudformation detect-stack-drift --stack-name HarpguruAccounts`, then, a few seconds later,
+`aws cloudformation describe-stack-resource-drifts --stack-name HarpguruAccounts --query 'StackResourceDrifts[].[LogicalResourceId,StackResourceDriftStatus]'`.
+On 2026-10-22 both resources were `IN_SYNC`.
 
 #### Cross-stack references
 
