@@ -60,8 +60,7 @@ Keep this list current: anything made outside a stack is added here in the PR th
 ## Moved into CDK
 
 - 2026-10-22: the `AdministratorAccess` permission set and its management account assignment,
-  imported into `HarpguruIdentity` (step 3b). Until the import is done, they are still
-  console-only.
+  imported into `HarpguruIdentity` (step 3b).
 
 ## Changes made outside CDK
 

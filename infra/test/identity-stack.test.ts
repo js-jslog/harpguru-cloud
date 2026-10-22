@@ -19,8 +19,8 @@ const synth = () => {
   return Template.fromStack(stack)
 }
 
-// An import adopts what exists and changes nothing, so these are the
-// console-made permission set's settings exactly, as read on 2026-10-22.
+// These are the console-made permission set's settings, as read on
+// 2026-10-22 and imported, plus the project tags added after the import.
 test('the permission set matches the one made in the console', () => {
   synth().templateMatches({
     Resources: {
@@ -31,7 +31,7 @@ test('the permission set matches the one made in the console', () => {
           Name: 'AdministratorAccess',
           ManagedPolicies: ['arn:aws:iam::aws:policy/AdministratorAccess'],
           SessionDuration: 'PT1H',
-          Tags: Match.absent(),
+          Tags: Match.arrayWith([{ Key: 'project', Value: 'harpguru' }]),
           Description: Match.absent(),
           InlinePolicy: Match.absent(),
           RelayStateType: Match.absent(),

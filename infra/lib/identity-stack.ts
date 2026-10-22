@@ -1,7 +1,6 @@
 import { RemovalPolicy, Stack, type StackProps } from 'aws-cdk-lib'
 import { CfnAssignment, CfnPermissionSet } from 'aws-cdk-lib/aws-sso'
 import type { Construct } from 'constructs'
-import { withoutProjectTags } from './tags'
 
 export type IdentityStackProps = StackProps & {
   identityCenterInstanceArn: string
@@ -13,10 +12,10 @@ export type IdentityStackProps = StackProps & {
 // management account. Both were made in the console before this app existed,
 // and are adopted here with `cdk import`, not created: see Phase A, step 3b.
 //
-// An import adopts a resource exactly as it is, and never changes it. So
-// what is written here must match the real thing, property for property, or
-// the stack starts life drifted. Both are retained, so deleting this stack
-// can never take away the login.
+// An import adopts a resource without applying the template to it, so the
+// template had to match the real thing, property for property; the project
+// tags, which the console never set, were left off until after the import.
+// Both are retained, so deleting this stack can never take away the login.
 export class IdentityStack extends Stack {
   constructor(scope: Construct, id: string, props: IdentityStackProps) {
     super(scope, id, props)
@@ -28,9 +27,6 @@ export class IdentityStack extends Stack {
       sessionDuration: 'PT1H',
     })
     admin.applyRemovalPolicy(RemovalPolicy.RETAIN)
-
-    // The console made it untagged.
-    withoutProjectTags(admin)
 
     // The workload account's assignment is in HarpguruAccounts, beside the
     // account it targets. Both name the permission set by the ARN in

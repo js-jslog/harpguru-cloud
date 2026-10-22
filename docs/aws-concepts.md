@@ -465,26 +465,29 @@ Since step 3's deploy on 2026-10-22, only its three stacks show `True`.
 
 **What:** **resource import** adopts something that already exists into a stack, without
 recreating it. You write the resource in the template as it really is, give CloudFormation its
-identifiers, and it makes an `IMPORT` change set. **An import never changes the resource**,
-and every imported resource must carry a deletion policy; both here are `Retain`. **Drift** is any difference between what a
+identifiers, and it makes an `IMPORT` change set. **An import doesn't apply the template to
+the resource**: a property that differs stays as it is, and becomes drift. The one thing it
+does add is CloudFormation's own `aws:cloudformation:*` tags, on resources that take tags.
+Every imported resource must carry a deletion policy; both here are `Retain`. **Drift** is any difference between what a
 template says and what is really there, and **drift detection** compares them on demand. A
 diff can't help here: it compares templates, not reality, and it shows an import as an addition.
 
 **Here:** `HarpguruIdentity` (step 3b) adopts the console-made `AdministratorAccess`
 permission set and its management account assignment, with `cdk import` and a resource
-mapping printed by `infra/scripts/identity-import-mapping.sh`. Because an import changes
-nothing, the code leaves off the project tags the console never set. They go on afterwards in
-an ordinary deploy, so the drift check in between can come back clean. A plain `cdk deploy`
-of the new stack would instead try to create a second permission set with the same name.
-*(PR `1-identity-import`)*
+mapping printed by `infra/scripts/identity-import-mapping.sh`. The code left off the project
+tags the console never set, so the drift check after the import came back `IN_SYNC` on
+2026-10-22; the tags went on afterwards in an ordinary deploy. A plain `cdk deploy` would have
+failed: the diff's change set was already refused by early validation, because the assignment
+"already exists". *(PR `1-identity-import`)*
 
 **Say it:** "Import adopts a resource as it is, and only then do I change it, in a normal
 deploy; drift detection, not a diff, is what tells me the template matches reality."
 
-**See it:** drift detection on a stack that already exists:
-`aws cloudformation detect-stack-drift --stack-name HarpguruAccounts`, then, a few seconds later,
-`aws cloudformation describe-stack-resource-drifts --stack-name HarpguruAccounts --query 'StackResourceDrifts[].[LogicalResourceId,StackResourceDriftStatus]'`.
-On 2026-10-22 both resources were `IN_SYNC`.
+**See it:** the import in the stack's events, as `IMPORT_COMPLETE` lines:
+`aws cloudformation describe-stack-events --stack-name HarpguruIdentity --query 'reverse(StackEvents)[].[LogicalResourceId,ResourceStatus,ResourceStatusReason]' --output table`.
+Drift detection:
+`aws cloudformation detect-stack-drift --stack-name HarpguruIdentity`, then, a few seconds later,
+`aws cloudformation describe-stack-resource-drifts --stack-name HarpguruIdentity --query 'StackResourceDrifts[].[LogicalResourceId,StackResourceDriftStatus]'`.
 
 #### Cross-stack references
 

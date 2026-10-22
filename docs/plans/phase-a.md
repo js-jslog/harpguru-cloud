@@ -23,7 +23,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | 2 | `1-budget`: $10 budget | **merged** and deployed 2026-10-13; zero-spend budget deleted | — |
 | 3 | `1-org-accounts`: workload account, OU, SCPs | **merged** and deployed 2026-10-22; `harpguru` profile added | — |
 | 3a | `1-scp-custom-resource`: SCPs switched on by a custom resource in its own stack; the four decisions settled | **merged** and deployed 2026-10-22 | — |
-| 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | coded on the branch; not imported | *you*: the import steps in #3b below |
+| 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | imported 2026-10-22; tags not yet deployed | *you*: step 4 of #3b below |
 | 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | not started | — |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | not started | — |
@@ -109,8 +109,8 @@ on its own schedule and puts something different at risk: a mistake in it costs 
 doesn't belong in `HarpguruPolicyTypes`, which is isolated so that nothing is ever deployed
 beside its SCP switch, nor in `HarpguruAccounts`, beside the account that can't be undone.
 
-An import never changes the resource, so the code matches the console
-exactly, which means the permission set goes in **without** the project tags. They are added
+An import doesn't apply the template to the resource, so the code had to match the console
+exactly, which meant the permission set went in **without** the project tags. They were added
 afterwards by an ordinary deploy, which is a real change and shows in its diff. Both resources
 name the permission set by the ARN in `deploy.local.json`, as `HarpguruAccounts` already does.
 `docs/outside-cdk.md` lists everything else that CDK doesn't manage, and why.
@@ -127,10 +127,19 @@ is real:
 3. Check for drift: `aws cloudformation detect-stack-drift --stack-name HarpguruIdentity`, then
    `aws cloudformation describe-stack-resource-drifts --stack-name HarpguruIdentity`. Both
    should be `IN_SYNC`.
-4. `cdk diff HarpguruIdentity`, then deploy it with `--require-approval never`. The import
-   leaves out CDK's metadata resource, so this adds it, and switches termination protection on.
-5. The agent then adds the tags in a second commit. `cdk diff` shows a tag change to the
-   permission set and nothing else, and you deploy it.
+4. With the drift check clean, the agent puts the tags back in the code. `cdk diff
+   HarpguruIdentity` shows the tag change to the permission set and CDK's metadata resource,
+   which the import leaves out, and nothing else. Then deploy it with `--require-approval never`.
+
+Steps 1 to 3 done 2026-10-22:
+- The diff's change set failed CloudFormation's early validation, because an assignment with
+  that identifier "already exists". So a plain deploy would indeed have failed, and the mapping's
+  identifiers were right. The diff fell back to comparing templates.
+- The import completed, and termination protection was on from the start.
+- Both resources were `IN_SYNC`. The import did change one thing: CloudFormation added its own
+  `aws:cloudformation:*` tags to the permission set, as it does to every taggable resource a
+  stack manages. It skipped the assignment, saying tags there would force a replacement.
+  Drift detection ignores those tags.
 
 **4 · `1-org-audit`.**
 - An organisation CloudTrail trail to S3.

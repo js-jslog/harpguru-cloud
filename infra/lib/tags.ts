@@ -14,12 +14,3 @@ export const applyProjectTags = (scope: IConstruct): void => {
     Tags.of(scope).add(key, value)
   }
 }
-
-// For a resource being imported: an import adopts the resource exactly as it
-// is and can't add tags, so they come off for the import and go back on in
-// an ordinary deploy after it.
-export const withoutProjectTags = (scope: IConstruct): void => {
-  for (const key of Object.keys(PROJECT_TAGS)) {
-    Tags.of(scope).remove(key)
-  }
-}
