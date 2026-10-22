@@ -80,7 +80,7 @@ account. It can't be restricted by IAM.
 Identity Center instead. An account created through Organizations, like `harpguru`, starts
 with a root user that has no password, although one can be set through "forgot password"
 on its email address. So the `harpguru-deny-root` SCP denies the root user every action in
-the workload account, once step 3 is deployed. AWS's newer **centralised root access** goes
+the workload account, live since step 3's deploy on 2026-10-22. AWS's newer **centralised root access** goes
 further. It takes three settings in the management account: trusted access for IAM in
 Organizations, then **root credentials management**, which lets the management account
 delete member accounts' root credentials, and **privileged root actions**, which lets it do
@@ -121,15 +121,17 @@ credentials for that role.
 `AdministratorAccess` permission set and its assignment to the management account were made
 in the console. Its assignment to the workload account is code: an
 `AWS::SSO::Assignment` in `HarpguruAccounts`, which also creates the
-`AWSReservedSSO_AdministratorAccess_*` role in the new account. Once step 3 is deployed, there
-is still one login, covering two accounts. *(PR `1-org-accounts`)*
+`AWSReservedSSO_AdministratorAccess_*` role in the new account. Since step 3's deploy on
+2026-10-22, one login covers two accounts: the CLI reaches the new one through a second
+profile, `harpguru`, which reuses the same SSO session. *(PR `1-org-accounts`)*
 
 **Say it:** "People never have credentials in an account. They sign in once and assume a
 role, and the credentials expire in hours."
 
 **See it:**
 `aws iam list-roles --query "Roles[?starts_with(RoleName,'AWSReservedSSO')].RoleName"`
-lists the role your permission set became.
+lists the role your permission set became; add `--profile harpguru` to see it in the workload
+account. `aws sts get-caller-identity --profile harpguru` shows you signed in there as that role.
 
 **How long things last.** There are two lifetimes. The role credentials last as long as the
 permission set's session duration, which for `AdministratorAccess` is one hour; the CLI
@@ -153,7 +155,8 @@ strongest isolation boundary: resources in different accounts can't touch each o
 unless they are deliberately allowed to.
 
 **Here:** the organisation already exists, and your original account is its management
-account. Step 3 adds a `harpguru` workload account in the `HarpguruAccounts` stack. The
+account. Step 3 added a `harpguru` workload account in the `HarpguruAccounts` stack, deployed
+on 2026-10-22, when creating it took under a minute. The
 management account keeps only billing, identity and audit, and runs no workloads.
 **Creating an account is the hard-to-undo step:** closing one takes a 90-day post-closure
 period, during which it still counts against the Organization's account quota (10 by default).
@@ -174,10 +177,10 @@ and it's the only way SCPs can apply to them."
 **What:** a folder for accounts inside an organisation. OUs can be nested, and policies
 attached to an OU apply to every account in it.
 
-**Here:** step 3 creates a `Workloads` OU holding the `harpguru` account. The rules live on
+**Here:** step 3 created a `Workloads` OU, which holds the `harpguru` account. The rules live on
 the OU, so a future lab or staging account inherits them just by being placed there. The OU
 and its SCPs are deployed in `HarpguruGuardrails` **before** the account stack, so the
-account is created inside a governed OU, with no gap. *(PR `1-org-accounts`)*
+account was created inside a governed OU, with no gap. *(PR `1-org-accounts`)*
 
 **Say it:** "Policies attach to OUs, not to individual accounts, so a new account is
 governed from the moment it's filed."
@@ -201,7 +204,9 @@ each is readable on its own (the limit is 10 per target, checked against AWS's q
 - `harpguru-region-lock` denies actions outside `eu-west-2` and `us-east-1`, exempting the five
   global services in the IAM guide's example (CloudFront, IAM, Organizations, Route 53 and
   Support). The Organizations guide's version exempts far more. Most global services are
-  served from `us-east-1`, which is allowed anyway, so the list is a safety margin
+  served from `us-east-1`, which is allowed anyway, so the list is a safety margin.
+  `us-east-1` is allowed at all mainly because CloudFront only accepts ACM certificates issued
+  there (see [Regions](#regions)); without it, step 7 could not create the certificate
 - `harpguru-deny-root` denies the root user
 - `harpguru-deny-leave-org` denies leaving the organisation
 
@@ -213,9 +218,9 @@ protects, a decision in the Phase A plan. How SCPs are switched on is in
 anywhere wins."
 
 **See it:** `aws organizations list-roots --query 'Roots[0].PolicyTypes'` is empty until SCPs
-are switched on. After that, run
-`aws organizations list-policies --filter SERVICE_CONTROL_POLICY --query 'Policies[].Name'`,
-and after the deploy,
+are switched on, which they have been since 2026-10-22.
+`aws organizations list-policies --filter SERVICE_CONTROL_POLICY --query 'Policies[].Name'`
+lists the four SCPs, and
 `aws organizations describe-policy --policy-id <id> --query Policy.Content --output text | jq`
 shows one policy exactly as written in `lib/guardrails-stack.ts`.
 To watch the region lock refuse a call from inside the workload account:
@@ -239,7 +244,7 @@ Center, and SCPs still limit this role like any other identity in the account.
 Organizations makes one in each new account as a break-glass route from the management
 account."
 
-**See it:** after the deploy, using the new profile,
+**See it:** using the workload account's profile,
 `aws iam get-role --role-name OrganizationAccountAccessRole --profile harpguru --query 'Role.AssumeRolePolicyDocument'`
 shows the trust policy naming the management account.
 
@@ -392,14 +397,18 @@ place, and it makes a deliberate delete take two steps. Its Lambda's role may ca
 `organizations:EnablePolicyType` and nothing else. It ignores
 `PolicyTypeAlreadyEnabledException`, so it does no harm if SCPs were already switched on by
 hand. The alternative was a one-off CLI command, which avoids the Lambda
-and role in the management account. *(PRs `1-org-accounts`, `1-scp-custom-resource`)*
+and role in the management account. Deployed on 2026-10-22, the stack holds five resources besides CDK's own metadata:
+the custom resource, the Lambda, its role, the role's policy, and a log group for the Lambda.
+The diff had not been expected to show the log group. This CDK version creates it explicitly, so
+it carries the project's tags and keeps logs for two years, at no real cost for a function
+that ran once. *(PRs `1-org-accounts`, `1-scp-custom-resource`)*
 
 **Say it:** "When CloudFormation has no resource for something, a custom resource runs code
 for it. If the reverse of that action is dangerous, I give it no delete handler and retain it."
 
-**See it:** once `HarpguruPolicyTypes` is deployed,
+**See it:**
 `aws cloudformation describe-stack-resources --stack-name HarpguruPolicyTypes --query 'StackResources[].[LogicalResourceId,ResourceType]' --output table`
-shows the custom resource beside its Lambda and role, and
+shows the custom resource beside its Lambda, role, policy and log group, and
 `aws organizations list-roots --query 'Roots[0].PolicyTypes'` shows what it switched on.
 
 #### Deletion policy and termination protection
@@ -429,14 +438,20 @@ Since step 3's deploy on 2026-10-22, only its three stacks show `True`.
 #### Cross-stack references
 
 **What:** how one stack uses a value another stack creates. In CDK you just pass the value,
-such as `guardrails.workloadsOu.attrId`, and CDK writes the plumbing. The plumbing comes in two kinds, chosen by the
-`@aws-cdk/core:defaultCrossStackReferences` setting in `cdk.json`:
-- **Weak**, our setting: the producing stack gets a plain **Output**, and the consuming stack
-  reads it with `Fn::GetStackOutput` when it deploys. Nothing stops the producer changing the
-  value or being deleted; the consumer just keeps the value it last read until its next deploy.
-- **Strong**, the CDK's default when the setting is absent: the value is written to an SSM
-  parameter, and the producer can't be deleted while a consumer uses it. Older CDK apps used an
-  **Export** read with `Fn::ImportValue` instead, with the same lock.
+such as `guardrails.workloadsOu.attrId`, and CDK writes the plumbing. Which plumbing depends on
+the `@aws-cdk/core:defaultCrossStackReferences` setting in `cdk.json`, and on whether the two
+stacks share a region:
+
+| | Same region | Different regions |
+| --- | --- | --- |
+| **Strong**, the default if the setting is absent | an **Output with an Export**, read with `Fn::ImportValue` | custom resources that copy the value into an SSM parameter in the consumer's region |
+| **Weak**, our setting since `1-cdk-app` | a plain **Output**, read with `Fn::GetStackOutput` | the same, with `Fn::GetStackOutput` naming the producer's region |
+
+A strong reference locks the producer: CloudFormation refuses to change or delete an export
+while another stack imports it. A weak one locks nothing; the consumer reads the output when
+it deploys and keeps that value until its next deploy. Weak is what `cdk init` writes for new
+projects. Step 7's certificate, made in `us-east-1` and used by the site in `eu-west-2`, will be
+the first reference between regions.
 
 **Here:** `HarpguruAccounts` reads the `Workloads` OU's ID from `HarpguruGuardrails`'s output.
 The reference also makes CDK deploy the guardrails first, which is the order we want. Being
@@ -462,8 +477,8 @@ anywhere, but can't do those lookups.
 
 **Here:** every stack is pinned. The region is written in the code, and the account comes
 from `CDK_DEFAULT_ACCOUNT`, which the CLI fills in from your SSO login, so no account ID is
-committed. Once step 3 creates the workload account, a second SSO profile for it supplies its
-stacks' account the same way. *(PR `1-cdk-app`)*
+committed. The workload account's stacks, from step 6, will get theirs the same way, from the
+`harpguru` profile added after step 3's deploy. *(PR `1-cdk-app`)*
 
 **Say it:** "Stacks are pinned to an account and region, but the account comes from the
 signed-in identity rather than from code."
