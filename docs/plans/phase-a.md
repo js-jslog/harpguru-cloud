@@ -123,9 +123,8 @@ to `us-west-2` from the new account was refused by the region lock.
 - You switch the nameservers at Heart. Delegate the domain; do not transfer it.
 - Confirm the change has propagated, then send a second test message.
 - Also check in Heart's panel that forwarding does not depend on Heart serving the zone.
-- Once the zone exists, **activate `project` as a cost allocation tag** in the management
-  account. A key can only be activated once a resource carries it, and earlier costs are
-  only split by requesting a backfill, so do it early.
+- ~~Once the zone exists, activate `project` as a cost allocation tag.~~ Done early, on
+  2026-10-22; see Decisions.
 
 **7 · `1-certificate`.** An ACM certificate in `us-east-1` covering the apex and `www`,
 validated through DNS in the zone. It reaches the site stack as a cross-region reference.
@@ -204,3 +203,9 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
   `HarpguruBudget`, need all of #3's values in `deploy.local.json`. What is hard to undo is
   the account itself, created by the first `cdk deploy HarpguruAccounts`: see #3, and the
   "Organizations" entry in `docs/aws-concepts.md`.
+- 2026-10-22: **`project` was activated as a cost allocation tag**, rather than in #6. Cost
+  Explorer already listed the key as `Inactive`, so waiting gained nothing. When it first
+  appeared is unknown: the budget has carried it since 2026-10-13. Costs from before activation are only split by requesting a backfill,
+  which was not done: they are pennies.
+- 2026-10-22: the tutor does **not** open its replies with a table of terms. That agreement in
+  `CLAUDE.md` is for the coding agent; the learning README says so.

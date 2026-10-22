@@ -516,17 +516,16 @@ back up to 12 months.
 **Here:** every resource gets `project=harpguru`, `repository=harpguru-cloud` and
 `managed-by=cdk`, applied once at the app root. The exceptions are L1 resources that CDK
 can't tag, such as the budget, which set them by hand (see
-[L1 and L2 constructs](#l1-and-l2-constructs)). Once tagged resources exist, `project` is
-activated, so "what does Harp Guru cost?" becomes one filter in Cost Explorer. The tagging is
-in PR `1-cdk-app`; the activation happens after step 6.
+[L1 and L2 constructs](#l1-and-l2-constructs)). `project` was activated on 2026-10-22, so "what does Harp Guru cost?" is one filter in Cost Explorer.
+Activation only splits costs from that day on. The tagging is in PR `1-cdk-app`.
 
 **Say it:** "Tag at the app root so nothing is missed, and activate the cost allocation tag
 early; anything earlier needs a backfill."
 
 **See it:** `aws ce list-cost-allocation-tags --region us-east-1 --query 'CostAllocationTags[].[TagKey,Status]'`.
-On 2026-10-22 it listed `project`, `repository` and `managed-by` as `Inactive`, beside
-CloudFormation's own automatic tags. A key appears there once a resource carries it, so
-`project` could already be activated; the plan still has it activated in step 6.
+It shows `project` as `Active`, and `repository` and `managed-by` as `Inactive`, beside
+CloudFormation's own automatic tags. A key only appears there once a resource carries it.
+Cost Explorer splits by it a day or so after activation.
 
 ### Audit and detection
 
