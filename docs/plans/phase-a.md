@@ -21,10 +21,10 @@ Update this table in the PR that moves a row. **You** means the user.
 | 0 | *you*: `aws configure sso`, profile renamed to `[default]` | **done** 2026-09-26 | — |
 | 1 | `1-cdk-app`: CDK skeleton | **merged** 2026-10-13 | — |
 | 2 | `1-budget`: $10 budget | **merged** and deployed 2026-10-13; zero-spend budget deleted | — |
-| 3 | `1-org-accounts`: workload account, OU, SCPs | merged; not deployed | *you*: the deploy steps in #3 below |
-| 3a | `1-scp-custom-resource`: SCPs switched on by a custom resource in its own stack; the four decisions settled | merged; not deployed | *you*: deployed as part of #3 |
-| 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | not started | #3 |
-| 5 | *you*: bootstrap the workload account | not started | #3 |
+| 3 | `1-org-accounts`: workload account, OU, SCPs | **merged** and deployed 2026-10-22; `harpguru` profile added | — |
+| 3a | `1-scp-custom-resource`: SCPs switched on by a custom resource in its own stack; the four decisions settled | **merged** and deployed 2026-10-22 | — |
+| 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | not started | — |
+| 5 | *you*: bootstrap the workload account | not started | — |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | not started | #5 |
 | 7 | `1-certificate`: ACM in `us-east-1` | not started | #6 propagated |
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
@@ -68,7 +68,8 @@ termination protection.
   Identity Center assignment giving `jslog` the `AdministratorAccess` permission set there,
   so the existing login reaches both accounts. The account email is a `+harpguru` alias of
   the user's address. The account is `RETAIN`, so tearing down a stack can never close it.
-  The OU's ID arrives as a cross-stack import, which also makes the guardrails deploy first.
+  The OU's ID arrives as a cross-stack reference, a weak one read with `Fn::GetStackOutput`,
+  which also makes the guardrails deploy first.
   The account is therefore governed from the moment it exists.
 - Values kept out of the repo (see Decisions) go in
   `infra/deploy.local.json`: the account email, the root
@@ -87,6 +88,11 @@ Deploying it, all *you*:
 5. Add a `[profile harpguru]` to `~/.aws/config` using the `WorkloadAccountId` output, and
    check that both the portal and `aws sts get-caller-identity --profile harpguru` reach the
    new account.
+
+Done 2026-10-22. Run with `!`, `cdk deploy` can't ask for approval of IAM changes, so after
+reading each diff the deploy was run with `--require-approval never`. The first attempt
+without it left an empty stack behind; see "Change sets" in `docs/aws-concepts.md`. A call
+to `us-west-2` from the new account was refused by the region lock.
 
 **4 · `1-org-audit`.**
 - An organisation CloudTrail trail to S3.

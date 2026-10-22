@@ -218,6 +218,9 @@ are switched on. After that, run
 and after the deploy,
 `aws organizations describe-policy --policy-id <id> --query Policy.Content --output text | jq`
 shows one policy exactly as written in `lib/guardrails-stack.ts`.
+To watch the region lock refuse a call from inside the workload account:
+`aws sqs list-queues --region us-west-2 --profile harpguru` fails with "explicit deny in a
+service control policy", and the same call in `eu-west-2` succeeds.
 
 #### OrganizationAccountAccessRole
 
@@ -312,6 +315,13 @@ first deploy, `HarpguruBudget` on 2026-10-13, took 13 seconds from `REVIEW_IN_PR
 `new CfnBudget(this, 'Monthly', …)`, and its physical ID is `harpguru-monthly`. Renaming
 `'Monthly'` in the code would make the next deploy delete the budget and create a new one.
 *(PR `1-budget`)*
+
+A new stack exists from the moment its first change set is made, in `REVIEW_IN_PROGRESS`.
+On 2026-10-22 the first `cdk deploy HarpguruPolicyTypes`, run with `!` and so without a
+terminal to ask for approval of IAM changes, made its change set and then gave up. It left
+an empty `REVIEW_IN_PROGRESS` stack with termination protection already on, so it couldn't
+tidy that stack up. The fix was to switch protection off, delete the empty stack, and
+deploy again with `--require-approval never` once the diff had been read.
 
 **Say it:** "CloudFormation tracks resources by logical ID, so renaming a construct means
 replacing the resource; I read the diff for replacements before every deploy."
@@ -414,30 +424,34 @@ stack from a careless delete. Anything stateful or irreplaceable gets both."
 
 **See it:**
 `aws cloudformation describe-stacks --query 'Stacks[].[StackName,EnableTerminationProtection]' --output table`.
-Once step 3 is deployed, only its three stacks show `True`.
+Since step 3's deploy on 2026-10-22, only its three stacks show `True`.
 
 #### Cross-stack references
 
 **What:** how one stack uses a value another stack creates. In CDK you just pass the value,
-such as `guardrails.workloadsOu.attrId`, and CDK writes the plumbing. Within one account
-and region, the producing stack gets an **Output with an Export**, and the consuming stack reads it
-with `Fn::ImportValue`. CloudFormation then refuses to change or delete an export while
-another stack imports it, which keeps the two stacks consistent but can block changes to the
-producer. References between regions work differently; the `defaultCrossStackReferences`
-setting in `cdk.json` applies only to those, and step 7's certificate is the first.
+such as `guardrails.workloadsOu.attrId`, and CDK writes the plumbing. The plumbing comes in two kinds, chosen by the
+`@aws-cdk/core:defaultCrossStackReferences` setting in `cdk.json`:
+- **Weak**, our setting: the producing stack gets a plain **Output**, and the consuming stack
+  reads it with `Fn::GetStackOutput` when it deploys. Nothing stops the producer changing the
+  value or being deleted; the consumer just keeps the value it last read until its next deploy.
+- **Strong**, the CDK's default when the setting is absent: the value is written to an SSM
+  parameter, and the producer can't be deleted while a consumer uses it. Older CDK apps used an
+  **Export** read with `Fn::ImportValue` instead, with the same lock.
 
-**Here:** `HarpguruAccounts` imports the `Workloads` OU's ID from `HarpguruGuardrails`. The
-import also makes CDK deploy the guardrails first, which is the order we want.
-*(PR `1-org-accounts`)*
+**Here:** `HarpguruAccounts` reads the `Workloads` OU's ID from `HarpguruGuardrails`'s output.
+The reference also makes CDK deploy the guardrails first, which is the order we want. Being
+weak, it doesn't guard the guardrails stack; termination protection does that. Until the
+deploy on 2026-10-22 this entry described exports, which no stack here uses.
+*(PR `1-org-accounts`; corrected in `1-deploy-org-accounts`)*
 
-**Say it:** "Cross-stack references are exports and imports, and an export can't change
-while it's imported; that's a feature for stable things like an OU, and a trap for anything
-you expect to replace."
+**Say it:** "A strong reference locks the producer while it's consumed; a weak one just reads
+its output at deploy time, so stability has to come from somewhere else, like termination
+protection."
 
-**See it:** `aws cloudformation list-exports --query 'Exports[].Name'`. Before step 3 it lists
-only `CdkBootstrap-hnb659fds-FileAssetKeyArn`, which the bootstrap stack exports. Afterwards it
-also lists the OU's ID, and `aws cloudformation list-imports --export-name <name>` shows
-`HarpguruAccounts` using it.
+**See it:** the reference as deployed:
+`aws cloudformation get-template --stack-name HarpguruAccounts --query 'TemplateBody.Resources.Harpguru.Properties.ParentIds'`.
+The output it reads, with no export name:
+`aws cloudformation describe-stacks --stack-name HarpguruGuardrails --query 'Stacks[0].Outputs'`.
 
 #### Environments
 
