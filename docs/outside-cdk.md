@@ -11,16 +11,15 @@ left alone.**
   management account assignment.
 - **Made by hand, as a one-off foundation that predates the app:** recorded here, not
   imported, where a stack would add a delete risk and nothing about it changes. The
-  Organization, the Identity Center instance and the anomaly monitor.
+  Organization, the Identity Center instance, the anomaly monitor and Resource Explorer.
 - **Made by AWS itself:** listed here and left as AWS made it. An AWS default is not manual
   work, and importing or deleting one would only add work to record.
 
-Four kinds of reason appear below:
+Three kinds of reason appear below:
 - **Can't:** CloudFormation has no resource type for it, it has to exist before any stack can,
   or something else forbids touching it: the service that owns it, or one of this project's
   SCPs.
 - **Chose not:** a resource type exists, and leaving it outside is a recorded decision.
-- **Not decided:** found, and waiting on a decision.
 - **Not AWS:** it lives somewhere else entirely.
 
 "No resource type" was checked on 2026-10-22 with
@@ -41,7 +40,7 @@ Keep this list current: anything made outside a stack is added here in the PR th
 | The Identity Center user `jslog` | Can't | There is no `AWS::IdentityStore::User`. A custom resource could create one, but a person's identity, with a password and MFA they set themselves, is not something to recreate from code | `aws identitystore list-users --identity-store-id <id> --query 'Users[].UserName'`, with the ID from `aws sso-admin list-instances` |
 | The `AWSReservedSSO_AdministratorAccess_*` role | Can't | Identity Center creates and owns it, from the assignment now in `HarpguruIdentity`, and it can only be changed through the permission set | `aws iam list-roles --query "Roles[?starts_with(RoleName,'AWSReservedSSO')].RoleName"` |
 | Service-linked roles: `AWSServiceRoleForOrganizations`, `ForSSO`, `ForSupport`, `ForTrustedAdvisor` and `ForResourceExplorer` | Can't | Each AWS service creates its own, under `/aws-service-role/`, and only that service may change it. `AWS::IAM::ServiceLinkedRole` can create one, but these already belong to their services | `aws iam list-roles --path-prefix /aws-service-role/ --query 'Roles[].RoleName'` |
-| Resource Explorer: a local index in `eu-west-2` and one view | Not decided | Switched on by hand in the console on 2026-08-28, before this project's app, and found only on 2026-10-22. `AWS::ResourceExplorer2::Index` and `View` exist. It is free | `aws resource-explorer-2 list-indexes --region eu-west-2` |
+| Resource Explorer: a local index in `eu-west-2` and one view | Chose not | Switched on by hand in the console on 2026-08-28, before this project's app, and found only on 2026-10-22. `AWS::ResourceExplorer2::Index` and `View` exist, but it is a one-off console convenience, not configuration the project depends on, so it is recorded here and kept. It is free. Decided 2026-10-22 | `aws resource-explorer-2 list-indexes --region eu-west-2` |
 | Trusted access for `sso.amazonaws.com` | Can't | Switched on by Identity Center when it was enabled. There is no resource type for trusted access | `aws organizations list-aws-service-access-for-organization` |
 | Cost Anomaly Detection's default monitor and its daily email | Chose not | `AWS::CE::AnomalyMonitor` and `AWS::CE::AnomalySubscription` exist. The console made them before this project, and the plan's step 2 decided not to rebuild them | `aws ce get-anomaly-monitors --region us-east-1 --query 'AnomalyMonitors[].MonitorName'` |
 | The `project` cost allocation tag's activation | Can't | There is no resource type. It was activated once with the CLI on 2026-10-22, and stays active | `aws ce list-cost-allocation-tags --region us-east-1 --tag-keys project` |

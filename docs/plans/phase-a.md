@@ -279,3 +279,6 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
   planned otherwise the same day, the role imported and the workload account's two default
   VPCs deleted, and dropped before anything ran: the deletion would itself have been manual
   work to record. One-off manual changes are logged at the end of `docs/outside-cdk.md`.
+- 2026-10-22: **Resource Explorer, found switched on in the management account since
+  2026-08-28, is kept and recorded in `docs/outside-cdk.md`**, not imported or switched off.
+  It is a free, one-off console convenience made before the app.
