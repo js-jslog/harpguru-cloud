@@ -1,17 +1,20 @@
 # Syllabus
 
-**As of 2026-10-22.** Covers Phase A steps 0–3 and 5: the SSO login, the CDK app skeleton, the $10
-budget, and the workload account with its OU and guardrails, including step 3a, which switches
-SCPs on through a custom resource. Steps 1 to 3a are merged. Step 1 is the skeleton and
+**As of 2026-10-22.** Covers Phase A steps 0–3b and 5: the SSO login, the CDK app skeleton,
+the $10 budget, and the workload account with its OU and guardrails, including step 3a, which
+switches SCPs on through a custom resource, and step 3b, which imported the console-made
+permission set into a stack and listed everything CDK doesn't manage. Steps 1 to 3b are
+merged. Step 1 is the skeleton and
 deploys nothing itself; the rest are **deployed**: step 2 on 2026-10-13, and step 3's three
-stacks on 2026-10-22. Step 5, bootstrapping the workload account in two regions, was done
-the same day. So the account really does hold the
+stacks on 2026-10-22. Step 3b's `HarpguruIdentity` was imported and deployed, and step 5,
+bootstrapping the workload account in two regions, was done, both the same day. So the account really does hold the
 `Workloads` OU, its three SCPs and the `harpguru` workload account, and the status table in
 `docs/plans/phase-a.md` says the same. Step 4 and everything after step 5 are out of scope; see
 the last section.
 
-**Priority now: topics 4 and 7.** Step 3 is no longer code waiting to run. The guardrails were
-seen refusing a real call, and the one irreversible step of Phase A so far has happened.
+**Priority now: topics 4, 7 and 8.** Step 3 is no longer code waiting to run. The guardrails
+were seen refusing a real call, and the one irreversible step of Phase A so far has happened.
+Topic 8 is new: what in the accounts no stack shows, and why.
 
 Each topic gives its tier and why, what I should be able to answer, and its sources. The
 sources hold the facts; this file deliberately does not restate them. Sources are named by
@@ -152,11 +155,36 @@ in the README, and the tiering here is a proposal, to be argued with.
   `roadmap-planning/aws-pathway-findings.md` "Step 3 facts, checked 2026-10-14 and 2026-10-20"
   and "Step 3 deployed, 2026-10-22".
 
+### 8. What CDK doesn't manage, and how something gets in
+
+- **Covers:** everything in the two accounts that no stack owns, each marked "can't", "chose
+  not" or "not AWS"; the test that decides it, and the record of changes made by hand. Also
+  resource import, which brought the console-made permission set and its management account
+  assignment into `HarpguruIdentity`, and why that is a separate stack.
+- **Why must own:** the stacks are only a full picture together with this list. I should be
+  able to say, for anything in the accounts, whether code owns it, and if not, why not, without
+  overstating a "chose not" as a "can't".
+- **Be able to answer:** the test for what goes into a stack, and why AWS-made defaults are left
+  alone; three things that can't be in CloudFormation, and why each can't; which items could be
+  and were left out deliberately, and the reason for each; why the default VPCs were neither
+  imported nor deleted, and why 15 of the workload account's can't even be touched; where a
+  change made by hand is recorded; how an import differs from a create, why a diff can't confirm
+  one, and what a plain deploy would have done; what an import does and doesn't change; why the
+  project tags were left off for the import; what drift is, and how it was checked; why
+  `HarpguruIdentity` is not part of `HarpguruPolicyTypes` or `HarpguruAccounts`.
+- **Sources:** `docs/outside-cdk.md`; `docs/aws-concepts.md` "Resource import and drift",
+  "Default VPC", "OrganizationAccountAccessRole" and "IAM Identity Center";
+  `docs/plans/phase-a.md` "Steps" (item 3b) and "Decisions" (the two 2026-10-22 entries about
+  what goes in a stack);
+  `infra/lib/identity-stack.ts`; `infra/test/identity-stack.test.ts`;
+  `infra/scripts/identity-import-mapping.sh`; `roadmap-planning/aws-pathway-findings.md`
+  "Step 3 deployed, 2026-10-22".
+
 ---
 
 ## Should understand
 
-### 8. Regions, environments and bootstrap
+### 9. Regions, environments and bootstrap
 
 - **Covers:** where things run, how a stack is pinned to an account and region without the
   account ID being in the code, and what bootstrap prepares.
@@ -167,14 +195,14 @@ in the README, and the tiering here is a proposal, to be argued with.
 - **Sources:** `docs/aws-concepts.md` "Regions", "Environments" and "CDK bootstrap";
   `infra/lib/config.ts`; `docs/plans/phase-a.md` "Steps" (item 5).
 
-### 9. Tags and cost allocation
+### 10. Tags and cost allocation
 
 - **Covers:** tagging once at the app root, the budget's exception to it, and why a cost
   allocation tag needs activating.
 - **Sources:** `docs/aws-concepts.md` "Tags and cost allocation tags" and
   "L1 and L2 constructs"; `infra/lib/tags.ts`; `infra/lib/budget-stack.ts`.
 
-### 10. Testing infrastructure code
+### 11. Testing infrastructure code
 
 - **Covers:** what assertions against a synthesised template can and cannot prove, including a
   test that exists to stop an expensive mistake rather than to check behaviour, and tests that
@@ -185,14 +213,14 @@ in the README, and the tiering here is a proposal, to be argued with.
   `infra/test/accounts-stack.test.ts`; `infra/test/guardrails-stack.test.ts`;
   `infra/test/policy-types-stack.test.ts`.
 
-### 11. Account IDs, ARNs and keeping them out of a public repo
+### 12. Account IDs, ARNs and keeping them out of a public repo
 
 - **Covers:** what an ARN is made of, why an account ID is not a secret but is still kept out,
   and how the repo avoids ever committing one.
 - **Sources:** `docs/aws-concepts.md` "Account ID and ARNs";
   `infra/README.md` "Deploy-time values"; `infra/lib/config.ts`.
 
-### 12. Three stacks, cross-stack references and deploy order
+### 13. Three stacks, cross-stack references and deploy order
 
 - **Covers:** why step 3 is three stacks; how the OU's ID gets from the guardrails to the
   accounts stack, and how that forces the guardrails to deploy first; and how the guardrails
@@ -203,7 +231,7 @@ in the README, and the tiering here is a proposal, to be argued with.
   "Apps, stacks and constructs"; `docs/plans/phase-a.md` "Decisions" and "Steps" (item 3);
   `infra/bin/harpguru.ts`.
 
-### 13. How I get into the new account
+### 14. How I get into the new account
 
 - **Covers:** the Identity Center assignment that gives my existing login access to the new
   account, the second CLI profile that uses it, and `OrganizationAccountAccessRole` as the way

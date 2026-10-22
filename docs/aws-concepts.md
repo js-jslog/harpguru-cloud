@@ -16,7 +16,7 @@ The "See it" commands assume you are signed in with `aws sso login`. Where a com
 the account ID, it fetches it with `aws sts get-caller-identity`.
 
 **Index:** [Regions](#regions) · [Account ID and ARNs](#account-id-and-arns) ·
-[Root user](#root-user) · [IAM users](#iam-users) ·
+[Default VPC](#default-vpc) · [Root user](#root-user) · [IAM users](#iam-users) ·
 [IAM Identity Center](#iam-identity-center) · [Organizations](#organizations) ·
 [Organizational Unit (OU)](#organizational-unit-ou) ·
 [Service Control Policy (SCP)](#service-control-policy-scp) ·
@@ -27,6 +27,7 @@ the account ID, it fetches it with `aws sts get-caller-identity`.
 [Apps, stacks and constructs](#apps-stacks-and-constructs) ·
 [L1 and L2 constructs](#l1-and-l2-constructs) · [Custom resources](#custom-resources) ·
 [Deletion policy and termination protection](#deletion-policy-and-termination-protection) ·
+[Resource import and drift](#resource-import-and-drift) ·
 [Cross-stack references](#cross-stack-references) ·
 [Environments](#environments) · [CDK bootstrap](#cdk-bootstrap) ·
 [Tags and cost allocation tags](#tags-and-cost-allocation-tags) ·
@@ -67,6 +68,28 @@ credentials."
 
 **See it:** `aws sts get-caller-identity`. The `Arn` it prints shows you as an assumed role
 rather than a user.
+
+#### Default VPC
+
+**What:** a VPC (Virtual Private Cloud) is a private network inside one region. AWS creates a
+**default VPC** in every region of every new account, with a public subnet in each
+availability zone and an internet gateway, so that an EC2 instance launched without any
+networking choices can still reach the internet. It costs nothing while nothing runs in it.
+
+**Here:** nothing uses one. Each account has one in every region, 17 each. They are left as
+AWS made them, neither imported nor deleted, because they are AWS defaults rather than manual
+work; the reasoning is in `docs/outside-cdk.md`. In the workload account, 15 of them can't be
+touched at all: the region lock denies every action outside the two allowed regions, deletion
+included. Phase F's VPC is to be designed from scratch, without NAT gateways.
+*(PR `1-identity-import`)*
+
+**Say it:** "Every account starts with a default VPC in every region. It's free, but it's a
+public network nobody designed. Many hardened accounts delete it; I left mine, because
+nothing runs there and the SCPs bound what could."
+
+**See it:**
+`aws ec2 describe-vpcs --profile harpguru --filters Name=is-default,Values=true --query 'Vpcs[].CidrBlock'`
+shows `172.31.0.0/16`, the range every default VPC uses. Add `--region us-east-1` for the other.
 
 ### Identity: who you are when you call AWS
 
@@ -119,11 +142,14 @@ credentials for that role.
 **Here:** an **organization instance** in `eu-west-2`. You sign in at the access portal, and
 `aws sso login --use-device-code` gets the CLI's short-lived credentials. The
 `AdministratorAccess` permission set and its assignment to the management account were made
-in the console. Its assignment to the workload account is code: an
+in the console, and on 2026-10-22 were imported into `HarpguruIdentity`, so they are code too
+now (see [Resource import and drift](#resource-import-and-drift)). Its assignment to the
+workload account was code from the start: an
 `AWS::SSO::Assignment` in `HarpguruAccounts`, which also creates the
 `AWSReservedSSO_AdministratorAccess_*` role in the new account. Since step 3's deploy on
 2026-10-22, one login covers two accounts: the CLI reaches the new one through a second
-profile, `harpguru`, which reuses the same SSO session. *(PR `1-org-accounts`)*
+profile, `harpguru`, which reuses the same SSO session. *(PRs `1-org-accounts`,
+`1-identity-import`)*
 
 **Say it:** "People never have credentials in an account. They sign in once and assume a
 role, and the credentials expire in hours."
@@ -278,7 +304,8 @@ spend."
 jumps outside it, even if you're still below any budget.
 
 **Here:** its default monitor is already running, with a daily email, so nothing is built
-for it.
+for it. It was made in the console, and is deliberately left out of CDK: see
+`docs/outside-cdk.md`.
 
 **Say it:** "Budgets catch totals; anomaly detection catches a sudden jump in rate, like a
 runaway resource on day two."
@@ -428,15 +455,45 @@ shows the custom resource beside its Lambda, role, policy and log group, and
 `applyRemovalPolicy(RemovalPolicy.RETAIN)`, although `Retain` is already CloudFormation's
 default for accounts. `HarpguruGuardrails` and `HarpguruAccounts` both have termination
 protection, because deleting the first would strip the guardrails off the OU.
-`HarpguruPolicyTypes` has it too, and its custom resource is `Retain`. `HarpguruBudget` has
-neither. *(PRs `1-org-accounts`, `1-scp-custom-resource`)*
+`HarpguruPolicyTypes` has it too, and its custom resource is `Retain`. `HarpguruIdentity` has
+it as well, and its imported permission set and assignment are both `Retain`, as every
+imported resource must have a deletion policy. `HarpguruBudget` has neither.
+*(PRs `1-org-accounts`, `1-scp-custom-resource`, `1-identity-import`)*
 
 **Say it:** "Retain protects a resource from its stack; termination protection protects the
 stack from a careless delete. Anything stateful or irreplaceable gets both."
 
 **See it:**
 `aws cloudformation describe-stacks --query 'Stacks[].[StackName,EnableTerminationProtection]' --output table`.
-Since step 3's deploy on 2026-10-22, only its three stacks show `True`.
+Since 2026-10-22, step 3's three stacks and `HarpguruIdentity` show `True`.
+
+#### Resource import and drift
+
+**What:** **resource import** adopts something that already exists into a stack, without
+recreating it. You write the resource in the template as it really is, give CloudFormation its
+identifiers, and it makes an `IMPORT` change set. **An import doesn't apply the template to
+the resource**: a property that differs stays as it is, and becomes drift. The one thing it
+does add is CloudFormation's own `aws:cloudformation:*` tags, on resources that take tags.
+Every imported resource must carry a deletion policy; both here are `Retain`. **Drift** is any difference between what a
+template says and what is really there, and **drift detection** compares them on demand. A
+diff can't help here: it compares templates, not reality, and it shows an import as an addition.
+
+**Here:** `HarpguruIdentity` (step 3b) adopts the console-made `AdministratorAccess`
+permission set and its management account assignment, with `cdk import` and a resource
+mapping printed by `infra/scripts/identity-import-mapping.sh`. The code left off the project
+tags the console never set, so the drift check after the import came back `IN_SYNC` on
+2026-10-22; the tags went on afterwards in an ordinary deploy. A plain `cdk deploy` would have
+failed: the diff's change set was already refused by early validation, because the assignment
+"already exists". *(PR `1-identity-import`)*
+
+**Say it:** "Import adopts a resource as it is, and only then do I change it, in a normal
+deploy; drift detection, not a diff, is what tells me the template matches reality."
+
+**See it:** the import in the stack's events, as `IMPORT_COMPLETE` lines:
+`aws cloudformation describe-stack-events --stack-name HarpguruIdentity --query 'reverse(StackEvents)[].[LogicalResourceId,ResourceStatus,ResourceStatusReason]' --output table`.
+Drift detection:
+`aws cloudformation detect-stack-drift --stack-name HarpguruIdentity`, then, a few seconds later,
+`aws cloudformation describe-stack-resource-drifts --stack-name HarpguruIdentity --query 'StackResourceDrifts[].[LogicalResourceId,StackResourceDriftStatus]'`.
 
 #### Cross-stack references
 

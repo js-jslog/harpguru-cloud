@@ -23,6 +23,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | 2 | `1-budget`: $10 budget | **merged** and deployed 2026-10-13; zero-spend budget deleted | — |
 | 3 | `1-org-accounts`: workload account, OU, SCPs | **merged** and deployed 2026-10-22; `harpguru` profile added | — |
 | 3a | `1-scp-custom-resource`: SCPs switched on by a custom resource in its own stack; the four decisions settled | **merged** and deployed 2026-10-22 | — |
+| 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | **merged**, imported and deployed 2026-10-22 | — |
 | 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | not started | — |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | not started | — |
@@ -95,6 +96,54 @@ expected. `aws sts get-caller-identity --profile harpguru` reached the new accou
 reading each diff the deploy was run with `--require-approval never`. The first attempt
 without it left an empty stack behind; see "Change sets" in `docs/aws-concepts.md`. A call
 to `us-west-2` from the new account was refused by the region lock.
+
+**3b · `1-identity-import`.** One stack in the management account, `HarpguruIdentity`,
+termination protected, that adopts two console-made resources with `cdk import` rather than
+creating them:
+- the `AdministratorAccess` permission set: one AWS managed policy, `AdministratorAccess`, and
+  a one-hour session, as read on 2026-10-22
+- its assignment of `jslog` to the management account
+
+Both are `Retain`. It is a stack of its own, apart from the existing ones, because it changes
+on its own schedule and puts something different at risk: a mistake in it costs the login. It
+doesn't belong in `HarpguruPolicyTypes`, which is isolated so that nothing is ever deployed
+beside its SCP switch, nor in `HarpguruAccounts`, beside the account that can't be undone.
+
+An import doesn't apply the template to the resource, so the code had to match the console
+exactly, which meant the permission set went in **without** the project tags. They were added
+afterwards by an ordinary deploy, which is a real change and shows in its diff.
+Its assignment names the permission set by the ARN in `deploy.local.json`, as the workload
+account's assignment in `HarpguruAccounts` already does, rather than by a reference to the
+resource beside it.
+`docs/outside-cdk.md` lists everything else that CDK doesn't manage, and why.
+
+Importing it, all *you*, from the branch before it is merged, so the merged PR describes what
+is real:
+1. `cdk diff HarpguruIdentity`. It shows both resources as `[+]`: a diff can't tell an import
+   from a create. **Do not `cdk deploy` here.** A deploy would try to create a second
+   permission set with the same name, and fail.
+2. `npx cdk import HarpguruIdentity --resource-mapping-inline "$(scripts/identity-import-mapping.sh)"`.
+   The script prints each resource's identifiers, read from `deploy.local.json` and the
+   signed-in account. The import makes an `IMPORT` change set that creates the stack around
+   the two existing resources.
+3. Check for drift: `aws cloudformation detect-stack-drift --stack-name HarpguruIdentity`, then
+   `aws cloudformation describe-stack-resource-drifts --stack-name HarpguruIdentity`. Both
+   should be `IN_SYNC`.
+4. With the drift check clean, the agent puts the tags back in the code. `cdk diff
+   HarpguruIdentity` shows the tag change to the permission set, plus the stack description
+   and the bootstrap parameter, which the import left out. The deploy also adds `CDKMetadata`,
+   which the import left out too, but which `cdk diff` never shows. Then deploy it with `--require-approval never`.
+
+Done 2026-10-22. After step 4 the stack was still `IN_SYNC`, and the login still reached both
+accounts. What steps 1 to 3 showed:
+- The diff's change set failed CloudFormation's early validation, because an assignment with
+  that identifier "already exists". So a plain deploy would indeed have failed, and the mapping's
+  identifiers were right. The diff fell back to comparing templates.
+- The import completed, and termination protection was on from the start.
+- Both resources were `IN_SYNC`. The import did change one thing: CloudFormation added its own
+  `aws:cloudformation:*` tags to the permission set, as it does to every taggable resource a
+  stack manages. It skipped the assignment, saying tags there would force a replacement.
+  Drift detection ignores those tags.
 
 **4 · `1-org-audit`.**
 - An organisation CloudTrail trail to S3.
@@ -212,3 +261,24 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
   which was not done: they are pennies.
 - 2026-10-22: the tutor does **not** open its replies with a table of terms. That agreement in
   `CLAUDE.md` is for the coding agent; the learning README says so.
+- 2026-10-22: **what CloudFormation could manage but the console made is decided case by
+  case.** The `AdministratorAccess` permission set and its management account assignment are
+  imported (#3b): they decide who is an admin where, and `HarpguruAccounts` already depends on
+  the permission set. The Organization and the Identity Center instance stay outside, by
+  choice: both existed before the app, nothing about them changes, and a stack owning them
+  would carry a delete risk like the one designed out of `HarpguruPolicyTypes`. The anomaly
+  monitor stays outside, as "Steps" item 2 says (planned 2026-09-25, against the account state
+  checked 2026-09-26). The full list, with each "can't" and "chose
+  not", is `docs/outside-cdk.md`.
+- 2026-10-22: **the test for what goes in a stack: every piece of manual work is on record,
+  and AWS defaults are left alone.** Configuration made by hand that may change goes into a
+  stack where CloudFormation can manage it; a one-off foundation made by hand before the app,
+  such as the Organization, is recorded in `docs/outside-cdk.md` instead, per the entry above;
+  anything AWS made by itself is listed there and left alone. Under it,
+  `OrganizationAccountAccessRole` and every default VPC stay outside. Both were briefly
+  planned otherwise the same day, the role imported and the workload account's two default
+  VPCs deleted, and dropped before anything ran: the deletion would itself have been manual
+  work to record. One-off manual changes are logged at the end of `docs/outside-cdk.md`.
+- 2026-10-22: **Resource Explorer, found switched on in the management account since
+  2026-08-28, is kept and recorded in `docs/outside-cdk.md`**, not imported or switched off.
+  It is a free, one-off console convenience made before the app.

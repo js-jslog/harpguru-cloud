@@ -4,6 +4,7 @@ import { AccountsStack } from '../lib/accounts-stack'
 import { BudgetStack } from '../lib/budget-stack'
 import { managementEnv, readDeployConfig, requireSetting } from '../lib/config'
 import { GuardrailsStack } from '../lib/guardrails-stack'
+import { IdentityStack } from '../lib/identity-stack'
 import { PolicyTypesStack } from '../lib/policy-types-stack'
 import { applyProjectTags } from '../lib/tags'
 
@@ -18,6 +19,22 @@ new BudgetStack(app, 'HarpguruBudget', {
   description:
     'Monthly cost budget and email alerts for the whole Organization',
   alertEmail: requireSetting(config, 'alertEmail'),
+})
+
+// Adopted from the console, not created; see lib/identity-stack.ts. Both
+// resources are retained, and the stack is protected, because the login to
+// every account depends on them.
+new IdentityStack(app, 'HarpguruIdentity', {
+  env: managementEnv(),
+  description:
+    'The AdministratorAccess permission set and its management account assignment',
+  terminationProtection: true,
+  identityCenterInstanceArn: requireSetting(
+    config,
+    'identityCenterInstanceArn'
+  ),
+  adminPermissionSetArn: requireSetting(config, 'adminPermissionSetArn'),
+  adminPrincipalId: requireSetting(config, 'adminPrincipalId'),
 })
 
 // SCPs must be switched on before any can be attached. This gets a stack of
