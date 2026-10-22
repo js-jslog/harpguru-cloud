@@ -142,6 +142,10 @@ what is real. First merge `scripts/identity-center-values.sh`'s output into
    `npx cdk import HarpguruBreakGlass --profile harpguru --resource-mapping-inline '{"OrganizationAccountAccessRole":{"RoleName":"OrganizationAccountAccessRole"}}'`.
 6. The agent then adds the tags in a second commit. `cdk diff` shows a tag change to each
    imported resource and nothing else, and you deploy both stacks.
+7. Delete the workload account's two default VPCs:
+   `AWS_PROFILE=harpguru scripts/delete-default-vpc.sh <region>` for `eu-west-2` and
+   `us-east-1`, which shows what it would delete, then again with `--yes`. The agent then
+   marks the log in `docs/outside-cdk.md` as run.
 
 **4 · `1-org-audit`.**
 - An organisation CloudTrail trail to S3.
@@ -269,3 +273,8 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
   would carry a delete risk like the one designed out of `HarpguruPolicyTypes`. The anomaly
   monitor stays outside, as decided 2026-09-26. The full list, with each "can't" and "chose
   not", is `docs/outside-cdk.md`.
+- 2026-10-22: **the workload account's default VPCs in the two allowed regions are deleted, not
+  imported**: nothing uses them, and Phase F designs its own network. It is done by hand with
+  `infra/scripts/delete-default-vpc.sh`, and recorded in `docs/outside-cdk.md`, since no
+  template shows it. The other 15 regions' default VPCs can't be reached past the region lock.
+  The management account's 17 are not yet decided.

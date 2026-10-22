@@ -76,19 +76,22 @@ rather than a user.
 availability zone and an internet gateway, so that an EC2 instance launched without any
 networking choices can still reach the internet. It costs nothing while nothing runs in it.
 
-**Here:** nothing uses one. The `harpguru` account got one in each region when it was created;
-the region lock stops anything being launched outside the two allowed regions, but the VPCs
-there still exist. No stack mentions them, which makes them the clearest example of
-something real that no template shows: see `docs/outside-cdk.md`. Phase F's VPC is to be
-designed from scratch, without NAT gateways.
+**Here:** nothing used one. The `harpguru` account got one in each of its 17 regions when it
+was created. The two in the allowed regions are deleted by hand, with
+`infra/scripts/delete-default-vpc.sh`, rather than imported into a stack; Phase F's VPC is to
+be designed from scratch, without NAT gateways. The other 15 can't be touched at all: the
+region lock denies every action there, deletion included. Because no stack records any of
+this, `docs/outside-cdk.md` does. The management account still has its 17, undecided.
+*(PR `1-identity-import`)*
 
 **Say it:** "Every account starts with a default VPC in every region. It's free, but it's a
 public network nobody designed, so a hardened account either deletes it or makes sure
 nothing lands in it."
 
-**See it:**
-`aws ec2 describe-vpcs --profile harpguru --filters Name=is-default,Values=true --query 'Vpcs[].CidrBlock'`
-shows `172.31.0.0/16`, the range every default VPC uses. Add `--region us-east-1` for the other.
+**See it:** in the management account,
+`aws ec2 describe-vpcs --filters Name=is-default,Values=true --query 'Vpcs[].CidrBlock'` shows
+`172.31.0.0/16`, the range every default VPC uses. Add `--profile harpguru` to see none, once
+the deletion has been run.
 
 ### Identity: who you are when you call AWS
 
