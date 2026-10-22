@@ -1,13 +1,14 @@
 # Syllabus
 
-**As of 2026-10-22.** Covers Phase A steps 0–3: the SSO login, the CDK app skeleton, the $10
+**As of 2026-10-22.** Covers Phase A steps 0–3 and 5: the SSO login, the CDK app skeleton, the $10
 budget, and the workload account with its OU and guardrails, including step 3a, which switches
 SCPs on through a custom resource. Steps 1 to 3a are merged. Step 1 is the skeleton and
 deploys nothing itself; the rest are **deployed**: step 2 on 2026-10-13, and step 3's three
-stacks on 2026-10-22. So the account really does hold the
+stacks on 2026-10-22. Step 5, bootstrapping the workload account in two regions, was done
+the same day. So the account really does hold the
 `Workloads` OU, its three SCPs and the `harpguru` workload account, and the status table in
-`docs/plans/phase-a.md` says the same. Everything after step 3 is out of scope; see the last
-section.
+`docs/plans/phase-a.md` says the same. Step 4 and everything after step 5 are out of scope; see
+the last section.
 
 **Priority now: topics 4 and 7.** Step 3 is no longer code waiting to run. The guardrails were
 seen refusing a real call, and the one irreversible step of Phase A so far has happened.
@@ -159,10 +160,12 @@ in the README, and the tiering here is a proposal, to be argued with.
 
 - **Covers:** where things run, how a stack is pinned to an account and region without the
   account ID being in the code, and what bootstrap prepares.
-- **Why not must own:** it is mechanical. Know why the workload account will need two
-  bootstraps, one of them in `us-east-1`, and what the certificate has to do with it.
+- **Why not must own:** it is mechanical. Know why the workload account needed two
+  bootstraps, one of them in `us-east-1`, and what the certificate has to do with it; and
+  what the two defaults kept at bootstrap mean, in particular who is in effect an admin of the
+  account.
 - **Sources:** `docs/aws-concepts.md` "Regions", "Environments" and "CDK bootstrap";
-  `infra/lib/config.ts`.
+  `infra/lib/config.ts`; `docs/plans/phase-a.md` "Steps" (item 5).
 
 ### 9. Tags and cost allocation
 
@@ -226,7 +229,6 @@ These are worth your time if they interest you. Skipping them leaves no gap.
 
 ## Not yet built, so not for study
 
-- CloudTrail, Config and GuardDuty (step 4); bootstrapping the workload account (step 5), which is
-  next; DNS, ACM, S3 and CloudFront (steps 6–8); and everything in phases B–F. Some of these already
+- CloudTrail, Config and GuardDuty (step 4); DNS, ACM, S3 and CloudFront (steps 6–8); and everything in phases B–F. Some of these already
   have concept entries, written ahead of the work; read them as reading ahead, and do not test
   me on them.

@@ -24,8 +24,8 @@ Update this table in the PR that moves a row. **You** means the user.
 | 3 | `1-org-accounts`: workload account, OU, SCPs | **merged** and deployed 2026-10-22; `harpguru` profile added | — |
 | 3a | `1-scp-custom-resource`: SCPs switched on by a custom resource in its own stack; the four decisions settled | **merged** and deployed 2026-10-22 | — |
 | 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | not started | — |
-| 5 | *you*: bootstrap the workload account | not started | — |
-| 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | not started | #5 |
+| 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
+| 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | not started | — |
 | 7 | `1-certificate`: ACM in `us-east-1` | not started | #6 propagated |
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
 
@@ -112,6 +112,9 @@ to `us-west-2` from the new account was refused by the region lock.
 
 **5 · you: bootstrap.** `cdk bootstrap` for the workload account in **both** `eu-west-2` and
 `us-east-1`. The certificate stack lives in `us-east-1`, which is easy to miss.
+Done 2026-10-22, in one run with `--profile harpguru` and the project's three tags passed as
+`--tags`, since bootstrap doesn't take them from the app. Default execution policy
+(`AdministratorAccess`) and no trusted accounts. Bootstrap version 32 in both regions.
 
 **6 · `1-dns-zone`.**
 - Create the hosted zone in the workload account, with its nameservers as stack outputs.

@@ -495,15 +495,21 @@ signed-in identity rather than from code."
 `CDKToolkit` stack, which holds an S3 bucket and an ECR repository for uploaded files and
 container images, plus the IAM roles CDK assumes to deploy.
 
-**Here:** the management account was bootstrapped in `eu-west-2` on 2026-08-28. In step 5,
-the workload account is bootstrapped in **both** `eu-west-2` and `us-east-1`, because the
-certificate stack lives in `us-east-1`.
+**Here:** the management account was bootstrapped in `eu-west-2` on 2026-08-28. The workload
+account was bootstrapped in **both** `eu-west-2` and `us-east-1` on 2026-10-22, in step 5,
+because the certificate stack will live in `us-east-1`. Two defaults were kept. CloudFormation's
+execution role, which actually creates resources, has `AdministratorAccess` in the account, so
+anyone allowed to deploy is in effect an admin there, still inside the SCPs. And no other
+account is trusted to deploy, because deploys run as me through the `harpguru` profile; a CI
+pipeline would need `--trust`. Bootstrap doesn't take tags from the app, so the workload
+account's bootstrap was given the project's three with `--tags`.
 
 **Say it:** "Bootstrap is per account and per region, so a stack in a second region needs a
 second bootstrap."
 
 **See it:**
-`aws cloudformation describe-stack-resources --stack-name CDKToolkit --query 'StackResources[].ResourceType'`
+`aws cloudformation describe-stack-resources --stack-name CDKToolkit --region us-east-1 --profile harpguru --query 'StackResources[].ResourceType'`
+lists the bucket, repository, roles and parameter in the workload account's second region.
 
 #### Tags and cost allocation tags
 
