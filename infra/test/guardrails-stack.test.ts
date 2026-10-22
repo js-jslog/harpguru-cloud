@@ -1,10 +1,10 @@
-import { App } from 'aws-cdk-lib'
 import { Match, Template } from 'aws-cdk-lib/assertions'
 import { ALLOWED_REGIONS, GuardrailsStack, SCPS } from '../lib/guardrails-stack'
 import { applyProjectTags, PROJECT_TAGS } from '../lib/tags'
+import { appWithFlags } from './app'
 
 const synth = () => {
-  const app = new App()
+  const app = appWithFlags()
   applyProjectTags(app)
   const stack = new GuardrailsStack(app, 'Guardrails', {
     organizationRootId: 'r-abcd',

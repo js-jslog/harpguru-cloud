@@ -80,7 +80,7 @@ account. It can't be restricted by IAM.
 Identity Center instead. An account created through Organizations, like `harpguru`, starts
 with a root user that has no password, although one can be set through "forgot password"
 on its email address. So the `harpguru-deny-root` SCP denies the root user every action in
-the workload account, once step 3 is deployed. AWS's newer **centralised root access** goes
+the workload account, live since step 3's deploy on 2026-10-22. AWS's newer **centralised root access** goes
 further. It takes three settings in the management account: trusted access for IAM in
 Organizations, then **root credentials management**, which lets the management account
 delete member accounts' root credentials, and **privileged root actions**, which lets it do
@@ -121,15 +121,17 @@ credentials for that role.
 `AdministratorAccess` permission set and its assignment to the management account were made
 in the console. Its assignment to the workload account is code: an
 `AWS::SSO::Assignment` in `HarpguruAccounts`, which also creates the
-`AWSReservedSSO_AdministratorAccess_*` role in the new account. Once step 3 is deployed, there
-is still one login, covering two accounts. *(PR `1-org-accounts`)*
+`AWSReservedSSO_AdministratorAccess_*` role in the new account. Since step 3's deploy on
+2026-10-22, one login covers two accounts: the CLI reaches the new one through a second
+profile, `harpguru`, which reuses the same SSO session. *(PR `1-org-accounts`)*
 
 **Say it:** "People never have credentials in an account. They sign in once and assume a
 role, and the credentials expire in hours."
 
 **See it:**
 `aws iam list-roles --query "Roles[?starts_with(RoleName,'AWSReservedSSO')].RoleName"`
-lists the role your permission set became.
+lists the role your permission set became; add `--profile harpguru` to see it in the workload
+account. `aws sts get-caller-identity --profile harpguru` shows you signed in there as that role.
 
 **How long things last.** There are two lifetimes. The role credentials last as long as the
 permission set's session duration, which for `AdministratorAccess` is one hour; the CLI
@@ -153,12 +155,14 @@ strongest isolation boundary: resources in different accounts can't touch each o
 unless they are deliberately allowed to.
 
 **Here:** the organisation already exists, and your original account is its management
-account. Step 3 adds a `harpguru` workload account in the `HarpguruAccounts` stack. The
+account. Step 3 added a `harpguru` workload account in the `HarpguruAccounts` stack, deployed
+on 2026-10-22, when creating it took under a minute. The
 management account keeps only billing, identity and audit, and runs no workloads.
 **Creating an account is the hard-to-undo step:** closing one takes a 90-day post-closure
 period, during which it still counts against the Organization's account quota (10 by default).
 Its name and email can't be changed through CloudFormation afterwards: AWS's resource docs say
-such an update fails, and so does its rollback. They can still be changed outside the stack:
+such an update fails, and so does its rollback. The same docs say only the root user can change
+them, which is out of date. They can still be changed outside the stack:
 the management account can rename a member account and start an email change with the
 Account Management API (`aws account put-account-name` and `start-primary-email-update`),
 once that API's trusted access is switched on. The stack's template then no longer matches the
@@ -174,10 +178,10 @@ and it's the only way SCPs can apply to them."
 **What:** a folder for accounts inside an organisation. OUs can be nested, and policies
 attached to an OU apply to every account in it.
 
-**Here:** step 3 creates a `Workloads` OU holding the `harpguru` account. The rules live on
+**Here:** step 3 created a `Workloads` OU, which holds the `harpguru` account. The rules live on
 the OU, so a future lab or staging account inherits them just by being placed there. The OU
 and its SCPs are deployed in `HarpguruGuardrails` **before** the account stack, so the
-account is created inside a governed OU, with no gap. *(PR `1-org-accounts`)*
+account was created inside a governed OU, with no gap. *(PR `1-org-accounts`)*
 
 **Say it:** "Policies attach to OUs, not to individual accounts, so a new account is
 governed from the moment it's filed."
@@ -201,7 +205,9 @@ each is readable on its own (the limit is 10 per target, checked against AWS's q
 - `harpguru-region-lock` denies actions outside `eu-west-2` and `us-east-1`, exempting the five
   global services in the IAM guide's example (CloudFront, IAM, Organizations, Route 53 and
   Support). The Organizations guide's version exempts far more. Most global services are
-  served from `us-east-1`, which is allowed anyway, so the list is a safety margin
+  served from `us-east-1`, which is allowed anyway, so the list is a safety margin.
+  `us-east-1` is allowed at all mainly because CloudFront only accepts ACM certificates issued
+  there (see [Regions](#regions)); without it, step 7 could not create the certificate
 - `harpguru-deny-root` denies the root user
 - `harpguru-deny-leave-org` denies leaving the organisation
 
@@ -213,11 +219,14 @@ protects, a decision in the Phase A plan. How SCPs are switched on is in
 anywhere wins."
 
 **See it:** `aws organizations list-roots --query 'Roots[0].PolicyTypes'` is empty until SCPs
-are switched on. After that, run
-`aws organizations list-policies --filter SERVICE_CONTROL_POLICY --query 'Policies[].Name'`,
-and after the deploy,
+are switched on, which they have been since 2026-10-22.
+`aws organizations list-policies --filter SERVICE_CONTROL_POLICY --query 'Policies[].Name'`
+lists the four SCPs, and
 `aws organizations describe-policy --policy-id <id> --query Policy.Content --output text | jq`
 shows one policy exactly as written in `lib/guardrails-stack.ts`.
+To watch the region lock refuse a call from inside the workload account:
+`aws sqs list-queues --region us-west-2 --profile harpguru` fails with "explicit deny in a
+service control policy", and the same call in `eu-west-2` succeeds.
 
 #### OrganizationAccountAccessRole
 
@@ -236,7 +245,7 @@ Center, and SCPs still limit this role like any other identity in the account.
 Organizations makes one in each new account as a break-glass route from the management
 account."
 
-**See it:** after the deploy, using the new profile,
+**See it:** using the workload account's profile,
 `aws iam get-role --role-name OrganizationAccountAccessRole --profile harpguru --query 'Role.AssumeRolePolicyDocument'`
 shows the trust policy naming the management account.
 
@@ -313,6 +322,15 @@ first deploy, `HarpguruBudget` on 2026-10-13, took 13 seconds from `REVIEW_IN_PR
 `'Monthly'` in the code would make the next deploy delete the budget and create a new one.
 *(PR `1-budget`)*
 
+A new stack exists from the moment its first change set is made, in `REVIEW_IN_PROGRESS`.
+On 2026-10-22 the first `cdk deploy HarpguruPolicyTypes`, run with `!` and so without a
+terminal to ask for approval of IAM changes, made its change set and then gave up. It left
+an empty `REVIEW_IN_PROGRESS` stack with termination protection already on, so it couldn't
+tidy that stack up. The fix was to switch protection off, delete the empty stack, and
+deploy again with `--require-approval never` once the diff had been read. That flag skips
+the approval prompt, which is the step that shows the IAM and other security changes before
+anything runs, so the diff read beforehand becomes the only review.
+
 **Say it:** "CloudFormation tracks resources by logical ID, so renaming a construct means
 replacing the resource; I read the diff for replacements before every deploy."
 
@@ -382,14 +400,18 @@ place, and it makes a deliberate delete take two steps. Its Lambda's role may ca
 `organizations:EnablePolicyType` and nothing else. It ignores
 `PolicyTypeAlreadyEnabledException`, so it does no harm if SCPs were already switched on by
 hand. The alternative was a one-off CLI command, which avoids the Lambda
-and role in the management account. *(PRs `1-org-accounts`, `1-scp-custom-resource`)*
+and role in the management account. Deployed on 2026-10-22, the stack holds five resources besides CDK's own metadata:
+the custom resource, the Lambda, its role, the role's policy, and a log group for the Lambda.
+The diff had not been expected to show the log group. This CDK version creates it explicitly, so
+it carries the project's tags and keeps logs for two years, at no real cost for a function
+that ran once. *(PRs `1-org-accounts`, `1-scp-custom-resource`)*
 
 **Say it:** "When CloudFormation has no resource for something, a custom resource runs code
 for it. If the reverse of that action is dangerous, I give it no delete handler and retain it."
 
-**See it:** once `HarpguruPolicyTypes` is deployed,
+**See it:**
 `aws cloudformation describe-stack-resources --stack-name HarpguruPolicyTypes --query 'StackResources[].[LogicalResourceId,ResourceType]' --output table`
-shows the custom resource beside its Lambda and role, and
+shows the custom resource beside its Lambda, role, policy and log group, and
 `aws organizations list-roots --query 'Roots[0].PolicyTypes'` shows what it switched on.
 
 #### Deletion policy and termination protection
@@ -414,30 +436,41 @@ stack from a careless delete. Anything stateful or irreplaceable gets both."
 
 **See it:**
 `aws cloudformation describe-stacks --query 'Stacks[].[StackName,EnableTerminationProtection]' --output table`.
-Once step 3 is deployed, only its three stacks show `True`.
+Since step 3's deploy on 2026-10-22, only its three stacks show `True`.
 
 #### Cross-stack references
 
 **What:** how one stack uses a value another stack creates. In CDK you just pass the value,
-such as `guardrails.workloadsOu.attrId`, and CDK writes the plumbing. Within one account
-and region, the producing stack gets an **Output with an Export**, and the consuming stack reads it
-with `Fn::ImportValue`. CloudFormation then refuses to change or delete an export while
-another stack imports it, which keeps the two stacks consistent but can block changes to the
-producer. References between regions work differently; the `defaultCrossStackReferences`
-setting in `cdk.json` applies only to those, and step 7's certificate is the first.
+such as `guardrails.workloadsOu.attrId`, and CDK writes the plumbing. Which plumbing depends on
+the `@aws-cdk/core:defaultCrossStackReferences` setting in `infra/cdk.json` (set to `"weak"`
+here), and on whether the two
+stacks share a region:
 
-**Here:** `HarpguruAccounts` imports the `Workloads` OU's ID from `HarpguruGuardrails`. The
-import also makes CDK deploy the guardrails first, which is the order we want.
-*(PR `1-org-accounts`)*
+| | Same region | Different regions |
+| --- | --- | --- |
+| **Strong**, the default if the setting is absent | an **Output with an Export**, read with `Fn::ImportValue` | custom resources that copy the value into an SSM parameter in the consumer's region |
+| **Weak**, our setting since `1-cdk-app` | a plain **Output**, read with `Fn::GetStackOutput` | a plain **Output**, read with `Fn::GetStackOutput`, which names the producer's region |
 
-**Say it:** "Cross-stack references are exports and imports, and an export can't change
-while it's imported; that's a feature for stable things like an OU, and a trap for anything
-you expect to replace."
+A strong reference locks the producer: CloudFormation refuses to change or delete an export
+while another stack imports it. A weak one locks nothing; the consumer reads the output when
+it deploys and keeps that value until its next deploy. Weak is what `cdk init` writes for new
+projects. Step 7's certificate, made in `us-east-1` and used by the site in `eu-west-2`, will be
+the first reference between regions.
 
-**See it:** `aws cloudformation list-exports --query 'Exports[].Name'`. Before step 3 it lists
-only `CdkBootstrap-hnb659fds-FileAssetKeyArn`, which the bootstrap stack exports. Afterwards it
-also lists the OU's ID, and `aws cloudformation list-imports --export-name <name>` shows
-`HarpguruAccounts` using it.
+**Here:** `HarpguruAccounts` reads the `Workloads` OU's ID from `HarpguruGuardrails`'s output.
+The reference also makes CDK deploy the guardrails first, which is the order we want. Being
+weak, it doesn't guard the guardrails stack; termination protection does that. Until the
+deploy on 2026-10-22 this entry described exports, which no stack here uses.
+*(PR `1-org-accounts`; corrected in `1-deploy-org-accounts`)*
+
+**Say it:** "A strong reference locks the producer while it's consumed; a weak one just reads
+its output at deploy time, so stability has to come from somewhere else, like termination
+protection."
+
+**See it:** the reference as deployed:
+`aws cloudformation get-template --stack-name HarpguruAccounts --query 'TemplateBody.Resources.Harpguru.Properties.ParentIds'`.
+The output it reads, with no export name:
+`aws cloudformation describe-stacks --stack-name HarpguruGuardrails --query 'Stacks[0].Outputs'`.
 
 #### Environments
 
@@ -448,14 +481,13 @@ anywhere, but can't do those lookups.
 
 **Here:** every stack is pinned. The region is written in the code, and the account comes
 from `CDK_DEFAULT_ACCOUNT`, which the CLI fills in from your SSO login, so no account ID is
-committed. Once step 3 creates the workload account, a second SSO profile for it supplies its
-stacks' account the same way. *(PR `1-cdk-app`)*
+committed. The workload account's stacks, from step 6, will get theirs the same way, from the
+`harpguru` profile added after step 3's deploy. *(PR `1-cdk-app`)*
 
 **Say it:** "Stacks are pinned to an account and region, but the account comes from the
 signed-in identity rather than from code."
 
-**See it:** `cd infra && cdk ls --long` shows each stack's `aws://<account>/<region>`, once
-stacks exist.
+**See it:** `cd infra && cdk ls --long` shows each stack's `aws://<account>/<region>`.
 
 #### CDK bootstrap
 
@@ -463,15 +495,21 @@ stacks exist.
 `CDKToolkit` stack, which holds an S3 bucket and an ECR repository for uploaded files and
 container images, plus the IAM roles CDK assumes to deploy.
 
-**Here:** the management account was bootstrapped in `eu-west-2` on 2026-08-28. In step 5,
-the workload account is bootstrapped in **both** `eu-west-2` and `us-east-1`, because the
-certificate stack lives in `us-east-1`.
+**Here:** the management account was bootstrapped in `eu-west-2` on 2026-08-28. The workload
+account was bootstrapped in **both** `eu-west-2` and `us-east-1` on 2026-10-22, in step 5,
+because the certificate stack will live in `us-east-1`. Two defaults were kept. CloudFormation's
+execution role, which actually creates resources, has `AdministratorAccess` in the account, so
+anyone allowed to deploy is in effect an admin there, still inside the SCPs. And no other
+account is trusted to deploy, because deploys run as me through the `harpguru` profile; a CI
+pipeline would need `--trust`. Bootstrap doesn't take tags from the app, so the workload
+account's bootstrap was given the project's three with `--tags`.
 
 **Say it:** "Bootstrap is per account and per region, so a stack in a second region needs a
 second bootstrap."
 
 **See it:**
-`aws cloudformation describe-stack-resources --stack-name CDKToolkit --query 'StackResources[].ResourceType'`
+`aws cloudformation describe-stack-resources --stack-name CDKToolkit --region us-east-1 --profile harpguru --query 'StackResources[].ResourceType'`
+lists the bucket, repository, roles and parameter in the workload account's second region.
 
 #### Tags and cost allocation tags
 
@@ -484,15 +522,16 @@ back up to 12 months.
 **Here:** every resource gets `project=harpguru`, `repository=harpguru-cloud` and
 `managed-by=cdk`, applied once at the app root. The exceptions are L1 resources that CDK
 can't tag, such as the budget, which set them by hand (see
-[L1 and L2 constructs](#l1-and-l2-constructs)). Once tagged resources exist, `project` is
-activated, so "what does Harp Guru cost?" becomes one filter in Cost Explorer. The tagging is
-in PR `1-cdk-app`; the activation happens after step 6.
+[L1 and L2 constructs](#l1-and-l2-constructs)). `project` was activated on 2026-10-22, so "what does Harp Guru cost?" is one filter in Cost Explorer.
+Activation only splits costs from that day on. The tagging is in PR `1-cdk-app`.
 
 **Say it:** "Tag at the app root so nothing is missed, and activate the cost allocation tag
 early; anything earlier needs a backfill."
 
 **See it:** `aws ce list-cost-allocation-tags --region us-east-1 --query 'CostAllocationTags[].[TagKey,Status]'`.
-For now it shows only CloudFormation's own automatic tags.
+It shows `project` as `Active`, and `repository` and `managed-by` as `Inactive`, beside
+CloudFormation's own automatic tags. A key only appears there once a resource carries it.
+Cost Explorer splits by it a day or so after activation.
 
 ### Audit and detection
 

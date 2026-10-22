@@ -1,7 +1,8 @@
-import { App, Stack } from 'aws-cdk-lib'
+import { Stack } from 'aws-cdk-lib'
 import { Match, Template } from 'aws-cdk-lib/assertions'
 import { CfnOrganizationalUnit } from 'aws-cdk-lib/aws-organizations'
 import { AccountsStack } from '../lib/accounts-stack'
+import { appWithFlags } from './app'
 
 const props = {
   parentOuId: 'ou-abcd-12345678',
@@ -13,7 +14,7 @@ const props = {
 }
 
 const synth = () =>
-  Template.fromStack(new AccountsStack(new App(), 'Accounts', props))
+  Template.fromStack(new AccountsStack(appWithFlags(), 'Accounts', props))
 
 test('the harpguru account is created inside the given OU', () => {
   synth().hasResourceProperties('AWS::Organizations::Account', {
@@ -48,8 +49,8 @@ test('the user is given AdministratorAccess in the new account', () => {
   })
 })
 
-test('the OU reaches the account as a cross-stack import', () => {
-  const app = new App()
+test('the OU reaches the account as a weak cross-stack reference', () => {
+  const app = appWithFlags()
   const producer = new Stack(app, 'Producer')
   const ou = new CfnOrganizationalUnit(producer, 'Ou', {
     name: 'Ou',
@@ -61,6 +62,10 @@ test('the OU reaches the account as a cross-stack import', () => {
   })
   Template.fromStack(accounts).hasResourceProperties(
     'AWS::Organizations::Account',
-    { ParentIds: [{ 'Fn::ImportValue': Match.stringLikeRegexp('^Producer:') }] }
+    {
+      ParentIds: [
+        { 'Fn::GetStackOutput': Match.objectLike({ StackName: 'Producer' }) },
+      ],
+    }
   )
 })

@@ -1,10 +1,10 @@
-import { App } from 'aws-cdk-lib'
 import { Match, Template } from 'aws-cdk-lib/assertions'
 import { PolicyTypesStack } from '../lib/policy-types-stack'
+import { appWithFlags } from './app'
 
 const synth = () =>
   Template.fromStack(
-    new PolicyTypesStack(new App(), 'PolicyTypes', {
+    new PolicyTypesStack(appWithFlags(), 'PolicyTypes', {
       organizationRootId: 'r-abcd',
     })
   )

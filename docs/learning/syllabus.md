@@ -1,23 +1,22 @@
 # Syllabus
 
-**As of 2026-10-21.** Covers Phase A steps 0–3: the SSO login, the CDK app skeleton, the $10
+**As of 2026-10-22.** Covers Phase A steps 0–3 and 5: the SSO login, the CDK app skeleton, the $10
 budget, and the workload account with its OU and guardrails, including step 3a, which switches
-SCPs on through a custom resource. Steps 1 to 3a are merged. Only step 2 is **deployed**:
-`HarpguruBudget` is the only stack of this project's running in the account. Step 3 is three
-stacks of code, waiting on me to deploy them, and the status table in `docs/plans/phase-a.md`
-says the same. Everything after step 3 is out of scope; see the last section.
+SCPs on through a custom resource. Steps 1 to 3a are merged. Step 1 is the skeleton and
+deploys nothing itself; the rest are **deployed**: step 2 on 2026-10-13, and step 3's three
+stacks on 2026-10-22. Step 5, bootstrapping the workload account in two regions, was done
+the same day. So the account really does hold the
+`Workloads` OU, its three SCPs and the `harpguru` workload account, and the status table in
+`docs/plans/phase-a.md` says the same. Step 4 and everything after step 5 are out of scope; see
+the last section.
 
-**Priority now: topics 6 and 7.** On 2026-10-21 I settled the four step 3 decisions: I changed
-one, so SCPs are now switched on by a custom resource, and confirmed the other three. What is
-left before the deploy is understanding that custom resource, and the one step that cannot be
-undone.
+**Priority now: topics 4 and 7.** Step 3 is no longer code waiting to run. The guardrails were
+seen refusing a real call, and the one irreversible step of Phase A so far has happened.
 
 Each topic gives its tier and why, what I should be able to answer, and its sources. The
 sources hold the facts; this file deliberately does not restate them. Sources are named by
 path, as listed at the top of the README, and a quoted name is a heading inside that
-file. Some concept entries describe step 3 as if it were deployed, for example in their "Say
-it" lines; it is merged but not deployed, so teach it as code that will do this, not as what
-the account does today. The tiers are defined
+file. The tiers are defined
 in the README, and the tiering here is a proposal, to be argued with.
 
 ---
@@ -41,17 +40,22 @@ in the README, and the tiering here is a proposal, to be argued with.
 
 ### 2. How CDK becomes AWS resources
 
-- **Covers:** the path from TypeScript to a running resource, through the one real deploy so
-  far, `HarpguruBudget` on 2026-10-13.
+- **Covers:** the path from TypeScript to a running resource, through the first deploy,
+  `HarpguruBudget` on 2026-10-13, and the step 3 deploy on 2026-10-22, whose first attempt
+  failed and left an empty stack behind.
 - **Why must own:** reading a diff before every deploy is my safety check, and I can only read
   it if I know what CloudFormation will do with it.
 - **Be able to answer:** walk through `cdk deploy` from source file to resource; what the
   budget's logical and physical IDs are, and what renaming its construct in the code would do;
   what app, stack and construct mean, and why stacks are split by lifecycle and location; what
-  an L1 construct is and why the budget had to use one; how to find out why a deploy failed.
+  an L1 construct is and why the budget had to use one; how to find out why a deploy failed;
+  when a new stack starts to exist, and why the first step 3 deploy left an empty stack it
+  could not delete; why `--require-approval never` is only safe once the diff has been read.
 - **Sources:** `docs/aws-concepts.md` "CloudFormation and CDK",
   "Change sets, stack events and logical IDs", "Apps, stacks and constructs" and
-  "L1 and L2 constructs"; `infra/bin/harpguru.ts`; `infra/lib/budget-stack.ts`.
+  "L1 and L2 constructs"; `infra/bin/harpguru.ts`; `infra/lib/budget-stack.ts`;
+  `docs/plans/phase-a.md` "Steps" (item 3, the paragraph after its numbered deploy steps);
+  `roadmap-planning/aws-pathway-findings.md` "Step 3 deployed, 2026-10-22".
 
 ### 3. Cost control as a design constraint
 
@@ -69,19 +73,23 @@ in the README, and the tiering here is a proposal, to be argued with.
 
 ### 4. The account structure and its guardrails
 
-- **Covers:** what step 3 will build: the Organization, a member account for the workload, the
-  OU it sits in, and the three SCPs on that OU. Also what SCP, OU and ARN stand for.
+- **Covers:** what step 3 built and deployed: the Organization, a member account for the
+  workload, the OU it sits in, and the three SCPs on that OU. Also what SCP, OU and ARN stand
+  for.
 - **Why must own:** keeping workloads out of the management account is a security property, and
   the SCPs are the guardrails I will rely on without seeing them work day to day.
 - **Be able to answer:** what SCP and OU stand for, and what each is; why the workload goes in a
   member account rather than the management account; why an SCP grants nothing, and what
   `FullAWSAccess` is for; what each of the three SCPs denies, and why the region lock exempts
-  some services; what happens to the new account's root user; why the account is created
-  inside an OU that is already governed.
+  some services; why `us-east-1` is one of the two allowed regions; what happens to the new
+  account's root user; why the account was created inside an OU that is already governed; how
+  the region lock was seen working, and what the refusal said.
 - **Sources:** `docs/aws-concepts.md` "Organizations", "Organizational Unit (OU)",
-  "Service Control Policy (SCP)", "Root user" and "Account ID and ARNs";
-  `docs/plans/phase-a.md` "Accounts" and "Steps" (item 3); `infra/lib/guardrails-stack.ts`;
-  `infra/test/guardrails-stack.test.ts`.
+  "Service Control Policy (SCP)", "Root user", "Account ID and ARNs" and "Regions";
+  `docs/plans/phase-a.md` "Accounts", "Steps" (item 3) and "Decisions" (the entry dated
+  2026-10-14 about two stacks);
+  `infra/lib/guardrails-stack.ts`; `infra/test/guardrails-stack.test.ts`;
+  `roadmap-planning/aws-pathway-findings.md` "Step 3 deployed, 2026-10-22".
 
 ### 5. The four step 3 decisions, and how I settled them
 
@@ -113,6 +121,7 @@ in the README, and the tiering here is a proposal, to be argued with.
   CloudFormation asks a custom resource to do on create, update and delete, and what this one
   does for each; what `Retain` changes about a delete; why it is a stack of its own, and why
   that stack is termination protected; what happens if SCPs were already switched on by hand;
+  what the deploy's diff showed besides the custom resource, and why;
   what its Lambda's role may call; what the agent's original alternative was, and what it would
   have saved.
 - **Sources:** `docs/aws-concepts.md` "Custom resources" and
@@ -122,21 +131,26 @@ in the README, and the tiering here is a proposal, to be argued with.
 
 ### 7. The point of no return
 
-- **Covers:** why merging and most of the deploy can be undone, but the first
-  `cdk deploy HarpguruAccounts` cannot, and what protects the account once it exists.
-- **Why must own:** it is the one irreversible step in Phase A so far, and I am the one who runs
-  it.
-- **Be able to answer:** why merging the step 3 code changes nothing in AWS, and the one thing
-  it does change locally; what makes creating
+- **Covers:** why merging and most of the deploy could be undone, but the first
+  `cdk deploy HarpguruAccounts` could not, and what protects the account now that it exists.
+  I ran it on 2026-10-22.
+- **Why must own:** it is the one irreversible step in Phase A so far, I ran it, and the
+  account it made is permanent.
+- **Be able to answer:** why merging the step 3 code changed nothing in AWS, and the one thing
+  it did change locally; what makes creating
   an account hard to undo, including the 90 days and the account quota; why the account's
   name and email cannot be changed through CloudFormation afterwards, and how they still could
   be; why renaming the
   account's construct in the code would try to create a second account, and what in the repo
-  guards against it; what `Retain` and termination protection each protect against.
+  guards against it; what `Retain` and termination protection each protect against; how I
+  checked afterwards that my login reaches the new account.
 - **Sources:** `docs/plans/phase-a.md` "Steps" (item 3) and "Decisions";
-  `docs/aws-concepts.md` "Organizations", "Change sets, stack events and logical IDs" and
+  `docs/aws-concepts.md` "Organizations", "IAM Identity Center",
+  "Change sets, stack events and logical IDs" and
   "Deletion policy and termination protection"; `infra/lib/accounts-stack.ts`;
-  `infra/test/accounts-stack.test.ts`; `infra/README.md` "Deploy-time values".
+  `infra/test/accounts-stack.test.ts`; `infra/README.md` "Deploy-time values";
+  `roadmap-planning/aws-pathway-findings.md` "Step 3 facts, checked 2026-10-14 and 2026-10-20"
+  and "Step 3 deployed, 2026-10-22".
 
 ---
 
@@ -146,10 +160,12 @@ in the README, and the tiering here is a proposal, to be argued with.
 
 - **Covers:** where things run, how a stack is pinned to an account and region without the
   account ID being in the code, and what bootstrap prepares.
-- **Why not must own:** it is mechanical. Know why the workload account will later need two
-  bootstraps.
+- **Why not must own:** it is mechanical. Know why the workload account needed two
+  bootstraps, one of them in `us-east-1`, and what the certificate has to do with it; and
+  what the two defaults kept at bootstrap mean, in particular who is in effect an admin of the
+  account.
 - **Sources:** `docs/aws-concepts.md` "Regions", "Environments" and "CDK bootstrap";
-  `infra/lib/config.ts`.
+  `infra/lib/config.ts`; `docs/plans/phase-a.md` "Steps" (item 5).
 
 ### 9. Tags and cost allocation
 
@@ -162,8 +178,10 @@ in the README, and the tiering here is a proposal, to be argued with.
 
 - **Covers:** what assertions against a synthesised template can and cannot prove, including a
   test that exists to stop an expensive mistake rather than to check behaviour, and tests that
-  prove something is absent, such as a custom resource's delete call.
-- **Sources:** `infra/README.md`; `infra/test/budget-stack.test.ts`;
+  prove something is absent, such as a custom resource's delete call. Also why every test
+  builds its app with `cdk.json`'s feature flags: until 2026-10-22 they did not, and the
+  cross-stack test passed while asserting an export the deployed app never used.
+- **Sources:** `infra/README.md`; `infra/test/app.ts`; `infra/test/budget-stack.test.ts`;
   `infra/test/accounts-stack.test.ts`; `infra/test/guardrails-stack.test.ts`;
   `infra/test/policy-types-stack.test.ts`.
 
@@ -178,15 +196,18 @@ in the README, and the tiering here is a proposal, to be argued with.
 
 - **Covers:** why step 3 is three stacks; how the OU's ID gets from the guardrails to the
   accounts stack, and how that forces the guardrails to deploy first; and how the guardrails
-  are made to wait for `HarpguruPolicyTypes`, which they take no value from.
+  are made to wait for `HarpguruPolicyTypes`, which they take no value from. Also the
+  difference between a strong and a weak reference, which one this repo uses, and what
+  therefore protects the guardrails stack instead.
 - **Sources:** `docs/aws-concepts.md` "Cross-stack references" and
   "Apps, stacks and constructs"; `docs/plans/phase-a.md` "Decisions" and "Steps" (item 3);
   `infra/bin/harpguru.ts`.
 
-### 13. How I will get into the new account
+### 13. How I get into the new account
 
 - **Covers:** the Identity Center assignment that gives my existing login access to the new
-  account, and `OrganizationAccountAccessRole` as the way back in if that ever breaks.
+  account, the second CLI profile that uses it, and `OrganizationAccountAccessRole` as the way
+  back in if that ever breaks.
 - **Sources:** `docs/aws-concepts.md` "IAM Identity Center" and
   "OrganizationAccountAccessRole"; `infra/lib/accounts-stack.ts`; `docs/plans/phase-a.md`
   "Steps" (item 3).
@@ -208,9 +229,6 @@ These are worth your time if they interest you. Skipping them leaves no gap.
 
 ## Not yet built, so not for study
 
-- **Deploying step 3.** The code is merged, but no OU, SCP or workload account exists yet, and
-  SCPs are not yet switched on. The Organization holds only the management account.
-- CloudTrail, Config and GuardDuty (step 4); bootstrapping the workload account (step 5); DNS,
-  ACM, S3 and CloudFront (steps 6–8); and everything in phases B–F. Some of these already
+- CloudTrail, Config and GuardDuty (step 4); DNS, ACM, S3 and CloudFront (steps 6–8); and everything in phases B–F. Some of these already
   have concept entries, written ahead of the work; read them as reading ahead, and do not test
   me on them.

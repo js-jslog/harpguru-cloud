@@ -21,11 +21,11 @@ Update this table in the PR that moves a row. **You** means the user.
 | 0 | *you*: `aws configure sso`, profile renamed to `[default]` | **done** 2026-09-26 | — |
 | 1 | `1-cdk-app`: CDK skeleton | **merged** 2026-10-13 | — |
 | 2 | `1-budget`: $10 budget | **merged** and deployed 2026-10-13; zero-spend budget deleted | — |
-| 3 | `1-org-accounts`: workload account, OU, SCPs | merged; not deployed | *you*: the deploy steps in #3 below |
-| 3a | `1-scp-custom-resource`: SCPs switched on by a custom resource in its own stack; the four decisions settled | merged; not deployed | *you*: deployed as part of #3 |
-| 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | not started | #3 |
-| 5 | *you*: bootstrap the workload account | not started | #3 |
-| 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | not started | #5 |
+| 3 | `1-org-accounts`: workload account, OU, SCPs | **merged** and deployed 2026-10-22; `harpguru` profile added | — |
+| 3a | `1-scp-custom-resource`: SCPs switched on by a custom resource in its own stack; the four decisions settled | **merged** and deployed 2026-10-22 | — |
+| 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | not started | — |
+| 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
+| 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | not started | — |
 | 7 | `1-certificate`: ACM in `us-east-1` | not started | #6 propagated |
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
 
@@ -68,7 +68,8 @@ termination protection.
   Identity Center assignment giving `jslog` the `AdministratorAccess` permission set there,
   so the existing login reaches both accounts. The account email is a `+harpguru` alias of
   the user's address. The account is `RETAIN`, so tearing down a stack can never close it.
-  The OU's ID arrives as a cross-stack import, which also makes the guardrails deploy first.
+  The OU's ID arrives as a cross-stack reference, a weak one read with `Fn::GetStackOutput`,
+  which also makes the guardrails deploy first.
   The account is therefore governed from the moment it exists.
 - Values kept out of the repo (see Decisions) go in
   `infra/deploy.local.json`: the account email, the root
@@ -88,6 +89,13 @@ Deploying it, all *you*:
    check that both the portal and `aws sts get-caller-identity --profile harpguru` reach the
    new account.
 
+Done 2026-10-22. Creating the account took under a minute of stack time, not the few minutes
+expected. `aws sts get-caller-identity --profile harpguru` reached the new account. Run with
+`!`, `cdk deploy` can't ask for approval of IAM changes, so after
+reading each diff the deploy was run with `--require-approval never`. The first attempt
+without it left an empty stack behind; see "Change sets" in `docs/aws-concepts.md`. A call
+to `us-west-2` from the new account was refused by the region lock.
+
 **4 · `1-org-audit`.**
 - An organisation CloudTrail trail to S3.
 - An SCP denying anyone from turning off CloudTrail or Config in `Workloads`, moved here from #3
@@ -104,6 +112,9 @@ Deploying it, all *you*:
 
 **5 · you: bootstrap.** `cdk bootstrap` for the workload account in **both** `eu-west-2` and
 `us-east-1`. The certificate stack lives in `us-east-1`, which is easy to miss.
+Done 2026-10-22, in one run with `--profile harpguru` and the project's three tags passed as
+`--tags`, since bootstrap doesn't take them from the app. Default execution policy
+(`AdministratorAccess`) and no trusted accounts. Bootstrap version 32 in both regions.
 
 **6 · `1-dns-zone`.**
 - Create the hosted zone in the workload account, with its nameservers as stack outputs.
@@ -115,9 +126,8 @@ Deploying it, all *you*:
 - You switch the nameservers at Heart. Delegate the domain; do not transfer it.
 - Confirm the change has propagated, then send a second test message.
 - Also check in Heart's panel that forwarding does not depend on Heart serving the zone.
-- Once the zone exists, **activate `project` as a cost allocation tag** in the management
-  account. A key can only be activated once a resource carries it, and earlier costs are
-  only split by requesting a backfill, so do it early.
+- ~~Once the zone exists, activate `project` as a cost allocation tag.~~ Done early, on
+  2026-10-22; see Decisions.
 
 **7 · `1-certificate`.** An ACM certificate in `us-east-1` covering the apex and `www`,
 validated through DNS in the zone. It reaches the site stack as a cross-region reference.
@@ -196,3 +206,9 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
   `HarpguruBudget`, need all of #3's values in `deploy.local.json`. What is hard to undo is
   the account itself, created by the first `cdk deploy HarpguruAccounts`: see #3, and the
   "Organizations" entry in `docs/aws-concepts.md`.
+- 2026-10-22: **`project` was activated as a cost allocation tag**, rather than in #6. Cost
+  Explorer already listed the key as `Inactive`, so waiting gained nothing. When it first
+  appeared is unknown: the budget has carried it since 2026-10-13. Costs from before activation are only split by requesting a backfill,
+  which was not done: they are pennies.
+- 2026-10-22: the tutor does **not** open its replies with a table of terms. That agreement in
+  `CLAUDE.md` is for the coding agent; the learning README says so.
