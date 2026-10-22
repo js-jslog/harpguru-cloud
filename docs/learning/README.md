@@ -3,7 +3,7 @@
 *For humans:* this file is the tutor's entry point. Start a session by sending the tutor its
 raw URL, with this file's current cache stamp, and "Please read this and follow its
 instructions":
-`https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/README.md?v=2026-10-22T2101Z`.
+`https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/README.md?v=2026-10-22T2102Z`.
 
 **Cache stamp.** Every raw URL here ends in `?v=` and a UTC date and time, such as
 `2026-10-21T1405Z`. GitHub ignores the query string, so the content is the same, but the
@@ -28,51 +28,51 @@ turn. Once you have replied, that turn is over, and every one of these links wil
 from then on: I would have to paste each one back to you by hand. They are about 170 KB in
 all, listed most important first.
 
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/syllabus.md?v=2026-10-22T2101Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/syllabus.md?v=2026-10-22T2102Z
   The syllabus: the topics, each with its tier, the questions I should be able to answer, and
   its sources. Start here once everything is open.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/plans/phase-a.md?v=2026-10-22T2101Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/plans/phase-a.md?v=2026-10-22T2102Z
   The Phase A plan: its status table (what is merged, what is deployed) and its dated decisions.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md?v=2026-10-22T2101Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md?v=2026-10-22T2102Z
   My study companion: one entry per AWS concept, each with what it is, how it is used here, one
   sentence to say in an interview, and a command to see it.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-conventions.md?v=2026-10-22T2101Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-conventions.md?v=2026-10-22T2102Z
   Credentials, cost control, and the CDK-versus-Terraform decision.
-- https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/aws-pathway-findings.md?v=2026-10-22T2101Z
+- https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/aws-pathway-findings.md?v=2026-10-22T2102Z
   Verified facts, the domain vocabulary, the AWS account state, and what the step 3 deploy showed.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/budget-stack.ts?v=2026-10-22T2101Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/budget-stack.ts?v=2026-10-22T2102Z
   `HarpguruBudget`: the $10 monthly budget. Deployed 2026-10-13.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/policy-types-stack.ts?v=2026-10-22T2101Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/policy-types-stack.ts?v=2026-10-22T2102Z
   `HarpguruPolicyTypes`: the custom resource that switches SCPs on. Deployed 2026-10-22.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/guardrails-stack.ts?v=2026-10-22T2101Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/guardrails-stack.ts?v=2026-10-22T2102Z
   `HarpguruGuardrails`: the `Workloads` OU and its three SCPs. Deployed 2026-10-22.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/accounts-stack.ts?v=2026-10-22T2101Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/accounts-stack.ts?v=2026-10-22T2102Z
   `HarpguruAccounts`: the `harpguru` workload account and my access to it. Deployed 2026-10-22.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/bin/harpguru.ts?v=2026-10-22T2101Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/bin/harpguru.ts?v=2026-10-22T2102Z
   The app: creates the stacks and applies the tags.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/config.ts?v=2026-10-22T2101Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/config.ts?v=2026-10-22T2102Z
   Regions, deploy-time values, and the management account environment.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/tags.ts?v=2026-10-22T2101Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/tags.ts?v=2026-10-22T2102Z
   The tags every resource carries.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/accounts-stack.test.ts?v=2026-10-22T2101Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/accounts-stack.test.ts?v=2026-10-22T2102Z
   The account stack's tests, including the one that guards the account's logical ID.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/guardrails-stack.test.ts?v=2026-10-22T2101Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/guardrails-stack.test.ts?v=2026-10-22T2102Z
   The guardrails stack's tests, including what each SCP must deny.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/policy-types-stack.test.ts?v=2026-10-22T2101Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/policy-types-stack.test.ts?v=2026-10-22T2102Z
   The policy types stack's tests, including the ones that prove SCPs are never switched off.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/app.ts?v=2026-10-22T2101Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/app.ts?v=2026-10-22T2102Z
   The helper every test builds its app with, so tests see the same feature flags as the real app.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/budget-stack.test.ts?v=2026-10-22T2101Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/budget-stack.test.ts?v=2026-10-22T2102Z
   An example of how the stacks are tested.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/scripts/identity-center-values.sh?v=2026-10-22T2101Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/scripts/identity-center-values.sh?v=2026-10-22T2102Z
   Prints the identifiers kept out of the repo, for `deploy.local.json`.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/README.md?v=2026-10-22T2101Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/README.md?v=2026-10-22T2102Z
   How the CDK app is laid out and run.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/orientation.md?v=2026-10-22T2101Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/orientation.md?v=2026-10-22T2102Z
   What this repo is for, what it must never contain, and the locked decisions.
-- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/CLAUDE.md?v=2026-10-22T2101Z
+- https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/CLAUDE.md?v=2026-10-22T2102Z
   The working agreements between me and my coding agent.
-- https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/roadmap.md?v=2026-10-22T2101Z
+- https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/roadmap.md?v=2026-10-22T2102Z
   The decisions, sequence and scope. Its decisions section matters more than its phase list.
 
 When all of them are open, carry on reading below, then reply. Your first reply is the

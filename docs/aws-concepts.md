@@ -525,8 +525,8 @@ early; anything earlier needs a backfill."
 
 **See it:** `aws ce list-cost-allocation-tags --region us-east-1 --query 'CostAllocationTags[].[TagKey,Status]'`.
 On 2026-10-22 it listed `project`, `repository` and `managed-by` as `Inactive`, beside
-CloudFormation's own automatic tags. Each key appears there once a resource carries it, so
-`project` can be activated now, earlier than the plan's step 6.
+CloudFormation's own automatic tags. A key appears there once a resource carries it, so
+`project` could already be activated; the plan still has it activated in step 6.
 
 ### Audit and detection
 
