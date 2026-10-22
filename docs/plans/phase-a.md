@@ -89,7 +89,9 @@ Deploying it, all *you*:
    check that both the portal and `aws sts get-caller-identity --profile harpguru` reach the
    new account.
 
-Done 2026-10-22. Run with `!`, `cdk deploy` can't ask for approval of IAM changes, so after
+Done 2026-10-22. Creating the account took under a minute of stack time, not the few minutes
+expected. `aws sts get-caller-identity --profile harpguru` reached the new account. Run with
+`!`, `cdk deploy` can't ask for approval of IAM changes, so after
 reading each diff the deploy was run with `--require-approval never`. The first attempt
 without it left an empty stack behind; see "Change sets" in `docs/aws-concepts.md`. A call
 to `us-west-2` from the new account was refused by the region lock.

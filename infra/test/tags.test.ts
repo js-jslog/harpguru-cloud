@@ -1,10 +1,11 @@
-import { App, Stack } from 'aws-cdk-lib'
+import { Stack } from 'aws-cdk-lib'
 import { Template } from 'aws-cdk-lib/assertions'
 import { Topic } from 'aws-cdk-lib/aws-sns'
 import { applyProjectTags, PROJECT_TAGS } from '../lib/tags'
+import { appWithFlags } from './app'
 
 test('every taggable resource in the app carries the project tags', () => {
-  const app = new App()
+  const app = appWithFlags()
   applyProjectTags(app)
   // Any taggable resource will do; nothing here is deployed.
   const stack = new Stack(app, 'TagProbe')

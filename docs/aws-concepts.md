@@ -161,7 +161,8 @@ management account keeps only billing, identity and audit, and runs no workloads
 **Creating an account is the hard-to-undo step:** closing one takes a 90-day post-closure
 period, during which it still counts against the Organization's account quota (10 by default).
 Its name and email can't be changed through CloudFormation afterwards: AWS's resource docs say
-such an update fails, and so does its rollback. They can still be changed outside the stack:
+such an update fails, and so does its rollback. The same docs say only the root user can change
+them, which is out of date. They can still be changed outside the stack:
 the management account can rename a member account and start an email change with the
 Account Management API (`aws account put-account-name` and `start-primary-email-update`),
 once that API's trusted access is switched on. The stack's template then no longer matches the
@@ -326,7 +327,9 @@ On 2026-10-22 the first `cdk deploy HarpguruPolicyTypes`, run with `!` and so wi
 terminal to ask for approval of IAM changes, made its change set and then gave up. It left
 an empty `REVIEW_IN_PROGRESS` stack with termination protection already on, so it couldn't
 tidy that stack up. The fix was to switch protection off, delete the empty stack, and
-deploy again with `--require-approval never` once the diff had been read.
+deploy again with `--require-approval never` once the diff had been read. That flag skips
+the approval prompt, which is the step that shows the IAM and other security changes before
+anything runs, so the diff read beforehand becomes the only review.
 
 **Say it:** "CloudFormation tracks resources by logical ID, so renaming a construct means
 replacing the resource; I read the diff for replacements before every deploy."
@@ -439,13 +442,14 @@ Since step 3's deploy on 2026-10-22, only its three stacks show `True`.
 
 **What:** how one stack uses a value another stack creates. In CDK you just pass the value,
 such as `guardrails.workloadsOu.attrId`, and CDK writes the plumbing. Which plumbing depends on
-the `@aws-cdk/core:defaultCrossStackReferences` setting in `cdk.json`, and on whether the two
+the `@aws-cdk/core:defaultCrossStackReferences` setting in `infra/cdk.json` (set to `"weak"`
+here), and on whether the two
 stacks share a region:
 
 | | Same region | Different regions |
 | --- | --- | --- |
 | **Strong**, the default if the setting is absent | an **Output with an Export**, read with `Fn::ImportValue` | custom resources that copy the value into an SSM parameter in the consumer's region |
-| **Weak**, our setting since `1-cdk-app` | a plain **Output**, read with `Fn::GetStackOutput` | the same, with `Fn::GetStackOutput` naming the producer's region |
+| **Weak**, our setting since `1-cdk-app` | a plain **Output**, read with `Fn::GetStackOutput` | a plain **Output**, read with `Fn::GetStackOutput`, which names the producer's region |
 
 A strong reference locks the producer: CloudFormation refuses to change or delete an export
 while another stack imports it. A weak one locks nothing; the consumer reads the output when
@@ -483,8 +487,7 @@ committed. The workload account's stacks, from step 6, will get theirs the same 
 **Say it:** "Stacks are pinned to an account and region, but the account comes from the
 signed-in identity rather than from code."
 
-**See it:** `cd infra && cdk ls --long` shows each stack's `aws://<account>/<region>`, once
-stacks exist.
+**See it:** `cd infra && cdk ls --long` shows each stack's `aws://<account>/<region>`.
 
 #### CDK bootstrap
 
@@ -521,7 +524,9 @@ in PR `1-cdk-app`; the activation happens after step 6.
 early; anything earlier needs a backfill."
 
 **See it:** `aws ce list-cost-allocation-tags --region us-east-1 --query 'CostAllocationTags[].[TagKey,Status]'`.
-For now it shows only CloudFormation's own automatic tags.
+On 2026-10-22 it listed `project`, `repository` and `managed-by` as `Inactive`, beside
+CloudFormation's own automatic tags. Each key appears there once a resource carries it, so
+`project` can be activated now, earlier than the plan's step 6.
 
 ### Audit and detection
 

@@ -2,8 +2,9 @@
 
 **As of 2026-10-22.** Covers Phase A steps 0–3: the SSO login, the CDK app skeleton, the $10
 budget, and the workload account with its OU and guardrails, including step 3a, which switches
-SCPs on through a custom resource. Steps 1 to 3a are merged and **deployed**: step 2 on
-2026-10-13, and step 3's three stacks on 2026-10-22. So the account really does hold the
+SCPs on through a custom resource. Steps 1 to 3a are merged. Step 1 is the skeleton and
+deploys nothing itself; the rest are **deployed**: step 2 on 2026-10-13, and step 3's three
+stacks on 2026-10-22. So the account really does hold the
 `Workloads` OU, its three SCPs and the `harpguru` workload account, and the status table in
 `docs/plans/phase-a.md` says the same. Everything after step 3 is out of scope; see the last
 section.
@@ -84,7 +85,8 @@ in the README, and the tiering here is a proposal, to be argued with.
   the region lock was seen working, and what the refusal said.
 - **Sources:** `docs/aws-concepts.md` "Organizations", "Organizational Unit (OU)",
   "Service Control Policy (SCP)", "Root user", "Account ID and ARNs" and "Regions";
-  `docs/plans/phase-a.md` "Accounts" and "Steps" (item 3);
+  `docs/plans/phase-a.md` "Accounts", "Steps" (item 3) and "Decisions" (the entry dated
+  2026-10-14 about two stacks);
   `infra/lib/guardrails-stack.ts`; `infra/test/guardrails-stack.test.ts`;
   `roadmap-planning/aws-pathway-findings.md` "Step 3 deployed, 2026-10-22".
 
@@ -145,7 +147,9 @@ in the README, and the tiering here is a proposal, to be argued with.
   `docs/aws-concepts.md` "Organizations", "IAM Identity Center",
   "Change sets, stack events and logical IDs" and
   "Deletion policy and termination protection"; `infra/lib/accounts-stack.ts`;
-  `infra/test/accounts-stack.test.ts`; `infra/README.md` "Deploy-time values".
+  `infra/test/accounts-stack.test.ts`; `infra/README.md` "Deploy-time values";
+  `roadmap-planning/aws-pathway-findings.md` "Step 3 facts, checked 2026-10-14 and 2026-10-20"
+  and "Step 3 deployed, 2026-10-22".
 
 ---
 
@@ -171,8 +175,10 @@ in the README, and the tiering here is a proposal, to be argued with.
 
 - **Covers:** what assertions against a synthesised template can and cannot prove, including a
   test that exists to stop an expensive mistake rather than to check behaviour, and tests that
-  prove something is absent, such as a custom resource's delete call.
-- **Sources:** `infra/README.md`; `infra/test/budget-stack.test.ts`;
+  prove something is absent, such as a custom resource's delete call. Also why every test
+  builds its app with `cdk.json`'s feature flags: until 2026-10-22 they did not, and the
+  cross-stack test passed while asserting an export the deployed app never used.
+- **Sources:** `infra/README.md`; `infra/test/app.ts`; `infra/test/budget-stack.test.ts`;
   `infra/test/accounts-stack.test.ts`; `infra/test/guardrails-stack.test.ts`;
   `infra/test/policy-types-stack.test.ts`.
 
