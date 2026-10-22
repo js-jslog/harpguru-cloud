@@ -23,7 +23,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | 2 | `1-budget`: $10 budget | **merged** and deployed 2026-10-13; zero-spend budget deleted | — |
 | 3 | `1-org-accounts`: workload account, OU, SCPs | **merged** and deployed 2026-10-22; `harpguru` profile added | — |
 | 3a | `1-scp-custom-resource`: SCPs switched on by a custom resource in its own stack; the four decisions settled | **merged** and deployed 2026-10-22 | — |
-| 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | imported 2026-10-22; tags not yet deployed | *you*: step 4 of #3b below |
+| 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | imported and deployed 2026-10-22 | — |
 | 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | not started | — |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | not started | — |
@@ -131,7 +131,8 @@ is real:
    HarpguruIdentity` shows the tag change to the permission set and CDK's metadata resource,
    which the import leaves out, and nothing else. Then deploy it with `--require-approval never`.
 
-Steps 1 to 3 done 2026-10-22:
+Done 2026-10-22. After step 4 the stack was still `IN_SYNC`, and the login still reached both
+accounts. What steps 1 to 3 showed:
 - The diff's change set failed CloudFormation's early validation, because an assignment with
   that identifier "already exists". So a plain deploy would indeed have failed, and the mapping's
   identifiers were right. The diff fell back to comparing templates.

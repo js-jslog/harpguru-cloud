@@ -142,11 +142,14 @@ credentials for that role.
 **Here:** an **organization instance** in `eu-west-2`. You sign in at the access portal, and
 `aws sso login --use-device-code` gets the CLI's short-lived credentials. The
 `AdministratorAccess` permission set and its assignment to the management account were made
-in the console. Its assignment to the workload account is code: an
+in the console, and on 2026-10-22 were imported into `HarpguruIdentity`, so they are code too
+now (see [Resource import and drift](#resource-import-and-drift)). Its assignment to the
+workload account was code from the start: an
 `AWS::SSO::Assignment` in `HarpguruAccounts`, which also creates the
 `AWSReservedSSO_AdministratorAccess_*` role in the new account. Since step 3's deploy on
 2026-10-22, one login covers two accounts: the CLI reaches the new one through a second
-profile, `harpguru`, which reuses the same SSO session. *(PR `1-org-accounts`)*
+profile, `harpguru`, which reuses the same SSO session. *(PRs `1-org-accounts`,
+`1-identity-import`)*
 
 **Say it:** "People never have credentials in an account. They sign in once and assume a
 role, and the credentials expire in hours."
@@ -301,7 +304,8 @@ spend."
 jumps outside it, even if you're still below any budget.
 
 **Here:** its default monitor is already running, with a daily email, so nothing is built
-for it.
+for it. It was made in the console, and is deliberately left out of CDK: see
+`docs/outside-cdk.md`.
 
 **Say it:** "Budgets catch totals; anomaly detection catches a sudden jump in rate, like a
 runaway resource on day two."
