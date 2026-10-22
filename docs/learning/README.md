@@ -25,7 +25,7 @@ Everything below is addressed to the tutor.
 me: no greeting, no plan, and no question about which topic I want.** Your fetch tool accepts a
 link only in the turn where it was seen, in my message or in a page you opened in that same
 turn. Once you have replied, that turn is over, and every one of these links will be refused
-from then on: I would have to paste each one back to you by hand. They are about 170 KB in
+from then on: I would have to paste each one back to you by hand. They are about 200 KB in
 all, listed most important first.
 
 - https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/syllabus.md?v=2026-10-22T2222Z
