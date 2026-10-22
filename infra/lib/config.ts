@@ -20,10 +20,6 @@ export type DeployConfig = {
   identityCenterInstanceArn?: string
   adminPermissionSetArn?: string
   adminPrincipalId?: string
-  // The two account IDs, for stacks that deploy into the workload account,
-  // or that name the management account from inside it.
-  managementAccountId?: string
-  workloadAccountId?: string
 }
 
 export const DEPLOY_CONFIG_PATH = join(__dirname, '..', 'deploy.local.json')
@@ -50,13 +46,5 @@ export const requireSetting = (
 // use this.
 export const managementEnv = (): Environment => ({
   account: process.env.CDK_DEFAULT_ACCOUNT,
-  region: PRIMARY_REGION,
-})
-
-// Stacks in the workload account are pinned to its ID from
-// deploy.local.json, and deployed with `--profile harpguru`. Signed in to
-// the wrong account, CDK refuses rather than deploying there.
-export const workloadEnv = (config: DeployConfig): Environment => ({
-  account: requireSetting(config, 'workloadAccountId'),
   region: PRIMARY_REGION,
 })

@@ -76,22 +76,20 @@ rather than a user.
 availability zone and an internet gateway, so that an EC2 instance launched without any
 networking choices can still reach the internet. It costs nothing while nothing runs in it.
 
-**Here:** nothing used one. The `harpguru` account got one in each of its 17 regions when it
-was created. The two in the allowed regions are deleted by hand, with
-`infra/scripts/delete-default-vpc.sh`, rather than imported into a stack; Phase F's VPC is to
-be designed from scratch, without NAT gateways. The other 15 can't be touched at all: the
-region lock denies every action there, deletion included. Because no stack records any of
-this, `docs/outside-cdk.md` does. The management account still has its 17, undecided.
+**Here:** nothing uses one. Each account has one in every region, 17 each. They are left as
+AWS made them, neither imported nor deleted, because they are AWS defaults rather than manual
+work; the reasoning is in `docs/outside-cdk.md`. In the workload account, 15 of them can't be
+touched at all: the region lock denies every action outside the two allowed regions, deletion
+included. Phase F's VPC is to be designed from scratch, without NAT gateways.
 *(PR `1-identity-import`)*
 
 **Say it:** "Every account starts with a default VPC in every region. It's free, but it's a
 public network nobody designed, so a hardened account either deletes it or makes sure
 nothing lands in it."
 
-**See it:** in the management account,
-`aws ec2 describe-vpcs --filters Name=is-default,Values=true --query 'Vpcs[].CidrBlock'` shows
-`172.31.0.0/16`, the range every default VPC uses. Add `--profile harpguru` to see none, once
-the deletion has been run.
+**See it:**
+`aws ec2 describe-vpcs --profile harpguru --filters Name=is-default,Values=true --query 'Vpcs[].CidrBlock'`
+shows `172.31.0.0/16`, the range every default VPC uses. Add `--region us-east-1` for the other.
 
 ### Identity: who you are when you call AWS
 
@@ -261,10 +259,8 @@ there can assume it. Assuming a role in another account is the general cross-acc
 pattern: the role's **trust policy** says who may assume it, and its permissions say what
 they can do once they have.
 
-**Here:** `harpguru` got one automatically. It's the way back in if the Identity Center
-assignment ever breaks, so it's kept, and step 3b imports it into `HarpguruBreakGlass`, the
-first stack in the workload account, so that it is written down and any change to it shows in
-a diff. Day-to-day access still goes through Identity
+**Here:** `harpguru` gets one automatically. It's the way back in if the Identity Center
+assignment ever breaks, so it's left in place. Day-to-day access still goes through Identity
 Center, and SCPs still limit this role like any other identity in the account.
 *(PR `1-org-accounts`)*
 

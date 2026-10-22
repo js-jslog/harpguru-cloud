@@ -4,7 +4,5 @@
   "organizationRootId": "r-xxxx",
   "identityCenterInstanceArn": "arn:aws:sso:::instance/ssoins-xxxxxxxxxxxxxxxx",
   "adminPermissionSetArn": "arn:aws:sso:::permissionSet/ssoins-xxxxxxxxxxxxxxxx/ps-xxxxxxxxxxxxxxxx",
-  "adminPrincipalId": "xxxxxxxxxx-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
-  "managementAccountId": "111111111111",
-  "workloadAccountId": "222222222222"
+  "adminPrincipalId": "xxxxxxxxxx-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 }

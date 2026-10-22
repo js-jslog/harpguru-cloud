@@ -1,14 +1,8 @@
 #!/usr/bin/env node
 import { App } from 'aws-cdk-lib'
 import { AccountsStack } from '../lib/accounts-stack'
-import { BreakGlassStack } from '../lib/break-glass-stack'
 import { BudgetStack } from '../lib/budget-stack'
-import {
-  managementEnv,
-  readDeployConfig,
-  requireSetting,
-  workloadEnv,
-} from '../lib/config'
+import { managementEnv, readDeployConfig, requireSetting } from '../lib/config'
 import { GuardrailsStack } from '../lib/guardrails-stack'
 import { IdentityStack } from '../lib/identity-stack'
 import { PolicyTypesStack } from '../lib/policy-types-stack'
@@ -75,14 +69,4 @@ new AccountsStack(app, 'HarpguruAccounts', {
   ),
   adminPermissionSetArn: requireSetting(config, 'adminPermissionSetArn'),
   adminPrincipalId: requireSetting(config, 'adminPrincipalId'),
-})
-
-// The first stack in the workload account, deployed with --profile harpguru.
-// Adopted from Organizations, not created; see lib/break-glass-stack.ts.
-new BreakGlassStack(app, 'HarpguruBreakGlass', {
-  env: workloadEnv(config),
-  description:
-    'OrganizationAccountAccessRole, the way back in from the management account',
-  terminationProtection: true,
-  managementAccountId: requireSetting(config, 'managementAccountId'),
 })

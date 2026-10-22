@@ -23,7 +23,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | 2 | `1-budget`: $10 budget | **merged** and deployed 2026-10-13; zero-spend budget deleted | — |
 | 3 | `1-org-accounts`: workload account, OU, SCPs | **merged** and deployed 2026-10-22; `harpguru` profile added | — |
 | 3a | `1-scp-custom-resource`: SCPs switched on by a custom resource in its own stack; the four decisions settled | **merged** and deployed 2026-10-22 | — |
-| 3b | `1-identity-import`: console-made identity resources imported into `HarpguruIdentity` and `HarpguruBreakGlass`; the inventory of what CDK doesn't manage | coded on the branch; not imported | *you*: the import steps in #3b below |
+| 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | coded on the branch; not imported | *you*: the import steps in #3b below |
 | 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | not started | — |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | not started | — |
@@ -97,34 +97,26 @@ reading each diff the deploy was run with `--require-approval never`. The first 
 without it left an empty stack behind; see "Change sets" in `docs/aws-concepts.md`. A call
 to `us-west-2` from the new account was refused by the region lock.
 
-**3b · `1-identity-import`.** Two stacks, both termination protected, that adopt resources
-made outside CloudFormation with `cdk import` rather than creating them:
-- **`HarpguruIdentity`**, in the management account:
-  - the `AdministratorAccess` permission set: one AWS managed policy, `AdministratorAccess`,
-    and a one-hour session, as read on 2026-10-22
-  - its assignment of `jslog` to the management account
-- **`HarpguruBreakGlass`**, the first stack in the workload account: the
-  `OrganizationAccountAccessRole` that Organizations made with the account, trusting the
-  management account and holding `AdministratorAccess`. It is deployed with
-  `--profile harpguru`, and pinned to the `workloadAccountId` in `deploy.local.json`, so CDK
-  refuses to deploy it with the wrong credentials. Its trust policy names the
-  `managementAccountId` there too.
+**3b · `1-identity-import`.** One stack in the management account, `HarpguruIdentity`,
+termination protected, that adopts two console-made resources with `cdk import` rather than
+creating them:
+- the `AdministratorAccess` permission set: one AWS managed policy, `AdministratorAccess`, and
+  a one-hour session, as read on 2026-10-22
+- its assignment of `jslog` to the management account
 
-Each is a stack of its own, apart from the existing ones, because each changes on its own
-schedule and puts something different at risk: a mistake in `HarpguruIdentity` costs the
-login, and one in `HarpguruBreakGlass` the way back in if the login is lost. Neither belongs
-in `HarpguruPolicyTypes`, which is isolated so that nothing else is ever deployed beside its
-SCP switch, nor in `HarpguruAccounts`, beside the account that can't be undone.
+Both are `Retain`. It is a stack of its own, apart from the existing ones, because it changes
+on its own schedule and puts something different at risk: a mistake in it costs the login. It
+doesn't belong in `HarpguruPolicyTypes`, which is isolated so that nothing is ever deployed
+beside its SCP switch, nor in `HarpguruAccounts`, beside the account that can't be undone.
 
-Every resource is `Retain`. An import never changes the resource, so the code matches the console
-exactly, which means the permission set and the role go in **without** the project tags. They are added
+An import never changes the resource, so the code matches the console
+exactly, which means the permission set goes in **without** the project tags. They are added
 afterwards by an ordinary deploy, which is a real change and shows in its diff. Both resources
 name the permission set by the ARN in `deploy.local.json`, as `HarpguruAccounts` already does.
 `docs/outside-cdk.md` lists everything else that CDK doesn't manage, and why.
 
-Importing them, all *you*, from the branch before it is merged, so the merged PR describes
-what is real. First merge `scripts/identity-center-values.sh`'s output into
-`deploy.local.json` again, for the two account IDs. Then, for `HarpguruIdentity`:
+Importing it, all *you*, from the branch before it is merged, so the merged PR describes what
+is real:
 1. `cdk diff HarpguruIdentity`. It shows both resources as `[+]`: a diff can't tell an import
    from a create. **Do not `cdk deploy` here.** A deploy would try to create a second
    permission set with the same name, and fail.
@@ -137,15 +129,8 @@ what is real. First merge `scripts/identity-center-values.sh`'s output into
    should be `IN_SYNC`.
 4. `cdk diff HarpguruIdentity`, then deploy it with `--require-approval never`. The import
    leaves out CDK's metadata resource, so this adds it, and switches termination protection on.
-5. The same again for `HarpguruBreakGlass`, adding `--profile harpguru` to every command. Its
-   import needs no script, because the role's name is its only identifier:
-   `npx cdk import HarpguruBreakGlass --profile harpguru --resource-mapping-inline '{"OrganizationAccountAccessRole":{"RoleName":"OrganizationAccountAccessRole"}}'`.
-6. The agent then adds the tags in a second commit. `cdk diff` shows a tag change to each
-   imported resource and nothing else, and you deploy both stacks.
-7. Delete the workload account's two default VPCs:
-   `AWS_PROFILE=harpguru scripts/delete-default-vpc.sh <region>` for `eu-west-2` and
-   `us-east-1`, which shows what it would delete, then again with `--yes`. The agent then
-   marks the log in `docs/outside-cdk.md` as run.
+5. The agent then adds the tags in a second commit. `cdk diff` shows a tag change to the
+   permission set and nothing else, and you deploy it.
 
 **4 · `1-org-audit`.**
 - An organisation CloudTrail trail to S3.
@@ -266,15 +251,15 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
 - 2026-10-22: **what CloudFormation could manage but the console made is decided case by
   case.** The `AdministratorAccess` permission set and its management account assignment are
   imported (#3b): they decide who is an admin where, and `HarpguruAccounts` already depends on
-  the permission set. **Changed the same day** at the user's request:
-  `OrganizationAccountAccessRole` is imported too, into `HarpguruBreakGlass`, against the
-  agent's suggestion to leave the break-glass role exactly as Organizations made it. The Organization and the Identity Center instance stay outside, by
+  the permission set. The Organization and the Identity Center instance stay outside, by
   choice: both existed before the app, nothing about them changes, and a stack owning them
   would carry a delete risk like the one designed out of `HarpguruPolicyTypes`. The anomaly
   monitor stays outside, as decided 2026-09-26. The full list, with each "can't" and "chose
   not", is `docs/outside-cdk.md`.
-- 2026-10-22: **the workload account's default VPCs in the two allowed regions are deleted, not
-  imported**: nothing uses them, and Phase F designs its own network. It is done by hand with
-  `infra/scripts/delete-default-vpc.sh`, and recorded in `docs/outside-cdk.md`, since no
-  template shows it. The other 15 regions' default VPCs can't be reached past the region lock.
-  The management account's 17 are not yet decided.
+- 2026-10-22: **the test for what goes in a stack: anything made by hand is brought into CDK
+  where CloudFormation can manage it; anything AWS made by itself is listed in
+  `docs/outside-cdk.md` and left alone.** The aim is a record of manual work. Under it,
+  `OrganizationAccountAccessRole` and every default VPC stay outside. Both were briefly
+  planned otherwise the same day, the role imported and the workload account's two default
+  VPCs deleted, and dropped before anything ran: the deletion would itself have been manual
+  work to record. One-off manual changes are logged at the end of `docs/outside-cdk.md`.

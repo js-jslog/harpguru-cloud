@@ -21,8 +21,7 @@ cdk deploy <stack> # the user runs this, after reading the diff
 ## Deploy-time values
 
 Some stacks need values that are fine to know but shouldn't be published, because this
-repo is public: email addresses, the two account IDs, and the Organization and Identity
-Center identifiers. They
+repo is public: email addresses, and the Organization and Identity Center identifiers. They
 live in `deploy.local.json`, a gitignored file beside `cdk.json`:
 
 ```

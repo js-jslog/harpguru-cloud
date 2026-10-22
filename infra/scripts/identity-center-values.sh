@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Prints the Organization, Identity Center and account values that
-# deploy.local.json needs, as JSON to paste in. Read-only; needs `aws sso login`.
+# Prints the Organization and Identity Center values that deploy.local.json
+# needs, as JSON to paste in. Read-only; needs `aws sso login`.
 #
 #   scripts/identity-center-values.sh [username]   # default: jslog
 set -euo pipefail
@@ -27,16 +27,8 @@ principal_id=$(aws identitystore get-user-id --identity-store-id "$store_id" \
   --alternate-identifier "{\"UniqueAttribute\":{\"AttributePath\":\"userName\",\"AttributeValue\":\"$username\"}}" \
   --query UserId --output text)
 
-management_id=$(aws sts get-caller-identity --query Account --output text)
-# Empty until HarpguruAccounts has created the account.
-workload_id=$(aws organizations list-accounts \
-  --query "Accounts[?Name=='harpguru'].Id | [0]" --output text)
-if [ "$workload_id" = None ]; then workload_id=; fi
-
 jq -n \
   --arg root "$root_id" --arg instance "$instance_arn" \
   --arg ps "$permission_set_arn" --arg principal "$principal_id" \
-  --arg management "$management_id" --arg workload "$workload_id" \
   '{organizationRootId: $root, identityCenterInstanceArn: $instance,
-    adminPermissionSetArn: $ps, adminPrincipalId: $principal,
-    managementAccountId: $management, workloadAccountId: $workload}'
+    adminPermissionSetArn: $ps, adminPrincipalId: $principal}'
