@@ -1,7 +1,7 @@
-import { RemovalPolicy, Stack, Tags, type StackProps } from 'aws-cdk-lib'
+import { RemovalPolicy, Stack, type StackProps } from 'aws-cdk-lib'
 import { CfnAssignment, CfnPermissionSet } from 'aws-cdk-lib/aws-sso'
 import type { Construct } from 'constructs'
-import { PROJECT_TAGS } from './tags'
+import { withoutProjectTags } from './tags'
 
 export type IdentityStackProps = StackProps & {
   identityCenterInstanceArn: string
@@ -29,11 +29,8 @@ export class IdentityStack extends Stack {
     })
     admin.applyRemovalPolicy(RemovalPolicy.RETAIN)
 
-    // The console made it untagged, and an import can't add tags. They come
-    // off here for the import, and go back on in an ordinary deploy after it.
-    for (const key of Object.keys(PROJECT_TAGS)) {
-      Tags.of(admin).remove(key)
-    }
+    // The console made it untagged.
+    withoutProjectTags(admin)
 
     // The workload account's assignment is in HarpguruAccounts, beside the
     // account it targets. Both name the permission set by the ARN in

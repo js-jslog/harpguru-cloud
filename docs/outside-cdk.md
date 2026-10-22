@@ -35,7 +35,6 @@ Keep this list current: anything made outside a stack is added here in the PR th
 
 | Thing | Kind | Why it stays outside | See it |
 | --- | --- | --- | --- |
-| `OrganizationAccountAccessRole` | Chose not | Organizations creates it with the account, and it is the way back in if Identity Center breaks. `AWS::IAM::Role` exists, so it could be imported, but a break-glass role is best left exactly as Organizations made it. Proposed 2026-10-22, not yet confirmed | `aws iam get-role --role-name OrganizationAccountAccessRole --profile harpguru --query 'Role.RoleName'` |
 | The `AWSReservedSSO_AdministratorAccess_*` role | Can't | Identity Center creates and owns it when the permission set is assigned, and it can only be changed through the permission set. The assignment is in `HarpguruAccounts`; the role is its result | `aws iam list-roles --profile harpguru --query "Roles[?starts_with(RoleName,'AWSReservedSSO')].RoleName"` |
 | A default VPC in each region | Chose not | AWS creates one in each region of a new account. `AWS::EC2::VPC` exists, so one could be imported, but nothing uses them. Whether to delete them is a choice for when networking arrives. See "Default VPC" in `docs/aws-concepts.md`. Proposed 2026-10-22, not yet confirmed | `aws ec2 describe-vpcs --profile harpguru --filters Name=is-default,Values=true --query 'Vpcs[].CidrBlock'` |
 | The root user | Can't | Created with the account, with no password. The `harpguru-deny-root` SCP blocks it, and centralised root access, which would remove its credentials, is deferred | See "Root user" in `docs/aws-concepts.md` |
@@ -55,3 +54,6 @@ Keep this list current: anything made outside a stack is added here in the PR th
 - 2026-10-22: the `AdministratorAccess` permission set and its management account assignment,
   imported into `HarpguruIdentity` (step 3b). Until the import is done, they are still
   console-only.
+- 2026-10-22: `OrganizationAccountAccessRole` in the workload account, imported into
+  `HarpguruBreakGlass` (step 3b), at the user's request. Until the import is done, it is
+  still Organizations' alone.

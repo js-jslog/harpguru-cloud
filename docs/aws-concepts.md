@@ -258,8 +258,10 @@ there can assume it. Assuming a role in another account is the general cross-acc
 pattern: the role's **trust policy** says who may assume it, and its permissions say what
 they can do once they have.
 
-**Here:** `harpguru` gets one automatically. It's the way back in if the Identity Center
-assignment ever breaks, so it's left in place. Day-to-day access still goes through Identity
+**Here:** `harpguru` got one automatically. It's the way back in if the Identity Center
+assignment ever breaks, so it's kept, and step 3b imports it into `HarpguruBreakGlass`, the
+first stack in the workload account, so that it is written down and any change to it shows in
+a diff. Day-to-day access still goes through Identity
 Center, and SCPs still limit this role like any other identity in the account.
 *(PR `1-org-accounts`)*
 
