@@ -174,7 +174,8 @@ in the README, and the tiering here is a proposal, to be argued with.
   `HarpguruIdentity` is not part of `HarpguruPolicyTypes` or `HarpguruAccounts`.
 - **Sources:** `docs/outside-cdk.md`; `docs/aws-concepts.md` "Resource import and drift",
   "Default VPC", "OrganizationAccountAccessRole" and "IAM Identity Center";
-  `docs/plans/phase-a.md` "Steps" (item 3b) and "Decisions" (the entries dated 2026-10-22);
+  `docs/plans/phase-a.md` "Steps" (item 3b) and "Decisions" (the two 2026-10-22 entries about
+  what goes in a stack);
   `infra/lib/identity-stack.ts`; `infra/test/identity-stack.test.ts`;
   `infra/scripts/identity-import-mapping.sh`; `roadmap-planning/aws-pathway-findings.md`
   "Step 3 deployed, 2026-10-22".

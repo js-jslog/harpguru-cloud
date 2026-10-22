@@ -84,8 +84,8 @@ included. Phase F's VPC is to be designed from scratch, without NAT gateways.
 *(PR `1-identity-import`)*
 
 **Say it:** "Every account starts with a default VPC in every region. It's free, but it's a
-public network nobody designed, so a hardened account either deletes it or makes sure
-nothing lands in it."
+public network nobody designed. Many hardened accounts delete it; I left mine, because
+nothing runs there and the SCPs bound what could."
 
 **See it:**
 `aws ec2 describe-vpcs --profile harpguru --filters Name=is-default,Values=true --query 'Vpcs[].CidrBlock'`
@@ -455,15 +455,17 @@ shows the custom resource beside its Lambda, role, policy and log group, and
 `applyRemovalPolicy(RemovalPolicy.RETAIN)`, although `Retain` is already CloudFormation's
 default for accounts. `HarpguruGuardrails` and `HarpguruAccounts` both have termination
 protection, because deleting the first would strip the guardrails off the OU.
-`HarpguruPolicyTypes` has it too, and its custom resource is `Retain`. `HarpguruBudget` has
-neither. *(PRs `1-org-accounts`, `1-scp-custom-resource`)*
+`HarpguruPolicyTypes` has it too, and its custom resource is `Retain`. `HarpguruIdentity` has
+it as well, and its imported permission set and assignment are both `Retain`, as every
+imported resource must have a deletion policy. `HarpguruBudget` has neither.
+*(PRs `1-org-accounts`, `1-scp-custom-resource`, `1-identity-import`)*
 
 **Say it:** "Retain protects a resource from its stack; termination protection protects the
 stack from a careless delete. Anything stateful or irreplaceable gets both."
 
 **See it:**
 `aws cloudformation describe-stacks --query 'Stacks[].[StackName,EnableTerminationProtection]' --output table`.
-Since step 3's deploy on 2026-10-22, only its three stacks show `True`.
+Since 2026-10-22, step 3's three stacks and `HarpguruIdentity` show `True`.
 
 #### Resource import and drift
 

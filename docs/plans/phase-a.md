@@ -23,7 +23,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | 2 | `1-budget`: $10 budget | **merged** and deployed 2026-10-13; zero-spend budget deleted | — |
 | 3 | `1-org-accounts`: workload account, OU, SCPs | **merged** and deployed 2026-10-22; `harpguru` profile added | — |
 | 3a | `1-scp-custom-resource`: SCPs switched on by a custom resource in its own stack; the four decisions settled | **merged** and deployed 2026-10-22 | — |
-| 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | imported and deployed 2026-10-22 | — |
+| 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | **merged**, imported and deployed 2026-10-22 | — |
 | 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | not started | — |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | not started | — |
@@ -112,7 +112,9 @@ beside its SCP switch, nor in `HarpguruAccounts`, beside the account that can't 
 An import doesn't apply the template to the resource, so the code had to match the console
 exactly, which meant the permission set went in **without** the project tags. They were added
 afterwards by an ordinary deploy, which is a real change and shows in its diff. Both resources
-name the permission set by the ARN in `deploy.local.json`, as `HarpguruAccounts` already does.
+Its assignment names the permission set by the ARN in `deploy.local.json`, as the workload
+account's assignment in `HarpguruAccounts` already does, rather than by a reference to the
+resource beside it.
 `docs/outside-cdk.md` lists everything else that CDK doesn't manage, and why.
 
 Importing it, all *you*, from the branch before it is merged, so the merged PR describes what
@@ -128,8 +130,9 @@ is real:
    `aws cloudformation describe-stack-resource-drifts --stack-name HarpguruIdentity`. Both
    should be `IN_SYNC`.
 4. With the drift check clean, the agent puts the tags back in the code. `cdk diff
-   HarpguruIdentity` shows the tag change to the permission set and CDK's metadata resource,
-   which the import leaves out, and nothing else. Then deploy it with `--require-approval never`.
+   HarpguruIdentity` shows the tag change to the permission set, plus the stack description
+   and the bootstrap parameter, which the import left out. The deploy also adds `CDKMetadata`,
+   which the import left out too, but which `cdk diff` never shows. Then deploy it with `--require-approval never`.
 
 Done 2026-10-22. After step 4 the stack was still `IN_SYNC`, and the login still reached both
 accounts. What steps 1 to 3 showed:
@@ -264,11 +267,13 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
   the permission set. The Organization and the Identity Center instance stay outside, by
   choice: both existed before the app, nothing about them changes, and a stack owning them
   would carry a delete risk like the one designed out of `HarpguruPolicyTypes`. The anomaly
-  monitor stays outside, as decided 2026-09-26. The full list, with each "can't" and "chose
+  monitor stays outside, as decided 2026-09-26 in "Steps" item 2. The full list, with each "can't" and "chose
   not", is `docs/outside-cdk.md`.
-- 2026-10-22: **the test for what goes in a stack: anything made by hand is brought into CDK
-  where CloudFormation can manage it; anything AWS made by itself is listed in
-  `docs/outside-cdk.md` and left alone.** The aim is a record of manual work. Under it,
+- 2026-10-22: **the test for what goes in a stack: every piece of manual work is on record,
+  and AWS defaults are left alone.** Configuration made by hand that may change goes into a
+  stack where CloudFormation can manage it; a one-off foundation made by hand before the app,
+  such as the Organization, is recorded in `docs/outside-cdk.md` instead, per the entry above;
+  anything AWS made by itself is listed there and left alone. Under it,
   `OrganizationAccountAccessRole` and every default VPC stay outside. Both were briefly
   planned otherwise the same day, the role imported and the workload account's two default
   VPCs deleted, and dropped before anything ran: the deletion would itself have been manual
