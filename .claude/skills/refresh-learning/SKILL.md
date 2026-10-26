@@ -67,7 +67,9 @@ Read both files before changing anything, so you keep their intent.
    - Revise topics where the code or decisions changed. Check each question can be answered
      from the sources named, by reading them; do not write from memory.
    - Move anything now on `master` out of "Not yet built".
-   - Update the "As of" date and what is deployed versus only merged. Any state claimed for a
+   - Update the "As of" date and what is deployed versus only merged. Copy the new date into
+     step 1 of "How a session runs" in the README, which quotes it: the README is the one file
+     sure to reach the tutor fresh, so a stale syllabus shows as a mismatch. Any state claimed for a
      step must match its row in the status table on `master`; fix whichever is wrong.
 3. **Update the README's sources.** They are the only place the tutor gets URLs from, so they
    must match the syllabus exactly: no more, no less. Each source is in two places: its URL in

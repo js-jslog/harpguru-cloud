@@ -18,7 +18,7 @@ Topic 8 is new: what in the accounts no stack shows, and why.
 
 Each topic gives its tier and why, what I should be able to answer, and its sources. The
 sources hold the facts; this file deliberately does not restate them. Sources are named by
-path, as listed at the top of the README, and a quoted name is a heading inside that
+path, as listed in the README's sources, and a quoted name is a heading inside that
 file. The tiers are defined
 in the README, and the tiering here is a proposal, to be argued with.
 
