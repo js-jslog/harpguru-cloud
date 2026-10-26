@@ -2,7 +2,13 @@
 import { App } from 'aws-cdk-lib'
 import { AccountsStack } from '../lib/accounts-stack'
 import { BudgetStack } from '../lib/budget-stack'
-import { managementEnv, readDeployConfig, requireSetting } from '../lib/config'
+import { DnsStack } from '../lib/dns-stack'
+import {
+  managementEnv,
+  readDeployConfig,
+  requireSetting,
+  workloadEnv,
+} from '../lib/config'
 import { GuardrailsStack } from '../lib/guardrails-stack'
 import { IdentityStack } from '../lib/identity-stack'
 import { PolicyTypesStack } from '../lib/policy-types-stack'
@@ -69,4 +75,13 @@ new AccountsStack(app, 'HarpguruAccounts', {
   ),
   adminPermissionSetArn: requireSetting(config, 'adminPermissionSetArn'),
   adminPrincipalId: requireSetting(config, 'adminPrincipalId'),
+})
+
+// From here on, stacks live in the workload account: deploy them with
+// `--profile harpguru`. Protected, because once the nameservers point at the
+// zone, deleting it would take the domain's mail down.
+new DnsStack(app, 'HarpguruDns', {
+  env: workloadEnv(),
+  description: 'The harpguru.com hosted zone, carrying the mail records',
+  terminationProtection: true,
 })

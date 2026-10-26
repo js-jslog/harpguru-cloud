@@ -48,3 +48,11 @@ export const managementEnv = (): Environment => ({
   account: process.env.CDK_DEFAULT_ACCOUNT,
   region: PRIMARY_REGION,
 })
+
+// The same, for stacks in the workload account. The account is still whoever
+// is signed in, so these are deployed with `--profile harpguru`. Without it,
+// the stack would go to the management account instead.
+export const workloadEnv = (): Environment => ({
+  account: process.env.CDK_DEFAULT_ACCOUNT,
+  region: PRIMARY_REGION,
+})

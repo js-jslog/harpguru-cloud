@@ -36,6 +36,9 @@ The file lives in the `/app` workspace volume, so it survives image rebuilds, bu
 
 **Account IDs are never needed here.** The target account comes from whoever is signed in,
 through `CDK_DEFAULT_ACCOUNT`, which the CLI fills in from the SSO login.
+So stacks in the workload account, from `HarpguruDns` on, are run with `--profile harpguru`:
+`cdk diff HarpguruDns --profile harpguru`. Without the profile they would target the
+management account.
 
 ## Layout
 
@@ -49,5 +52,6 @@ through `CDK_DEFAULT_ACCOUNT`, which the CLI fills in from the SSO login.
 | `lib/policy-types-stack.ts` | `HarpguruPolicyTypes`: the custom resource that switches SCPs on                                    |
 | `lib/guardrails-stack.ts`   | `HarpguruGuardrails`: the `Workloads` OU and its SCPs                                               |
 | `lib/accounts-stack.ts`     | `HarpguruAccounts`: the `harpguru` account and its Identity Center access                           |
+| `lib/dns-stack.ts`          | `HarpguruDns`: the harpguru.com hosted zone and its mail records, in the workload account           |
 | `scripts/`                  | read-only helpers, such as printing values for `deploy.local.json`                                  |
 | `test/`                     | one test file per module or stack, and `app.ts`, which gives tests `cdk.json`'s flags               |

@@ -26,7 +26,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | **merged**, imported and deployed 2026-10-22 | — |
 | 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | not started | — |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
-| 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | not started | — |
+| 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **branch pushed** 2026-10-26: the zone's code | *you*: deploy, then the switch and mail tests |
 | 7 | `1-certificate`: ACM in `us-east-1` | not started | #6 propagated |
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
 
@@ -177,6 +177,25 @@ Done 2026-10-22, in one run with `--profile harpguru` and the project's three ta
 - Also check in Heart's panel that forwarding does not depend on Heart serving the zone.
 - ~~Once the zone exists, activate `project` as a cost allocation tag.~~ Done early, on
   2026-10-22; see Decisions.
+
+Doing it, all *you*. Deploying the zone changes nothing live: the internet keeps asking
+Heart until the nameservers move, so the steps can be split across sessions at the line.
+1. `cdk diff HarpguruDns --profile harpguru`. It shows the zone and two record sets as `[+]`,
+   all in the workload account. **Check the profile is there**: without it, the stack would
+   target the management account.
+2. `cdk deploy HarpguruDns --profile harpguru`. The `NameServers` output lists the four
+   nameservers. The zone is billed from now: $0.50 a month.
+
+   *A good place to stop.*
+3. Send a test message to `contact@` and check it arrives.
+4. In Heart's panel, check that forwarding doesn't depend on Heart serving the zone, then
+   replace Heart's nameservers with the four from the output.
+5. When `curl -s 'https://dns.google/resolve?name=harpguru.com&type=NS'` shows the Route 53
+   nameservers, send a second test message.
+
+The apex and `www` are left out of the zone on purpose. Today they point at Heart's parked page,
+which has no HTTPS, and #8 points them at CloudFront. Until then they won't resolve. So is
+`ftp.harpguru.com` (`79.170.44.11`), which nothing uses.
 
 **7 · `1-certificate`.** An ACM certificate in `us-east-1` covering the apex and `www`,
 validated through DNS in the zone. It reaches the site stack as a cross-region reference.

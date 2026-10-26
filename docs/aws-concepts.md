@@ -31,6 +31,7 @@ the account ID, it fetches it with `aws sts get-caller-identity`.
 [Cross-stack references](#cross-stack-references) ·
 [Environments](#environments) · [CDK bootstrap](#cdk-bootstrap) ·
 [Tags and cost allocation tags](#tags-and-cost-allocation-tags) ·
+[Route 53 hosted zones and delegation](#route-53-hosted-zones-and-delegation) ·
 [CloudTrail](#cloudtrail) · [Config](#config) · [GuardDuty](#guardduty)
 
 ---
@@ -538,8 +539,10 @@ anywhere, but can't do those lookups.
 
 **Here:** every stack is pinned. The region is written in the code, and the account comes
 from `CDK_DEFAULT_ACCOUNT`, which the CLI fills in from your SSO login, so no account ID is
-committed. The workload account's stacks, from step 6, will get theirs the same way, from the
-`harpguru` profile added after step 3's deploy. *(PR `1-cdk-app`)*
+committed. The workload account's stacks, from step 6, get theirs the same way, from the
+`harpguru` profile added after step 3's deploy, so they are deployed with `--profile harpguru`.
+Without it, the stack would go to the management account. *(PR `1-cdk-app`; the workload
+account's stacks from `1-dns-zone`)*
 
 **Say it:** "Stacks are pinned to an account and region, but the account comes from the
 signed-in identity rather than from code."
@@ -589,6 +592,33 @@ early; anything earlier needs a backfill."
 It shows `project` as `Active`, and `repository` and `managed-by` as `Inactive`, beside
 CloudFormation's own automatic tags. A key only appears there once a resource carries it.
 Cost Explorer splits by it a day or so after activation.
+
+### DNS
+
+#### Route 53 hosted zones and delegation
+
+**What:** a hosted zone is the set of DNS records for one domain, served by four Route 53
+nameservers that AWS picks when the zone is made. A zone answers nothing until the domain is
+**delegated** to it: the registrar's record of the domain's nameservers is changed to the
+zone's four. Registration and DNS hosting are separate things, so the domain can stay
+registered somewhere else. A public hosted zone costs $0.50 a month.
+
+**Here:** `HarpguruDns` holds the `harpguru.com` zone, in the workload account. Before anything
+moves, it carries the two records mail needs, `MX 10 mail.harpguru.com` and `mail.harpguru.com A`
+Heart's mail host, because once delegated, the zone is the only thing answering, and a record
+missing from it stops existing. The registration stays with Heart, and the nameserver switch is
+made by hand in Heart's panel. The zone is `Retain` and the stack termination protected: a
+replacement zone would come with four new nameservers. *(PR `1-dns-zone`)*
+
+**Say it:** "Delegate rather than transfer: point the registrar at the zone's nameservers, and
+copy every live record in first, because delegation replaces the whole zone, not just the
+records you meant to change."
+
+**See it:** the zone and its nameservers:
+`aws route53 list-hosted-zones-by-name --dns-name harpguru.com --profile harpguru --query 'HostedZones[].[Name,Id,ResourceRecordSetCount]'`,
+then the records with
+`aws route53 list-resource-record-sets --profile harpguru --hosted-zone-id <Id> --query 'ResourceRecordSets[].[Name,Type]'`.
+Who the internet asks today: `curl -s 'https://dns.google/resolve?name=harpguru.com&type=NS'`.
 
 ### Audit and detection
 
