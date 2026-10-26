@@ -14,8 +14,10 @@ flight and what is waiting on the user. Update it in the same PR that changes it
 
 **[docs/learning/README.md](docs/learning/README.md)** is the entry point for a tutor agent
 on the user's phone, which the user sends its raw URL. It is the tutor's whole prompt and its
-only list of sources; the syllabus beside it holds the topics. It covers what has been built,
-not what is planned. The user asks for it to be refreshed periodically; use the
+only list of sources; the syllabus beside it holds the topics. It covers what has been
+built, not what is planned. The tutor fetches nothing itself: it hands the sources back in
+batches of 25 for the user to paste, because its fetch tool drops the cache stamp from links
+it follows out of a page. The user asks for it to be refreshed periodically; use the
 `refresh-learning` skill. A refresh is not part of the per-PR checklist below, but bumping the
 cache stamp is, because the tutor's fetch tool caches by URL.
 
