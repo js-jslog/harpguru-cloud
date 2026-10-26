@@ -9,7 +9,8 @@ description: Refresh docs/learning/ so the owner's mobile tutor agent teaches fr
 
 - **`README.md`** is the tutor's entry point and whole prompt. The owner sends the tutor its
   raw URL and asks it to follow the instructions there. It holds the role, how sessions run,
-  the tiers, the ground rules, and **the only list of sources**, each a full raw URL.
+  the tiers, the ground rules, and **the only list of sources**: the batches of full raw URLs
+  that the tutor hands back for the owner to paste, and a list of what each source is, by path.
 - **`syllabus.md`** holds the topics: tier and why, "Be able to answer" questions, and
   sources named by path and heading. It has no URLs and does not restate the facts its
   sources hold.
@@ -20,20 +21,23 @@ Facts the tutor's fetch tool imposes, which the README's design depends on:
   `blob` pages are built by JavaScript and come back empty. Raw files have no section anchors,
   so a section is named by its heading, exactly as written.
 - A URL is accepted only in the turn it was seen, in the owner's message or a page fetched
-  that turn (found 2026-10-18, Claude mobile). So the README tells the tutor to fetch every
-  source in its first turn, before it writes anything. A tutor on 2026-10-19 still replied
-  first, asking which topic to start on, so the instruction and the list now open the README,
-  ahead of everything else. Keep them there, keep the count in the heading ("all N sources")
-  equal to the list's length, and keep the first step of "How a session runs" as the fetch.
-  Keep the sources small enough to fetch at once; they are about 170 KB.
-
+  that turn (found 2026-10-18, Claude mobile).
 - **The tutor's fetch tool caches by full URL** (found 2026-10-21: it served a syllabus five
   days old, under the same URL, until a query string was added). So every raw URL in the
   README, including the one in its note for humans, ends in a cache stamp,
   `?v=YYYY-MM-DDTHHMMZ` in UTC, the same on all of them. A date alone was not enough: two
-  changes merged on 2026-10-21 shared one stamp, so the second would have been served from
-  the cache. GitHub ignores the query string. A new stamp is a new URL, fetched
-  fresh. **Every refresh bumps the stamp; it is not optional.**
+  changes merged on 2026-10-21 shared one stamp. GitHub ignores the query string. A new stamp
+  is a new URL, fetched fresh. **Every refresh bumps the stamp; it is not optional.**
+- **The stamp only survives in links from the owner's message** (found 2026-10-26). A tutor
+  that followed the README's links fetched them with the query string dropped, and got copies
+  from before 2026-10-22 for every path it had fetched before; only paths new since then came
+  back current. So the tutor fetches nothing itself. Its first reply is batch 1, copied from
+  the README; the owner pastes it back; the tutor fetches it and replies with the next batch,
+  and starts teaching only after the last. Keep that flow, and keep it first in the README.
+- **The tool fetches at most 25 links in one turn** (found 2026-10-26). So each batch holds at
+  most 25 URLs, one per line in a fenced block with nothing else in it, and the count of
+  batches in the README ("batch 1 of N") matches the blocks. There is no limit on the number of
+  batches, so a source earns its place by being useful, not by fitting a cap.
 
 Facts about the sources:
 
@@ -45,8 +49,8 @@ Facts about the sources:
 - **Every other source is written for the owner or the coding agent**, and contains
   instructions and links that are not for the tutor. The README tells the tutor to read their
   content only. Keep that, rather than editing those files for the tutor's sake.
-- **Sources are listed most important first**, so a tutor whose tool limits fetches per turn
-  still gets what matters.
+- **Sources are listed most important first**, so if a session is cut short, what matters
+  arrived first.
 
 Read both files before changing anything, so you keep their intent.
 
@@ -65,15 +69,17 @@ Read both files before changing anything, so you keep their intent.
    - Move anything now on `master` out of "Not yet built".
    - Update the "As of" date and what is deployed versus only merged. Any state claimed for a
      step must match its row in the status table on `master`; fix whichever is wrong.
-3. **Update the README's source list.** It is the only place the tutor gets URLs from, so it
-   must match the syllabus exactly: no more, no less.
+3. **Update the README's sources.** They are the only place the tutor gets URLs from, so they
+   must match the syllabus exactly: no more, no less. Each source is in two places: its URL in
+   a batch, and its path and one line on what it is in "The N sources". Keep them in the same
+   order.
    - **Add** every path the syllabus names that is missing, with its full raw URL (on `master`,
-     or on the findings branch for `harpguru` files) and one line on what it is. Place it by
-     importance: sources for *must own* topics above those only cited by lower tiers.
+     or on the findings branch for `harpguru` files). Place it by importance: sources for
+     *must own* topics above those only cited by lower tiers.
    - **Remove** every entry the syllabus no longer names, not only files that were deleted.
-     The list is fetched in full every session, so an unused entry costs every session.
-   - **Update** the count in the opening heading to the list's new length, and the size figure
-     if the total has moved by more than about 10 KB.
+     Every source is pasted and fetched every session, so an unused entry costs every session.
+   - **Rebatch** in that order, at most 25 per batch, and update every count that depends on
+     it: "N sources", "batch K of M" in each heading, and M wherever the instructions name it.
    - Change the rest of the README only for a reason, and say so in the hand-over.
 4. **Bump the cache stamp.** Set every `?v=` in `docs/learning/README.md` to the current UTC
    time, from `date -u +%Y-%m-%dT%H%MZ`,
@@ -96,7 +102,11 @@ Read both files before changing anything, so you keep their intent.
      follow its instructions"), with each URL mapped to `git show <branch>:<path>`, dropping its
      `?v=` query string, or to the
      named branch in `/harpguru` after a fetch, and any other URL counted as a failed fetch.
-   - Run the first turn and the freshness check, show the syllabus, then answer every question
+     Fetching a URL that did not arrive in the owner's message counts as a failure of the
+     README, and is reported as such.
+   - Play the paste exchange: each reply that hands over a batch is answered by the owner
+     pasting exactly that block. Check each handed-over block is the README's, unchanged.
+   - Run the batches and the freshness check, show the syllabus, then answer every question
      of at least two *must own* topics from their named sources alone, citing file and heading,
      and saying plainly where a source does not answer.
    - Report, ranked by harm: instructions that are ambiguous or impossible; facts that
