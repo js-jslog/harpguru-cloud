@@ -45,9 +45,10 @@ export const requireSetting = (
   return value
 }
 
-// The account comes from whoever is signed in (`aws sso login`), so no
-// account ID is ever committed. Stacks that target the management account
-// use this.
+// Stacks that target the management account take it from whoever is signed
+// in (`aws sso login`). Unlike the workload stacks below, they are not pinned:
+// that would need the management account's ID too, and nothing required it
+// before step 7. So deploying one with `--profile harpguru` is not caught.
 export const managementEnv = (): Environment => ({
   account: process.env.CDK_DEFAULT_ACCOUNT,
   region: PRIMARY_REGION,

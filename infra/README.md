@@ -47,7 +47,7 @@ signed in, through `CDK_DEFAULT_ACCOUNT`, which the CLI fills in from the SSO lo
 | Path                        | Holds                                                                                               |
 | --------------------------- | --------------------------------------------------------------------------------------------------- |
 | `bin/harpguru.ts`           | the app: creates each stack and applies the project tags                                            |
-| `lib/config.ts`             | regions, the deploy-time values, the management account environment                                 |
+| `lib/config.ts`             | regions, the deploy-time values, the management and workload account environments                   |
 | `lib/tags.ts`               | the tags every resource carries                                                                     |
 | `lib/budget-stack.ts`       | `HarpguruBudget`: the $10 monthly budget, in the management account                                 |
 | `lib/identity-stack.ts`     | `HarpguruIdentity`: the permission set and management account assignment, imported from the console |

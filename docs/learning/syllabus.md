@@ -222,10 +222,11 @@ in the README, and the tiering here is a proposal, to be argued with.
   bootstraps, one of them in `us-east-1`, and what the certificate has to do with it; and
   what the two defaults kept at bootstrap mean, in particular who is in effect an admin of the
   account. Also why the workload account's stacks are pinned to an account ID kept in
-  `deploy.local.json`, while the management account's follow the login, and what each does
-  when I forget `--profile harpguru`.
+  `deploy.local.json`, while the management account's follow the login; what happens when I
+  forget `--profile harpguru` for a workload stack, and which mistake is still not caught.
 - **Sources:** `docs/aws-concepts.md` "Regions", "Environments" and "CDK bootstrap";
-  `infra/lib/config.ts`; `docs/plans/phase-a.md` "Steps" (item 5).
+  `infra/lib/config.ts`; `docs/plans/phase-a.md` "Steps" (item 5) and "Decisions" (the
+  2026-10-26 entry).
 
 ### 11. Tags and cost allocation
 

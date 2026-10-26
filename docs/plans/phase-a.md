@@ -321,4 +321,5 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
   forgotten `--profile harpguru` would have deployed `HarpguruDns` to the management account.
   Now CDK refuses. Done before #7, which adds a second workload stack. The management stacks
   still follow the login; the reverse mistake, one of them deployed with `--profile harpguru`,
-  is not guarded.
+  is not guarded. Pinning them too would need the management account's ID as a second value,
+  and only the workload side had a deploy coming that needed the guard.
