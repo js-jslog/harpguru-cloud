@@ -618,9 +618,11 @@ records you meant to change."
 **See it:** the zone and its nameservers:
 `aws route53 list-hosted-zones-by-name --dns-name harpguru.com --profile harpguru --query 'HostedZones[].[Name,Id,ResourceRecordSetCount]'`,
 then the records with
-`aws route53 list-resource-record-sets --profile harpguru --hosted-zone-id <Id> --query 'ResourceRecordSets[].[Name,Type]'`.
+`aws route53 list-resource-record-sets --profile harpguru --hosted-zone-id $(aws route53 list-hosted-zones-by-name --dns-name harpguru.com --profile harpguru --query 'HostedZones[0].Id' --output text) --query 'ResourceRecordSets[].[Name,Type]'`.
 What the zone would answer, before anything points at it:
-`aws route53 test-dns-answer --profile harpguru --hosted-zone-id <Id> --record-name harpguru.com --record-type MX`.
+`aws route53 test-dns-answer --profile harpguru --hosted-zone-id $(aws route53 list-hosted-zones-by-name --dns-name harpguru.com --profile harpguru --query 'HostedZones[0].Id' --output text) --record-name harpguru.com --record-type MX --output text`.
+Without `--profile harpguru` these ask the management account, and `test-dns-answer` fails
+with `AccessDenied` rather than saying the zone is elsewhere.
 Who the internet asks today: `curl -s 'https://dns.google/resolve?name=harpguru.com&type=NS'`.
 
 ### Audit and detection

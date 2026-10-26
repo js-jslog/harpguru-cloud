@@ -191,7 +191,10 @@ Heart until the nameservers move, so the steps can be split across sessions at t
 4. In Heart's panel, check that forwarding doesn't depend on Heart serving the zone, then
    replace Heart's nameservers with the four from the output.
 5. When `curl -s 'https://dns.google/resolve?name=harpguru.com&type=NS'` shows the Route 53
-   nameservers, send a second test message.
+   nameservers, and the same query with `type=MX` still shows `10 mail.harpguru.com`, send a
+   second test message. Only this one tests the new zone: the first is a baseline, showing
+   forwarding worked before anything moved. Sent earlier, the sender's mail server may still be
+   asking Heart.
 
 The apex and `www` are left out of the zone on purpose. Today they point at Heart's parked page,
 which has no HTTPS, and #8 points them at CloudFront. Until then they won't resolve. So is
