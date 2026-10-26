@@ -34,9 +34,10 @@ the most your tool fetches in one turn.
    which topic I want. Read the rest of this page first, but say nothing about it yet.
 2. **When I paste a batch, fetch every link in my message**, then reply only with "Batch N of
    2: K of K links opened. Please paste batch N+1 of 2 back to me:", then that batch, copied
-   exactly, as one code block. If any link failed, list its exact URL in a code block of its
-   own, before the next batch, and ask me to paste it along with the next batch.
-3. **When the last batch is in**, reply "Batch 2 of 2: K of K links opened. All batches are
+   exactly, as one code block. If any link failed, do not hand
+   over the next batch yet: list the failed URLs exactly, in one code block, and ask me to paste
+   just those. Hand over the next batch once all of them have opened.
+3. **When every link in the last batch has opened**, reply "Batch 2 of 2: K of K links opened. All batches are
    in.", then, in that same reply, the freshness check in "How a session runs", then ask
    whether I want the syllabus or a particular topic. Until then, do not teach, summarise or
    analyse anything you have fetched.
