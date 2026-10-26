@@ -26,7 +26,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | **merged**, imported and deployed 2026-10-22 | — |
 | 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | not started | — |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
-| 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | not started | — |
+| 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **merged**; zone deployed 2026-10-26, from the branch; switch not made | *you*: the switch and mail tests |
 | 7 | `1-certificate`: ACM in `us-east-1` | not started | #6 propagated |
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
 
@@ -178,6 +178,40 @@ Done 2026-10-22, in one run with `--profile harpguru` and the project's three ta
 - ~~Once the zone exists, activate `project` as a cost allocation tag.~~ Done early, on
   2026-10-22; see Decisions.
 
+Doing it, all *you*. Deploying the zone changes nothing live: the internet keeps asking
+Heart until the nameservers move, so the steps can be split across sessions at the line.
+1. `cdk diff HarpguruDns --profile harpguru`. It shows the zone and two record sets as `[+]`,
+   all in the workload account. Without the profile, CDK refuses: the stack is pinned to the
+   workload account's ID (see Decisions, 2026-10-26), and the refusal was seen on 2026-10-26.
+   That pin arrived after the deploy below, which was checked by hand instead.
+2. `cdk deploy HarpguruDns --profile harpguru`. The `NameServers` output lists the four
+   nameservers. The zone is billed from now: $0.50 a month.
+
+   *A good place to stop.*
+3. Send a test message to `contact@` and check it arrives.
+4. In Heart's panel, check that forwarding doesn't depend on Heart serving the zone, then
+   replace Heart's nameservers with the four from the output.
+5. When `curl -s 'https://dns.google/resolve?name=harpguru.com&type=NS'` shows the Route 53
+   nameservers, and the same query with `type=MX` still shows `10 mail.harpguru.com`, send a
+   second test message. Only this one tests the new zone: the first is a baseline, showing
+   forwarding worked before anything moved. Sent earlier, the sender's mail server may still be
+   asking Heart.
+
+The apex and `www` are left out of the zone on purpose. Today they point at Heart's parked page,
+which has no HTTPS, and #8 points them at CloudFront. Until then they won't resolve. So is
+`ftp.harpguru.com` (`79.170.44.11`), which nothing uses. Heart also serves a wildcard,
+`*.harpguru.com` to the parked address, so every made-up name resolves there, `webmail` and
+`imap` included; and a `_domainconnect` TXT record, Heart's hook for letting third parties set
+up DNS. Both are left behind too. Mail is forwarded, not kept in a mailbox, so nothing reads
+mail through those names.
+
+Steps 1 and 2 done 2026-10-26, from the branch. The diff showed only the zone, the two record
+sets and the output, all in the workload account. The deploy took about 90 seconds. Route 53
+added the zone's own `NS` and `SOA` records, so it holds four record sets; asked directly with
+`aws route53 test-dns-answer`, it answers the `MX` correctly. The public answer is still
+Heart's, as expected. The `.com` zone hands out the delegation with a two-day TTL, so a
+resolver may keep asking Heart for up to two days after the switch; allow that long for step 5.
+
 **7 · `1-certificate`.** An ACM certificate in `us-east-1` covering the apex and `www`,
 validated through DNS in the zone. It reaches the site stack as a cross-region reference.
 
@@ -282,3 +316,13 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
 - 2026-10-22: **Resource Explorer, found switched on in the management account since
   2026-08-28, is kept and recorded in `docs/outside-cdk.md`**, not imported or switched off.
   It is a free, one-off console convenience made before the app.
+- 2026-10-26: **the workload account's ID goes in `deploy.local.json`, and its stacks are
+  pinned to it.** Until then every stack took its account from the signed-in profile, so a
+  forgotten `--profile harpguru` would have deployed `HarpguruDns` to the management account.
+  Now CDK refuses. Done before #7, which adds a second workload stack. The management stacks
+  still follow the login; the reverse mistake, one of them deployed with `--profile harpguru`,
+  is not guarded. Pinning them too would need the management account's ID as a second value,
+  and only the workload side had a deploy coming that needed the guard. Seen working the same
+  day: `cdk diff HarpguruDns`, signed in to the management account, printed no diff, only
+  `Could not assume role in target account` for the workload account's
+  `cdk-hnb659fds-lookup-role` and `cdk-hnb659fds-deploy-role`.

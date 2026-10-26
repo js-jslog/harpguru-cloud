@@ -20,6 +20,10 @@ export type DeployConfig = {
   identityCenterInstanceArn?: string
   adminPermissionSetArn?: string
   adminPrincipalId?: string
+  // The one account ID this app reads. Pinning the workload account's stacks
+  // to it makes CDK refuse to deploy them with the wrong profile, rather than
+  // quietly targeting the management account.
+  workloadAccountId?: string
 }
 
 export const DEPLOY_CONFIG_PATH = join(__dirname, '..', 'deploy.local.json')
@@ -41,10 +45,20 @@ export const requireSetting = (
   return value
 }
 
-// The account comes from whoever is signed in (`aws sso login`), so no
-// account ID is ever committed. Stacks that target the management account
-// use this.
+// Stacks that target the management account take it from whoever is signed
+// in (`aws sso login`). Unlike the workload stacks below, they are not pinned:
+// that would need the management account's ID too, and nothing required it
+// before step 7. So deploying one with `--profile harpguru` is not caught.
 export const managementEnv = (): Environment => ({
   account: process.env.CDK_DEFAULT_ACCOUNT,
+  region: PRIMARY_REGION,
+})
+
+// Stacks in the workload account are pinned to its ID, read from
+// deploy.local.json, so they are deployed with `--profile harpguru`. Signed in
+// to any other account, CDK refuses: those credentials can't reach this
+// account's bootstrap roles.
+export const workloadEnv = (config: DeployConfig): Environment => ({
+  account: requireSetting(config, 'workloadAccountId'),
   region: PRIMARY_REGION,
 })

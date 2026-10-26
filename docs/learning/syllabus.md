@@ -1,20 +1,24 @@
 # Syllabus
 
-**As of 2026-10-22.** Covers Phase A steps 0–3b and 5: the SSO login, the CDK app skeleton,
-the $10 budget, and the workload account with its OU and guardrails, including step 3a, which
-switches SCPs on through a custom resource, and step 3b, which imported the console-made
-permission set into a stack and listed everything CDK doesn't manage. Steps 1 to 3b are
-merged. Step 1 is the skeleton and
-deploys nothing itself; the rest are **deployed**: step 2 on 2026-10-13, and step 3's three
-stacks on 2026-10-22. Step 3b's `HarpguruIdentity` was imported and deployed, and step 5,
-bootstrapping the workload account in two regions, was done, both the same day. So the account really does hold the
-`Workloads` OU, its three SCPs and the `harpguru` workload account, and the status table in
-`docs/plans/phase-a.md` says the same. Step 4 and everything after step 5 are out of scope; see
-the last section.
+**As of 2026-10-26.** Covers Phase A steps 0–3b, 5 and the first half of 6: the SSO login, the
+CDK app skeleton, the $10 budget, and the workload account with its OU and guardrails,
+including step 3a, which switches SCPs on through a custom resource, and step 3b, which
+imported the console-made permission set into a stack and listed everything CDK doesn't
+manage. Step 1 is the skeleton and deploys nothing itself; the rest are **deployed**: step 2 on
+2026-10-13, and step 3's three stacks on 2026-10-22. Step 3b's `HarpguruIdentity` was imported
+and deployed, and step 5, bootstrapping the workload account in two regions, was done, both the
+same day. So the account really does hold the `Workloads` OU, its three SCPs and the `harpguru`
+workload account.
 
-**Priority now: topics 4, 7 and 8.** Step 3 is no longer code waiting to run. The guardrails
-were seen refusing a real call, and the one irreversible step of Phase A so far has happened.
-Topic 8 is new: what in the accounts no stack shows, and why.
+Step 6's hosted zone, `HarpguruDns`, was **deployed** on 2026-10-26, but **the nameserver
+switch at Heart has not been made**, so the zone answers nobody yet: the internet still asks
+Heart. Teach everything after the deploy as what comes next, not as done: the first mail test,
+the check in Heart's panel, the switch itself, the wait, and the second mail test. The
+status table in `docs/plans/phase-a.md` says the same. Step 4, the rest of step 6, and steps 7
+and 8 are out of scope; see the last section.
+
+**Priority now: topic 9**, before I make the nameserver switch, which is the one risky step
+left in step 6. Then topics 4, 7 and 8 if they are still shaky.
 
 Each topic gives its tier and why, what I should be able to answer, and its sources. The
 sources hold the facts; this file deliberately does not restate them. Sources are named by
@@ -180,29 +184,58 @@ in the README, and the tiering here is a proposal, to be argued with.
   `infra/scripts/identity-import-mapping.sh`; `roadmap-planning/aws-pathway-findings.md`
   "Step 3 deployed, 2026-10-22".
 
+### 9. Moving harpguru.com's DNS without breaking its mail
+
+- **Covers:** the Route 53 hosted zone in the workload account, deployed but not yet answering;
+  the records it carries and the ones left behind at Heart; and the nameserver switch still to
+  come, with the two mail tests around it. Also what NS, SOA and TTL mean.
+- **Why must own:** the switch is the first change in this project that can break something
+  live: customers write to `contact@harpguru.com`. I make it by hand, in Heart's panel, with no
+  diff to read first, so understanding is the only safety check.
+- **Be able to answer:** what a hosted zone is, and why it answers nothing yet; the difference
+  between delegating a domain and transferring it, and why this project delegates; what an NS
+  record is, and the two places one appears; what an SOA record is, and what it holds; why
+  Route 53 shows four record sets when the code made two; what a TTL is, and why the switch may
+  take up to two days to reach everyone; why the `MX` and `mail` records had to be in the zone
+  before the switch, and what would happen to mail if they were not; what is deliberately left
+  behind at Heart, including the wildcard, and why nothing is lost by it; why the first mail test
+  proves nothing about the new zone, and when the second one counts; how I can see what the
+  zone would answer before anything points at it; why the zone is `Retain` and its stack
+  termination protected; why its `cdk` commands need `--profile harpguru`, and what happens
+  without it; what the zone costs.
+- **Sources:** `docs/aws-concepts.md` "Route 53 hosted zones and delegation" and
+  "Environments"; `docs/plans/phase-a.md` "Status" and "Steps" (item 6);
+  `infra/lib/dns-stack.ts`; `infra/test/dns-stack.test.ts`; `infra/bin/harpguru.ts`;
+  `infra/README.md` "Deploy-time values"; `docs/outside-cdk.md`;
+  `roadmap-planning/aws-pathway-findings.md` "harpguru.com, re-checked 2026-10-26, and the
+  hosted zone", "harpguru.com, re-checked 2026-09-25" and "harpguru.com, checked 2026-08-31".
+
 ---
 
 ## Should understand
 
-### 9. Regions, environments and bootstrap
+### 10. Regions, environments and bootstrap
 
 - **Covers:** where things run, how a stack is pinned to an account and region without the
   account ID being in the code, and what bootstrap prepares.
 - **Why not must own:** it is mechanical. Know why the workload account needed two
   bootstraps, one of them in `us-east-1`, and what the certificate has to do with it; and
   what the two defaults kept at bootstrap mean, in particular who is in effect an admin of the
-  account.
+  account. Also why the workload account's stacks are pinned to an account ID kept in
+  `deploy.local.json`, while the management account's follow the login; what happens when I
+  forget `--profile harpguru` for a workload stack, and which mistake is still not caught.
 - **Sources:** `docs/aws-concepts.md` "Regions", "Environments" and "CDK bootstrap";
-  `infra/lib/config.ts`; `docs/plans/phase-a.md` "Steps" (item 5).
+  `infra/lib/config.ts`; `docs/plans/phase-a.md` "Steps" (item 5) and "Decisions" (the
+  2026-10-26 entry).
 
-### 10. Tags and cost allocation
+### 11. Tags and cost allocation
 
 - **Covers:** tagging once at the app root, the budget's exception to it, and why a cost
   allocation tag needs activating.
 - **Sources:** `docs/aws-concepts.md` "Tags and cost allocation tags" and
   "L1 and L2 constructs"; `infra/lib/tags.ts`; `infra/lib/budget-stack.ts`.
 
-### 11. Testing infrastructure code
+### 12. Testing infrastructure code
 
 - **Covers:** what assertions against a synthesised template can and cannot prove, including a
   test that exists to stop an expensive mistake rather than to check behaviour, and tests that
@@ -213,14 +246,14 @@ in the README, and the tiering here is a proposal, to be argued with.
   `infra/test/accounts-stack.test.ts`; `infra/test/guardrails-stack.test.ts`;
   `infra/test/policy-types-stack.test.ts`.
 
-### 12. Account IDs, ARNs and keeping them out of a public repo
+### 13. Account IDs, ARNs and keeping them out of a public repo
 
 - **Covers:** what an ARN is made of, why an account ID is not a secret but is still kept out,
   and how the repo avoids ever committing one.
 - **Sources:** `docs/aws-concepts.md` "Account ID and ARNs";
   `infra/README.md` "Deploy-time values"; `infra/lib/config.ts`.
 
-### 13. Three stacks, cross-stack references and deploy order
+### 14. Three stacks, cross-stack references and deploy order
 
 - **Covers:** why step 3 is three stacks; how the OU's ID gets from the guardrails to the
   accounts stack, and how that forces the guardrails to deploy first; and how the guardrails
@@ -231,7 +264,7 @@ in the README, and the tiering here is a proposal, to be argued with.
   "Apps, stacks and constructs"; `docs/plans/phase-a.md` "Decisions" and "Steps" (item 3);
   `infra/bin/harpguru.ts`.
 
-### 14. How I get into the new account
+### 15. How I get into the new account
 
 - **Covers:** the Identity Center assignment that gives my existing login access to the new
   account, the second CLI profile that uses it, and `OrganizationAccountAccessRole` as the way
@@ -257,6 +290,8 @@ These are worth your time if they interest you. Skipping them leaves no gap.
 
 ## Not yet built, so not for study
 
-- CloudTrail, Config and GuardDuty (step 4); DNS, ACM, S3 and CloudFront (steps 6–8); and everything in phases B–F. Some of these already
+- CloudTrail, Config and GuardDuty (step 4); the nameserver switch (the rest of step 6), which
+  topic 9 covers as the next step but which has not happened; ACM, S3 and CloudFront (steps 7
+  and 8); and everything in phases B–F. Some of these already
   have concept entries, written ahead of the work; read them as reading ahead, and do not test
   me on them.
