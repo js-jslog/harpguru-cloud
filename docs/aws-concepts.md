@@ -608,7 +608,8 @@ moves, it carries the two records mail needs, `MX 10 mail.harpguru.com` and `mai
 Heart's mail host, because once delegated, the zone is the only thing answering, and a record
 missing from it stops existing. The registration stays with Heart, and the nameserver switch is
 made by hand in Heart's panel. The zone is `Retain` and the stack termination protected: a
-replacement zone would come with four new nameservers. *(PR `1-dns-zone`)*
+replacement zone would come with four new nameservers. Route 53 adds the zone's own `NS` and
+`SOA` records itself, so the deployed zone holds four record sets, not two. *(PR `1-dns-zone`)*
 
 **Say it:** "Delegate rather than transfer: point the registrar at the zone's nameservers, and
 copy every live record in first, because delegation replaces the whole zone, not just the
@@ -618,6 +619,8 @@ records you meant to change."
 `aws route53 list-hosted-zones-by-name --dns-name harpguru.com --profile harpguru --query 'HostedZones[].[Name,Id,ResourceRecordSetCount]'`,
 then the records with
 `aws route53 list-resource-record-sets --profile harpguru --hosted-zone-id <Id> --query 'ResourceRecordSets[].[Name,Type]'`.
+What the zone would answer, before anything points at it:
+`aws route53 test-dns-answer --profile harpguru --hosted-zone-id <Id> --record-name harpguru.com --record-type MX`.
 Who the internet asks today: `curl -s 'https://dns.google/resolve?name=harpguru.com&type=NS'`.
 
 ### Audit and detection

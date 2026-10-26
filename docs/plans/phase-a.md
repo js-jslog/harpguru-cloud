@@ -26,7 +26,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | **merged**, imported and deployed 2026-10-22 | — |
 | 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | not started | — |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
-| 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **branch pushed** 2026-10-26: the zone's code | *you*: deploy, then the switch and mail tests |
+| 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | zone **deployed** 2026-10-26; switch not made | *you*: the switch and mail tests |
 | 7 | `1-certificate`: ACM in `us-east-1` | not started | #6 propagated |
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
 
@@ -196,6 +196,13 @@ Heart until the nameservers move, so the steps can be split across sessions at t
 The apex and `www` are left out of the zone on purpose. Today they point at Heart's parked page,
 which has no HTTPS, and #8 points them at CloudFront. Until then they won't resolve. So is
 `ftp.harpguru.com` (`79.170.44.11`), which nothing uses.
+
+Steps 1 and 2 done 2026-10-26, from the branch. The diff showed only the zone, the two record
+sets and the output, all in the workload account. The deploy took about 90 seconds. Route 53
+added the zone's own `NS` and `SOA` records, so it holds four record sets; asked directly with
+`aws route53 test-dns-answer`, it answers the `MX` correctly. The public answer is still
+Heart's, as expected. The parent `.com` zone caches nameservers for up to two days, so allow
+that long for step 5.
 
 **7 · `1-certificate`.** An ACM certificate in `us-east-1` covering the apex and `www`,
 validated through DNS in the zone. It reaches the site stack as a cross-region reference.
