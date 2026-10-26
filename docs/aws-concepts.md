@@ -603,6 +603,16 @@ nameservers that AWS picks when the zone is made. A zone answers nothing until t
 zone's four. Registration and DNS hosting are separate things, so the domain can stay
 registered somewhere else. A public hosted zone costs $0.50 a month.
 
+Three terms come with it. An **NS** (name server) record names the servers that answer for a
+domain. It appears twice: in the parent zone, here `.com`, where the registrar puts it and which
+is what delegation changes; and at the top of the zone itself, which Route 53 writes. An
+**SOA** (start of authority) record, one per zone, says which server is primary, and holds the
+timers other servers use, including how long to remember that a name does *not* exist. A
+**TTL** (time to live) on any record is how many seconds a resolver may cache the answer before
+asking again. That is why a change is never instant: the `.com` zone hands out its delegation
+with a two-day TTL, so after a nameserver switch some resolvers keep asking the old servers for
+up to two days.
+
 **Here:** `HarpguruDns` holds the `harpguru.com` zone, in the workload account. Before anything
 moves, it carries the two records mail needs, `MX 10 mail.harpguru.com` and `mail.harpguru.com A`
 Heart's mail host, because once delegated, the zone is the only thing answering, and a record
