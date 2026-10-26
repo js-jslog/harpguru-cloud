@@ -182,8 +182,8 @@ Doing it, all *you*. Deploying the zone changes nothing live: the internet keeps
 Heart until the nameservers move, so the steps can be split across sessions at the line.
 1. `cdk diff HarpguruDns --profile harpguru`. It shows the zone and two record sets as `[+]`,
    all in the workload account. Without the profile, CDK refuses: the stack is pinned to the
-   workload account's ID (see Decisions, 2026-10-26). That pin arrived after the deploy below,
-   which was checked by hand instead.
+   workload account's ID (see Decisions, 2026-10-26), and the refusal was seen on 2026-10-26.
+   That pin arrived after the deploy below, which was checked by hand instead.
 2. `cdk deploy HarpguruDns --profile harpguru`. The `NameServers` output lists the four
    nameservers. The zone is billed from now: $0.50 a month.
 
@@ -322,4 +322,7 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
   Now CDK refuses. Done before #7, which adds a second workload stack. The management stacks
   still follow the login; the reverse mistake, one of them deployed with `--profile harpguru`,
   is not guarded. Pinning them too would need the management account's ID as a second value,
-  and only the workload side had a deploy coming that needed the guard.
+  and only the workload side had a deploy coming that needed the guard. Seen working the same
+  day: `cdk diff HarpguruDns`, signed in to the management account, printed no diff, only
+  `Could not assume role in target account` for the workload account's
+  `cdk-hnb659fds-lookup-role` and `cdk-hnb659fds-deploy-role`.
