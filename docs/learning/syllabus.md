@@ -12,7 +12,8 @@ workload account.
 
 Step 6's hosted zone, `HarpguruDns`, was **deployed** on 2026-10-26, but **the nameserver
 switch at Heart has not been made**, so the zone answers nobody yet: the internet still asks
-Heart. Teach the switch, the wait and the second mail test as what comes next, not as done. The
+Heart. Teach everything after the deploy as what comes next, not as done: the first mail test,
+the check in Heart's panel, the switch itself, the wait, and the second mail test. The
 status table in `docs/plans/phase-a.md` says the same. Step 4, the rest of step 6, and steps 7
 and 8 are out of scope; see the last section.
 
@@ -206,7 +207,8 @@ in the README, and the tiering here is a proposal, to be argued with.
   "Environments"; `docs/plans/phase-a.md` "Status" and "Steps" (item 6);
   `infra/lib/dns-stack.ts`; `infra/test/dns-stack.test.ts`; `infra/bin/harpguru.ts`;
   `infra/README.md` "Deploy-time values"; `docs/outside-cdk.md`;
-  `roadmap-planning/aws-pathway-findings.md` "harpguru.com, re-checked 2026-09-25".
+  `roadmap-planning/aws-pathway-findings.md` "harpguru.com, re-checked 2026-10-26, and the
+  hosted zone", "harpguru.com, re-checked 2026-09-25" and "harpguru.com, checked 2026-08-31".
 
 ---
 
@@ -219,8 +221,9 @@ in the README, and the tiering here is a proposal, to be argued with.
 - **Why not must own:** it is mechanical. Know why the workload account needed two
   bootstraps, one of them in `us-east-1`, and what the certificate has to do with it; and
   what the two defaults kept at bootstrap mean, in particular who is in effect an admin of the
-  account. Also why the workload account's stacks take their account from the `harpguru`
-  profile, not from code.
+  account. Also why the workload account's stacks are pinned to an account ID kept in
+  `deploy.local.json`, while the management account's follow the login, and what each does
+  when I forget `--profile harpguru`.
 - **Sources:** `docs/aws-concepts.md` "Regions", "Environments" and "CDK bootstrap";
   `infra/lib/config.ts`; `docs/plans/phase-a.md` "Steps" (item 5).
 

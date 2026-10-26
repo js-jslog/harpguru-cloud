@@ -77,11 +77,11 @@ new AccountsStack(app, 'HarpguruAccounts', {
   adminPrincipalId: requireSetting(config, 'adminPrincipalId'),
 })
 
-// From here on, stacks live in the workload account: deploy them with
-// `--profile harpguru`. Protected, because once the nameservers point at the
-// zone, deleting it would take the domain's mail down.
+// From here on, stacks live in the workload account, pinned to its ID: deploy
+// them with `--profile harpguru`. Protected, because once the nameservers point
+// at the zone, deleting it would take the domain's mail down.
 new DnsStack(app, 'HarpguruDns', {
-  env: workloadEnv(),
+  env: workloadEnv(config),
   description: 'The harpguru.com hosted zone, carrying the mail records',
   terminationProtection: true,
 })

@@ -26,7 +26,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | **merged**, imported and deployed 2026-10-22 | — |
 | 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | not started | — |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
-| 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | zone **deployed** 2026-10-26; switch not made | *you*: the switch and mail tests |
+| 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **merged**; zone deployed 2026-10-26, from the branch; switch not made | *you*: the switch and mail tests |
 | 7 | `1-certificate`: ACM in `us-east-1` | not started | #6 propagated |
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
 
@@ -181,8 +181,9 @@ Done 2026-10-22, in one run with `--profile harpguru` and the project's three ta
 Doing it, all *you*. Deploying the zone changes nothing live: the internet keeps asking
 Heart until the nameservers move, so the steps can be split across sessions at the line.
 1. `cdk diff HarpguruDns --profile harpguru`. It shows the zone and two record sets as `[+]`,
-   all in the workload account. **Check the profile is there**: without it, the stack would
-   target the management account.
+   all in the workload account. Without the profile, CDK refuses: the stack is pinned to the
+   workload account's ID (see Decisions, 2026-10-26). That pin arrived after the deploy below,
+   which was checked by hand instead.
 2. `cdk deploy HarpguruDns --profile harpguru`. The `NameServers` output lists the four
    nameservers. The zone is billed from now: $0.50 a month.
 
@@ -315,3 +316,9 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
 - 2026-10-22: **Resource Explorer, found switched on in the management account since
   2026-08-28, is kept and recorded in `docs/outside-cdk.md`**, not imported or switched off.
   It is a free, one-off console convenience made before the app.
+- 2026-10-26: **the workload account's ID goes in `deploy.local.json`, and its stacks are
+  pinned to it.** Until then every stack took its account from the signed-in profile, so a
+  forgotten `--profile harpguru` would have deployed `HarpguruDns` to the management account.
+  Now CDK refuses. Done before #7, which adds a second workload stack. The management stacks
+  still follow the login; the reverse mistake, one of them deployed with `--profile harpguru`,
+  is not guarded.

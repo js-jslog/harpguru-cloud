@@ -34,11 +34,13 @@ is missing, naming the key, even when you only asked about one stack.
 The file lives in the `/app` workspace volume, so it survives image rebuilds, but not
 `runcontainer.ps1 destructive` or `purge`.
 
-**Account IDs are never needed here.** The target account comes from whoever is signed in,
-through `CDK_DEFAULT_ACCOUNT`, which the CLI fills in from the SSO login.
-So stacks in the workload account, from `HarpguruDns` on, are run with `--profile harpguru`:
-`cdk diff HarpguruDns --profile harpguru`. Without the profile they would target the
-management account.
+**One account ID is needed here: the workload account's**, as `workloadAccountId`.
+`aws sts get-caller-identity --profile harpguru --query Account --output text` prints it.
+Stacks in the workload account, from `HarpguruDns` on, are pinned to it and run with
+`--profile harpguru`: `cdk diff HarpguruDns --profile harpguru`. Without the profile, CDK
+refuses, because the management account's credentials can't use the workload account's
+bootstrap roles. The management account's stacks still take their account from whoever is
+signed in, through `CDK_DEFAULT_ACCOUNT`, which the CLI fills in from the SSO login.
 
 ## Layout
 

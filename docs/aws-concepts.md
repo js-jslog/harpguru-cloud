@@ -62,7 +62,8 @@ Name) identifies any single thing in AWS, and the account ID sits inside it. For
 `arn:aws:sts::<account>:assumed-role/<role>/<session>`.
 
 **Here:** the account ID is not a secret, because knowing it grants nothing. It is still
-kept out of this public repo, and the CDK app reads it from your login at deploy time.
+kept out of this public repo. The CDK app reads the management account's from your login at
+deploy time, and the workload account's from the gitignored `deploy.local.json`.
 
 **Say it:** "An account ID identifies; it doesn't authorise. Access always needs
 credentials."
@@ -458,15 +459,18 @@ default for accounts. `HarpguruGuardrails` and `HarpguruAccounts` both have term
 protection, because deleting the first would strip the guardrails off the OU.
 `HarpguruPolicyTypes` has it too, and its custom resource is `Retain`. `HarpguruIdentity` has
 it as well, and its imported permission set and assignment are both `Retain`, as every
-imported resource must have a deletion policy. `HarpguruBudget` has neither.
-*(PRs `1-org-accounts`, `1-scp-custom-resource`, `1-identity-import`)*
+imported resource must have a deletion policy. `HarpguruDns`, in the workload account, has
+both: its hosted zone is `Retain`, because once the domain is delegated to it, a replacement
+would come with new nameservers. `HarpguruBudget` has neither.
+*(PRs `1-org-accounts`, `1-scp-custom-resource`, `1-identity-import`, `1-dns-zone`)*
 
 **Say it:** "Retain protects a resource from its stack; termination protection protects the
 stack from a careless delete. Anything stateful or irreplaceable gets both."
 
 **See it:**
 `aws cloudformation describe-stacks --query 'Stacks[].[StackName,EnableTerminationProtection]' --output table`.
-Since 2026-10-22, step 3's three stacks and `HarpguruIdentity` show `True`.
+Since 2026-10-22, step 3's three stacks and `HarpguruIdentity` show `True`. Add
+`--profile harpguru` to see `HarpguruDns`, which shows `True` since 2026-10-26.
 
 #### Resource import and drift
 
@@ -537,15 +541,17 @@ environment can use account-specific features, such as looking up an existing ho
 A stack without one is "environment-agnostic": a single template that can be deployed
 anywhere, but can't do those lookups.
 
-**Here:** every stack is pinned. The region is written in the code, and the account comes
-from `CDK_DEFAULT_ACCOUNT`, which the CLI fills in from your SSO login, so no account ID is
-committed. The workload account's stacks, from step 6, get theirs the same way, from the
-`harpguru` profile added after step 3's deploy, so they are deployed with `--profile harpguru`.
-Without it, the stack would go to the management account. *(PR `1-cdk-app`; the workload
-account's stacks from `1-dns-zone`)*
+**Here:** every stack is pinned, and no account ID is committed. The region is written in the
+code. The management account's stacks take their account from `CDK_DEFAULT_ACCOUNT`, which the
+CLI fills in from your SSO login. The workload account's stacks, from step 6, are pinned to
+its ID, read from the gitignored `deploy.local.json`, and deployed with `--profile harpguru`.
+Taking that account from the login too would mean a forgotten `--profile` quietly deploys
+them to the management account; pinned, CDK refuses instead, because the management
+account's credentials can't use the workload account's bootstrap roles. *(PR `1-cdk-app`; the
+workload account's pin from `1-dns-zone`)*
 
-**Say it:** "Stacks are pinned to an account and region, but the account comes from the
-signed-in identity rather than from code."
+**Say it:** "Pin a stack to the account it belongs in, so the wrong credentials fail loudly
+instead of deploying somewhere else."
 
 **See it:** `cd infra && cdk ls --long` shows each stack's `aws://<account>/<region>`.
 
@@ -601,7 +607,9 @@ Cost Explorer splits by it a day or so after activation.
 nameservers that AWS picks when the zone is made. A zone answers nothing until the domain is
 **delegated** to it: the registrar's record of the domain's nameservers is changed to the
 zone's four. Registration and DNS hosting are separate things, so the domain can stay
-registered somewhere else. A public hosted zone costs $0.50 a month.
+registered somewhere else. A **transfer** is the other route: it moves the registration itself
+to a new registrar, such as Route 53 Domains, a process run through both registrars. This
+project only needs AWS to answer for the domain, not to own its registration, so it delegates. A public hosted zone costs $0.50 a month.
 
 Three terms come with it. An **NS** (name server) record names the servers that answer for a
 domain. It appears twice: in the parent zone, here `.com`, where the registrar puts it and which
@@ -617,7 +625,8 @@ up to two days.
 moves, it carries the two records mail needs, `MX 10 mail.harpguru.com` and `mail.harpguru.com A`
 Heart's mail host, because once delegated, the zone is the only thing answering, and a record
 missing from it stops existing. The registration stays with Heart, and the nameserver switch is
-made by hand in Heart's panel. The zone is `Retain` and the stack termination protected: a
+made by hand in Heart's panel. **As of 2026-10-26 the zone is deployed but the switch has not
+been made**, so the internet still asks Heart. The zone is `Retain` and the stack termination protected: a
 replacement zone would come with four new nameservers. Route 53 adds the zone's own `NS` and
 `SOA` records itself, so the deployed zone holds four record sets, not two. *(PR `1-dns-zone`)*
 
