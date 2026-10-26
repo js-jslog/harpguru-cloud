@@ -1,4 +1,4 @@
-import { Template } from 'aws-cdk-lib/assertions'
+import { Match, Template } from 'aws-cdk-lib/assertions'
 import { DnsStack, MAIL_HOST_IP } from '../lib/dns-stack'
 import { appWithFlags } from './app'
 
@@ -6,7 +6,8 @@ const synth = () => Template.fromStack(new DnsStack(appWithFlags(), 'Dns', {}))
 
 test('the zone is public, for harpguru.com, and retained', () => {
   synth().hasResource('AWS::Route53::HostedZone', {
-    Properties: { Name: 'harpguru.com.' },
+    // A zone attached to a VPC would be private, answering only inside it.
+    Properties: { Name: 'harpguru.com.', VPCs: Match.absent() },
     DeletionPolicy: 'Retain',
     UpdateReplacePolicy: 'Retain',
   })
