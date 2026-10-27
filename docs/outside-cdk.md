@@ -65,7 +65,7 @@ Keep this list current: anything made outside a stack is added here in the PR th
 
 | Thing | Where | Why |
 | --- | --- | --- |
-| The harpguru.com registration | Heart Internet | Decided before Phase A: delegate the domain to Route 53 rather than transfer it. The nameserver switch in step 6 is made in Heart's panel, and has not been made yet. What Heart serves that the new zone leaves behind, deliberately, is listed in `docs/plans/phase-a.md` "Steps" (item 6) |
+| The harpguru.com registration | Heart Internet | Decided before Phase A: delegate the domain to Route 53 rather than transfer it. The nameserver switch in step 6 was made in Heart's panel on 2026-10-27. What Heart serves that the new zone leaves behind, deliberately, is listed in `docs/plans/phase-a.md` "Steps" (item 6) |
 | `contact@harpguru.com` forwarding | Heart's mail hosting | Mail stays with Heart. Step 6's hosted zone carries its `MX` record so it keeps working |
 | CLI profiles | `~/.aws/config` | Local to the container. `[default]` reaches the management account and `[profile harpguru]` the workload account, through one SSO session |
 | Deploy-time values | `infra/deploy.local.json` | Gitignored, because the repo is public. See `infra/README.md` "Deploy-time values" |

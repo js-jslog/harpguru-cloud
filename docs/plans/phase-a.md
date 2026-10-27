@@ -26,9 +26,9 @@ Update this table in the PR that moves a row. **You** means the user.
 | 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | **merged**, imported and deployed 2026-10-22 | — |
 | 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | not started | — |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
-| 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **merged**; zone deployed 2026-10-26, from the branch; switch not made | *you*: the switch and the second mail test; baseline sent 2026-10-27 |
-| 6a | `1-mail-canary`: a weekly pair of messages showing `contact@` still forwards, in `HarpguruMailCanary` | **in review**; not deployed | #6 propagated |
-| 7 | `1-certificate`: ACM in `us-east-1` | not started | #6 propagated |
+| 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **done**: zone deployed 2026-10-26; switch made and mail tested 2026-10-27 | — |
+| 6a | `1-mail-canary`: a weekly pair of messages showing `contact@` still forwards, in `HarpguruMailCanary` | **in review**; not deployed | *you*: the deploy |
+| 7 | `1-certificate`: ACM in `us-east-1` | not started | — |
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
 
 ## Accounts
@@ -220,6 +220,13 @@ on Heart's forwarding page about its nameservers. Its nameservers page warns tha
 nameservers stop "features such as web forwarding and web hosting", which doesn't name mail
 forwarding but doesn't rule it out, so step 5's test is what settles it. No DNSSEC setting in
 the panel; the registration runs to September 2027.
+
+Steps 4 and 5 done 2026-10-27, at about 21:00 UTC. A message from Hotmail, under three minutes
+after the switch, arrived, but proves little: Heart's nameservers still answer for the domain
+with the same `MX`, so a resolver that hasn't moved yet gets the same answer. Google's and
+Cloudflare's public DNS already listed the Route 53 nameservers, so a message from a Gmail
+address, which then arrived, took the new path. The wait was minutes, not the two days allowed.
+By 2026-10-29 every resolver must have moved, since the `.com` delegation's TTL is two days.
 
 **After the switch, `79.170.44.72` is ours to keep right.** Heart kept `mail.harpguru.com` up
 to date in its own zone; from the switch on, it is a fixed value in `HarpguruDns`, and if Heart

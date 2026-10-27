@@ -627,8 +627,10 @@ up to two days.
 moves, it carries the two records mail needs, `MX 10 mail.harpguru.com` and `mail.harpguru.com A`
 Heart's mail host, because once delegated, the zone is the only thing answering, and a record
 missing from it stops existing. The registration stays with Heart, and the nameserver switch is
-made by hand in Heart's panel. **As of 2026-10-26 the zone is deployed but the switch has not
-been made**, so the internet still asks Heart. The zone is `Retain` and the stack termination protected: a
+made by hand in Heart's panel. **The switch was made on 2026-10-27**, and Google's public DNS
+was asking Route 53 within minutes, not days. Heart's nameservers went on answering for the
+domain with the same records, so for a while two paths were live and a mail test passed either
+way: only a sender whose DNS had already moved, here Gmail, tested the new zone. The zone is `Retain` and the stack termination protected: a
 replacement zone would come with four new nameservers. Route 53 adds the zone's own `NS` and
 `SOA` records itself, so the deployed zone holds four record sets, not two. *(PR `1-dns-zone`)*
 
