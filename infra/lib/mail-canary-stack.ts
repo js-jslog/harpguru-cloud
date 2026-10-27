@@ -14,8 +14,8 @@ import { DOMAIN } from './dns-stack'
 export const CONTACT_ADDRESS = `contact@${DOMAIN}`
 export const SENDER_ADDRESS = `canary@${DOMAIN}`
 
-// Mondays at 09:00 London time; Scheduler follows the clock change.
-export const SEND_TIME = { weekDay: 'MON', hour: '9', minute: '0' }
+// Wednesdays at 09:00 London time; Scheduler follows the clock change.
+export const SEND_TIME = { weekDay: 'WED', hour: '9', minute: '0' }
 
 export type MailCanaryStackProps = StackProps & {
   zone: IPublicHostedZone
@@ -55,7 +55,7 @@ export class MailCanaryStack extends Stack {
     // IAM names SES v2's actions `ses:`, so the permission is written out. It
     // names the recipient's identity as well as the sender's: whether SES
     // checks the recipient in the sandbox wasn't confirmed, and the extra
-    // resource costs nothing. The first Monday's send is the test.
+    // resource costs nothing. The first Wednesday's send is the test.
     const sendPermission = new PolicyStatement({
       actions: ['ses:SendEmail'],
       resources: [domain.emailIdentityArn, forwardingAddress.emailIdentityArn],

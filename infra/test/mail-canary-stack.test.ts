@@ -46,11 +46,11 @@ test('the forwarding address is an identity, so the sandbox may send to it', () 
   })
 })
 
-test('two schedules, Mondays at nine, London time', () => {
+test('two schedules, Wednesdays at nine, London time', () => {
   const template = synth()
   template.resourceCountIs('AWS::Scheduler::Schedule', 2)
   template.allResourcesProperties('AWS::Scheduler::Schedule', {
-    ScheduleExpression: 'cron(0 9 ? * MON *)',
+    ScheduleExpression: 'cron(0 9 ? * WED *)',
     ScheduleExpressionTimezone: 'Europe/London',
     FlexibleTimeWindow: { Mode: 'OFF' },
     State: 'ENABLED',

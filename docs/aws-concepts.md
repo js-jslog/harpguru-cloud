@@ -679,7 +679,7 @@ choose, so a 9am schedule stays 9am through the clock change. A **universal targ
 call almost any AWS API action directly, such as SES's `SendEmail`, with no Lambda function in
 between. It acts through an IAM role you give it.
 
-**Here:** step 6a's two Monday-morning schedules each call `sesv2:sendEmail`. CDK guesses the
+**Here:** step 6a's two Wednesday-morning schedules each call `sesv2:sendEmail`. CDK guesses the
 role's permission from the service name, as `sesv2:sendEmail`, but IAM names it
 `ses:SendEmail`, so the stack writes it out. *(PR `1-mail-canary`)*
 

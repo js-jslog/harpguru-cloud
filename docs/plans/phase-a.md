@@ -244,7 +244,7 @@ the silent failure above. One stack in the workload account, `HarpguruMailCanary
 - **SES** sends as `canary@harpguru.com`. The domain is an SES identity with Easy DKIM, and CDK
   writes its three `CNAME` records into the zone. SES can only verify them once the public DNS
   answers from Route 53, so this deploys **after #6 has propagated**.
-- **Two EventBridge Scheduler schedules**, Mondays at 09:00 London time, each calling SES's
+- **Two EventBridge Scheduler schedules**, Wednesdays at 09:00 London time, each calling SES's
   `SendEmail` directly as a universal target, with no Lambda:
   - one straight to the forwarding address, saying the other should be beside it
   - one to `contact@`, which arrives only if forwarding works
@@ -259,7 +259,9 @@ the silent failure above. One stack in the workload account, `HarpguruMailCanary
 - The universal target's default permission would be `sesv2:sendEmail`, but IAM names SES's
   actions `ses:`, so the stack writes `ses:SendEmail` itself. It names the forwarding
   address's identity as well as the domain's, in case SES checks the recipient in the sandbox;
-  that wasn't confirmed, and the first Monday is the test.
+  that wasn't confirmed, and the first Wednesday is the test.
+- Wednesdays, the user's choice on 2026-10-27, a Tuesday, so the first run came the next
+  morning.
 - `HarpguruDns` gains one output, the zone's ID, which the canary reads as a weak reference.
 - Cost: SES charges about $0.10 per thousand messages; Scheduler's free tier covers this.
 
@@ -276,11 +278,11 @@ Doing it, all *you*, once #6's step 5 shows the Route 53 nameservers:
 3. SES mails a verification link to the forwarding address. Click it.
 4. `aws sesv2 get-email-identity --email-identity harpguru.com --profile harpguru --query '[VerifiedForSendingStatus,DkimAttributes.Status]'`
    shows `true` and `SUCCESS`, usually within minutes, up to 72 hours.
-5. Send the pair once by hand rather than waiting for Monday; this tests SES and the content,
-   not the schedules' role:
+5. Optional, if the first Wednesday is days away: send the pair once by hand. This tests SES
+   and the content, not the schedules' role:
    `aws scheduler get-schedule --name <name> --profile harpguru --query Target.Input --output text > /tmp/in.json && aws sesv2 send-email --cli-input-json file:///tmp/in.json --profile harpguru`,
    for each schedule, with names from `aws scheduler list-schedules --profile harpguru --query 'Schedules[].Name'`.
-6. On the first Monday, both arrive. If not, `aws cloudwatch get-metric-statistics` on
+6. On the first Wednesday, both arrive. If not, `aws cloudwatch get-metric-statistics` on
    `AWS/Scheduler` `TargetErrorCount` says whether the role was refused.
 
 **7 · `1-certificate`.** An ACM certificate in `us-east-1` covering the apex and `www`,
