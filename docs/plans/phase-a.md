@@ -192,8 +192,8 @@ Doing it, all *you*, signed in to the management account:
    management account, and IAM-style statements for the bucket policy.
 4. `cdk deploy HarpguruTrail --require-approval never`.
 5. `aws cloudtrail get-trail-status --name harpguru-org-trail --query IsLogging` is `true`.
-   Within about 15 minutes, `aws s3 ls s3://<bucket>/AWSLogs/ --recursive | head` shows objects
-   under both the management account and the Organization's ID.
+   Within about 15 minutes, `aws s3 ls s3://<bucket>/AWSLogs/ --recursive | head` shows the
+   first log files. Where each account's logs land under `AWSLogs/` is recorded here once seen.
 
 **4b · `1-config`.**
 - Config in the workload account only, in `eu-west-2` and `us-east-1`, with periodic (daily)
@@ -458,15 +458,6 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
 - 2026-10-22: **Resource Explorer, found switched on in the management account since
   2026-08-28, is kept and recorded in `docs/outside-cdk.md`**, not imported or switched off.
   It is a free, one-off console convenience made before the app.
-- 2026-10-27: **step 4 is three branches**, `1-org-trail`, `1-config` and `1-guardduty`, in that
-  order, rather than one. The user's choice.
-- 2026-10-27: **GuardDuty runs in both accounts**, as standalone detectors, rather than in the
-  workload account only or through a delegated administrator. The user's choice.
-- 2026-10-27: **the trail's logs are kept for a year**, then deleted by a lifecycle rule. The
-  user's choice, over 90 days or forever.
-- 2026-10-27: **trusted access for CloudTrail is a one-off CLI command**, logged in
-  `docs/outside-cdk.md`, not a custom resource. See #4a. Proposed by the agent; easy to revisit,
-  since the command is idempotent and a custom resource could adopt it later.
 - 2026-10-26: **the workload account's ID goes in `deploy.local.json`, and its stacks are
   pinned to it.** Until then every stack took its account from the signed-in profile, so a
   forgotten `--profile harpguru` would have deployed `HarpguruDns` to the management account.
@@ -477,6 +468,15 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
   day: `cdk diff HarpguruDns`, signed in to the management account, printed no diff, only
   `Could not assume role in target account` for the workload account's
   `cdk-hnb659fds-lookup-role` and `cdk-hnb659fds-deploy-role`.
+- 2026-10-27: **step 4 is three branches**, `1-org-trail`, `1-config` and `1-guardduty`, in that
+  order, rather than one. The user's choice.
+- 2026-10-27: **GuardDuty runs in both accounts**, as standalone detectors, rather than in the
+  workload account only or through a delegated administrator. The user's choice.
+- 2026-10-27: **the trail's logs are kept for a year**, then deleted by a lifecycle rule. The
+  user's choice, over 90 days or forever.
+- 2026-10-27: **trusted access for CloudTrail is a one-off CLI command**, logged in
+  `docs/outside-cdk.md`, not a custom resource. See #4a. Proposed by the agent; easy to revisit,
+  since the command is idempotent and a custom resource could adopt it later.
 - 2026-10-27: **a weekly mail canary, #6a**, at the user's request: after the switch, Heart's
   mail server address is a fixed value in our zone, and a stale one would fail silently. SES
   and EventBridge Scheduler, with no Lambda, and SES left in its sandbox. Not in the roadmap,

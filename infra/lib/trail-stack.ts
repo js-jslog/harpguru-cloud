@@ -21,7 +21,7 @@ export type TrailStackProps = StackProps & {
 // One trail for the whole Organization, in the management account, where
 // SCPs never apply and a member account can't touch it. It records
 // management events in every region; the first copy of those is free, so
-// the only cost is S3 storage.
+// what it costs is S3's storage and requests: pennies.
 //
 // Organizations must trust cloudtrail.amazonaws.com before this deploys. The
 // console does that itself; CloudFormation doesn't. See the plan's step 4a.
