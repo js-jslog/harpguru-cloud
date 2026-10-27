@@ -18,7 +18,7 @@ the account ID, it fetches it with `aws sts get-caller-identity`.
 **Index:** [Regions](#regions) · [Account ID and ARNs](#account-id-and-arns) ·
 [Default VPC](#default-vpc) · [Root user](#root-user) · [IAM users](#iam-users) ·
 [IAM Identity Center](#iam-identity-center) · [Organizations](#organizations) ·
-[Organizational Unit (OU)](#organizational-unit-ou) ·
+[Trusted access](#trusted-access) · [Organizational Unit (OU)](#organizational-unit-ou) ·
 [Service Control Policy (SCP)](#service-control-policy-scp) ·
 [OrganizationAccountAccessRole](#organizationaccountaccessrole) · [Budgets](#budgets) ·
 [Cost Anomaly Detection](#cost-anomaly-detection) ·
@@ -34,7 +34,9 @@ the account ID, it fetches it with `aws sts get-caller-identity`.
 [Route 53 hosted zones and delegation](#route-53-hosted-zones-and-delegation) ·
 [SES identities, the sandbox and DKIM](#ses-identities-the-sandbox-and-dkim) ·
 [EventBridge Scheduler and universal targets](#eventbridge-scheduler-and-universal-targets) ·
-[CloudTrail](#cloudtrail) · [Config](#config) · [GuardDuty](#guardduty)
+[CloudTrail](#cloudtrail) ·
+[S3 buckets, bucket policies and lifecycle rules](#s3-buckets-bucket-policies-and-lifecycle-rules) ·
+[Config](#config) · [GuardDuty](#guardduty)
 
 ---
 
@@ -202,6 +204,22 @@ account, so the plan is to get both right first time. *(PR `1-org-accounts`)*
 and it's the only way SCPs can apply to them."
 
 **See it:** `aws organizations list-accounts --query 'Accounts[].[Name,Status]'`
+
+#### Trusted access
+
+**What:** an Organization-wide switch that lets a named AWS service act across every account,
+for example CloudTrail writing one trail for all of them. Switching it on usually creates a
+**service-linked role** for that service. The console flips it for you when you set a
+service up there; the API, and so CloudFormation, expects it to be on already.
+
+**Here:** `sso.amazonaws.com` was switched on by Identity Center. Step 4a switches on
+`cloudtrail.amazonaws.com` with one CLI command before the trail's deploy. There is no
+resource type for it, so it is logged in `docs/outside-cdk.md`. *(PR `1-org-trail`)*
+
+**Say it:** "Org-wide features need trusted access first; the console hides that step, and
+infrastructure as code makes you take it yourself."
+
+**See it:** `aws organizations list-aws-service-access-for-organization --query 'EnabledServicePrincipals[].ServicePrincipal'`
 
 #### Organizational Unit (OU)
 
@@ -701,15 +719,42 @@ Console clicks are API calls too. **Event history**, the last 90 days of managem
 in each region, is always on and free. A **trail** is what you add to keep events longer, in
 S3, across all regions and accounts.
 
-**Here:** step 4 creates an **organisation trail**, one trail covering every account and
-writing to S3. It's the record you'd check to find out who changed that DNS record. GuardDuty
-also analyses the same events.
+**Here:** step 4a's `HarpguruTrail`, in the management account, holds an **organisation
+trail**, `harpguru-org-trail`: one trail covering every account and every region, management
+events only, writing to an S3 bucket that keeps logs for a year. It's the record you'd check to
+find out who changed that DNS record. **Log file validation** adds a signed digest file every
+hour, so you can prove later that no log was altered or deleted. A member account sees the
+trail but can't change or stop it, which is why no SCP is needed to protect it. GuardDuty
+reads the same events. *(PR `1-org-trail`)*
 
 **Say it:** "Event history gives you 90 days for free; an org trail gives durable, central
 retention that member accounts can't switch off."
 
 **See it:** `aws cloudtrail lookup-events --max-results 5 --query 'Events[].[EventTime,EventName,Username]'`
-works today, with no trail at all.
+works with no trail at all. After the deploy:
+`aws cloudtrail get-trail-status --name harpguru-org-trail --query '[IsLogging,LatestDeliveryTime]'`,
+and from the workload account,
+`aws cloudtrail describe-trails --profile harpguru --query 'trailList[].[Name,IsOrganizationTrail,HomeRegion]'`.
+
+#### S3 buckets, bucket policies and lifecycle rules
+
+**What:** S3 stores objects in **buckets**. A **bucket policy** is a resource policy: it is
+attached to the bucket and says who may do what to it, including services such as CloudTrail.
+**Block Public Access** overrides any policy that would make the bucket public. A **lifecycle
+rule** deletes or moves objects once they reach a given age, without anything running.
+
+**Here:** the trail's bucket in step 4a. Public access is blocked, it accepts only TLS, and
+its policy lets `cloudtrail.amazonaws.com` write under `AWSLogs/`, but only for this trail.
+A lifecycle rule deletes logs after 365 days. Step 8's site bucket meets the same ideas again,
+with CloudFront as the reader. *(PR `1-org-trail`)*
+
+**Say it:** "An identity policy says what a principal may do; a bucket policy says who may
+touch this bucket. A service like CloudTrail has no identity in your account, so a resource
+policy is how you let it in."
+
+**See it:** after the deploy, `aws s3api get-bucket-policy --bucket <bucket> --query Policy --output text | jq`
+and `aws s3api get-bucket-lifecycle-configuration --bucket <bucket>`, with the bucket's name
+from `aws cloudtrail describe-trails --query 'trailList[0].S3BucketName' --output text`.
 
 #### Config
 
