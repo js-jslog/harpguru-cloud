@@ -27,7 +27,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | not started | — |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **done**: zone deployed 2026-10-26; switch made and mail tested 2026-10-27 | — |
-| 6a | `1-mail-canary`: a weekly pair of messages showing `contact@` still forwards, in `HarpguruMailCanary` | **in review**; not deployed | *you*: the deploy |
+| 6a | `1-mail-canary`: a weekly pair of messages showing `contact@` still forwards, in `HarpguruMailCanary` | **in review**; deployed 2026-10-27, from the branch | the first send, 2026-10-28 09:00 |
 | 7 | `1-certificate`: ACM in `us-east-1` | not started | — |
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
 
@@ -284,6 +284,12 @@ Doing it, all *you*, once #6's step 5 shows the Route 53 nameservers:
    for each schedule, with names from `aws scheduler list-schedules --profile harpguru --query 'Schedules[].Name'`.
 6. On the first Wednesday, both arrive. If not, `aws cloudwatch get-metric-statistics` on
    `AWS/Scheduler` `TargetErrorCount` says whether the role was refused.
+
+Steps 1 to 4 done 2026-10-27, from the branch; step 5 skipped, since the first Wednesday was
+the next morning. The diff showed only what step 1 lists, and the role's trust policy limited to
+this account's `default` schedule group. The canary's deploy took about two and a half minutes.
+Straight afterwards both identities showed `SUCCESS`, the domain's DKIM included, and the
+account showed `ProductionAccessEnabled: false`, a 200-message daily quota.
 
 **7 · `1-certificate`.** An ACM certificate in `us-east-1` covering the apex and `www`,
 validated through DNS in the zone. It reaches the site stack as a cross-region reference.
