@@ -29,8 +29,8 @@ export type MailCanaryStackProps = StackProps & {
 // nothing says so. So two messages go out each week, sent separately:
 //   - one straight to the forwarding address, saying to expect the other
 //   - one to contact@, which only arrives if forwarding works
-// They are separate sends, not one message to two recipients, because Gmail
-// hides a second copy of a message it has already delivered: a shared one
+// They are separate sends, not one message to two recipients. Gmail can
+// hide a second copy of a message it has already delivered, so a shared one
 // could have its forwarded copy dropped, which is the failure being looked for.
 //
 // SES stays in its sandbox, which only sends to verified identities. The
@@ -52,8 +52,10 @@ export class MailCanaryStack extends Stack {
 
     // Scheduler calls SES's SendEmail itself, with no Lambda in between. The
     // universal target's default permission would be `sesv2:sendEmail`, but
-    // IAM names SES v2's actions `ses:`, so the permission is written out. In
-    // the sandbox, SES checks it against the recipient's identity too.
+    // IAM names SES v2's actions `ses:`, so the permission is written out. It
+    // names the recipient's identity as well as the sender's: whether SES
+    // checks the recipient in the sandbox wasn't confirmed, and the extra
+    // resource costs nothing. The first Monday's send is the test.
     const sendPermission = new PolicyStatement({
       actions: ['ses:SendEmail'],
       resources: [domain.emailIdentityArn, forwardingAddress.emailIdentityArn],

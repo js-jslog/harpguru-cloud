@@ -249,7 +249,7 @@ the silent failure above. One stack in the workload account, `HarpguruMailCanary
   - one straight to the forwarding address, saying the other should be beside it
   - one to `contact@`, which arrives only if forwarding works
 
-  Separate sends, not one message to both: Gmail hides a second copy of a message it has
+  Separate sends, not one message to both: Gmail can hide a second copy of a message it has
   already delivered, so a shared message's forwarded copy could be dropped, the very failure
   being looked for.
 - **SES stays in its sandbox.** The sandbox sends only to verified identities, which the
@@ -257,7 +257,9 @@ the silent failure above. One stack in the workload account, `HarpguruMailCanary
   requested.
 - The forwarding address is `forwardingAddress` in `deploy.local.json`.
 - The universal target's default permission would be `sesv2:sendEmail`, but IAM names SES's
-  actions `ses:`, so the stack writes `ses:SendEmail` itself.
+  actions `ses:`, so the stack writes `ses:SendEmail` itself. It names the forwarding
+  address's identity as well as the domain's, in case SES checks the recipient in the sandbox;
+  that wasn't confirmed, and the first Monday is the test.
 - `HarpguruDns` gains one output, the zone's ID, which the canary reads as a weak reference.
 - Cost: SES charges about $0.10 per thousand messages; Scheduler's free tier covers this.
 
