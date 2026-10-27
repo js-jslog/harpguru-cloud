@@ -13,6 +13,8 @@ export const EDGE_REGION = 'us-east-1'
 export type DeployConfig = {
   alertEmail?: string
   workloadAccountEmail?: string
+  // Where Heart forwards contact@harpguru.com to; the mail canary writes to it.
+  forwardingAddress?: string
   // Identifiers for the Organization and Identity Center. Not secrets, but
   // the same kind of identifier as the account ID, so kept out of the repo
   // too. scripts/identity-center-values.sh prints them.

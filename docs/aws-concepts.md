@@ -32,6 +32,8 @@ the account ID, it fetches it with `aws sts get-caller-identity`.
 [Environments](#environments) · [CDK bootstrap](#cdk-bootstrap) ·
 [Tags and cost allocation tags](#tags-and-cost-allocation-tags) ·
 [Route 53 hosted zones and delegation](#route-53-hosted-zones-and-delegation) ·
+[SES identities, the sandbox and DKIM](#ses-identities-the-sandbox-and-dkim) ·
+[EventBridge Scheduler and universal targets](#eventbridge-scheduler-and-universal-targets) ·
 [CloudTrail](#cloudtrail) · [Config](#config) · [GuardDuty](#guardduty)
 
 ---
@@ -643,6 +645,48 @@ What the zone would answer, before anything points at it:
 Without `--profile harpguru` these ask the management account, and `test-dns-answer` fails
 with `AccessDenied` rather than saying the zone is elsewhere.
 Who the internet asks today: `curl -s 'https://dns.google/resolve?name=harpguru.com&type=NS'`.
+
+### Mail
+
+#### SES identities, the sandbox and DKIM
+
+**What:** SES (Simple Email Service) sends email. It sends only as an **identity** you have
+verified: a whole domain, or a single address. A new account starts in the **sandbox**, per
+region, where it may also only send **to** verified identities, at most 200 a day. **DKIM**
+(DomainKeys Identified Mail) signs each message; the receiving server checks the signature
+against public keys published in the sender's DNS, which is how it knows the mail really came
+from the domain. With **Easy DKIM**, SES holds the keys and you publish three `CNAME` records.
+
+**Here:** step 6a's `HarpguruMailCanary` makes harpguru.com an identity, and CDK writes its
+three DKIM records into the zone. The forwarding address is an identity too, verified by a
+click, so the canary can stay in the sandbox: the domain covers `contact@` as a recipient.
+*(PR `1-mail-canary`)*
+
+**Say it:** "Verify the domain, not the address, and publish DKIM: receivers trust signed mail,
+and the sandbox is fine for as long as you only mail yourself."
+
+**See it:** after the deploy,
+`aws sesv2 get-email-identity --email-identity harpguru.com --profile harpguru --query '[VerifiedForSendingStatus,DkimAttributes.Status,DkimAttributes.Tokens]'`,
+and `aws sesv2 get-account --profile harpguru --query '[ProductionAccessEnabled,SendQuota]'`,
+where `false` means the sandbox.
+
+#### EventBridge Scheduler and universal targets
+
+**What:** runs an action on a schedule, once or on a `cron` or `rate`, in a time zone you
+choose, so a 9am schedule stays 9am through the clock change. A **universal target** lets it
+call almost any AWS API action directly, such as SES's `SendEmail`, with no Lambda function in
+between. It acts through an IAM role you give it.
+
+**Here:** step 6a's two Monday-morning schedules each call `sesv2:sendEmail`. CDK guesses the
+role's permission from the service name, as `sesv2:sendEmail`, but IAM names it
+`ses:SendEmail`, so the stack writes it out. *(PR `1-mail-canary`)*
+
+**Say it:** "If all a schedule does is make one API call, a universal target replaces the
+Lambda: less code, nothing to patch, and the permission is exactly that one action."
+
+**See it:** after the deploy,
+`aws scheduler list-schedules --profile harpguru --query 'Schedules[].[Name,State]'`, then
+`aws scheduler get-schedule --name <name> --profile harpguru --query '[ScheduleExpression,ScheduleExpressionTimezone,Target.Arn]'`.
 
 ### Audit and detection
 

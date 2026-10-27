@@ -3,6 +3,7 @@ import { App } from 'aws-cdk-lib'
 import { AccountsStack } from '../lib/accounts-stack'
 import { BudgetStack } from '../lib/budget-stack'
 import { DnsStack } from '../lib/dns-stack'
+import { MailCanaryStack } from '../lib/mail-canary-stack'
 import {
   managementEnv,
   readDeployConfig,
@@ -80,8 +81,17 @@ new AccountsStack(app, 'HarpguruAccounts', {
 // From here on, stacks live in the workload account, pinned to its ID: deploy
 // them with `--profile harpguru`. Protected, because once the nameservers point
 // at the zone, deleting it would take the domain's mail down.
-new DnsStack(app, 'HarpguruDns', {
+const dns = new DnsStack(app, 'HarpguruDns', {
   env: workloadEnv(config),
   description: 'The harpguru.com hosted zone, carrying the mail records',
   terminationProtection: true,
+})
+
+// A weekly check that contact@ still forwards. Not protected: it holds nothing
+// that can't be recreated, and deleting it takes its DKIM records with it.
+new MailCanaryStack(app, 'HarpguruMailCanary', {
+  env: workloadEnv(config),
+  description: 'A weekly pair of messages that shows contact@ still forwards',
+  zone: dns.zone,
+  forwardingAddress: requireSetting(config, 'forwardingAddress'),
 })
