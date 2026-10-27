@@ -58,13 +58,14 @@ Keep this list current: anything made outside a stack is added here in the PR th
 | The default VPCs in the other 15 regions | Can't | `AWS::EC2::VPC` exists, but the region lock, this project's own SCP, denies every action outside the two allowed regions, CloudFormation's included. Nothing in the account can import, use or delete them while it stands. Were the lock lifted, they would be "chose not", like the rest | `aws ec2 describe-vpcs --profile harpguru --region eu-central-1` is refused by the SCP |
 | The root user | Can't | Created with the account, with no password. The `harpguru-deny-root` SCP blocks it, and centralised root access, which would remove its credentials, is deferred | See "Root user" in `docs/aws-concepts.md` |
 | The hosted zone's `NS` and `SOA` records | Can't | Route 53 writes them when it makes the zone, and they go when it does. They show in the zone, not in the template | `aws route53 list-resource-record-sets --profile harpguru --hosted-zone-id <Id> --query "ResourceRecordSets[?Type=='NS'\|\|Type=='SOA'].Type"`, with the `Id` from `aws route53 list-hosted-zones-by-name --dns-name harpguru.com --profile harpguru` |
+| Verification of the mail canary's forwarding address | Can't | SES mails a link to the address when `HarpguruMailCanary` creates its identity, and only a click on it verifies the address. The identity itself is in the stack | `aws sesv2 get-email-identity --email-identity <address> --profile harpguru --query VerifiedForSendingStatus` |
 | The `CDKToolkit` stacks in `eu-west-2` and `us-east-1` | Can't | As for the management account's. Made by `cdk bootstrap` on 2026-10-22, step 5 | `aws cloudformation describe-stacks --stack-name CDKToolkit --region us-east-1 --profile harpguru --query 'Stacks[0].StackStatus'` |
 
 ## Not AWS
 
 | Thing | Where | Why |
 | --- | --- | --- |
-| The harpguru.com registration | Heart Internet | Decided before Phase A: delegate the domain to Route 53 rather than transfer it. The nameserver switch in step 6 is made in Heart's panel, and has not been made yet. What Heart serves that the new zone leaves behind, deliberately, is listed in `docs/plans/phase-a.md` "Steps" (item 6) |
+| The harpguru.com registration | Heart Internet | Decided before Phase A: delegate the domain to Route 53 rather than transfer it. The nameserver switch in step 6 was made in Heart's panel on 2026-10-27. What Heart serves that the new zone leaves behind, deliberately, is listed in `docs/plans/phase-a.md` "Steps" (item 6) |
 | `contact@harpguru.com` forwarding | Heart's mail hosting | Mail stays with Heart. Step 6's hosted zone carries its `MX` record so it keeps working |
 | CLI profiles | `~/.aws/config` | Local to the container. `[default]` reaches the management account and `[profile harpguru]` the workload account, through one SSO session |
 | Deploy-time values | `infra/deploy.local.json` | Gitignored, because the repo is public. See `infra/README.md` "Deploy-time values" |

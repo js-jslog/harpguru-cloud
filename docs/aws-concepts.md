@@ -32,6 +32,8 @@ the account ID, it fetches it with `aws sts get-caller-identity`.
 [Environments](#environments) · [CDK bootstrap](#cdk-bootstrap) ·
 [Tags and cost allocation tags](#tags-and-cost-allocation-tags) ·
 [Route 53 hosted zones and delegation](#route-53-hosted-zones-and-delegation) ·
+[SES identities, the sandbox and DKIM](#ses-identities-the-sandbox-and-dkim) ·
+[EventBridge Scheduler and universal targets](#eventbridge-scheduler-and-universal-targets) ·
 [CloudTrail](#cloudtrail) · [Config](#config) · [GuardDuty](#guardduty)
 
 ---
@@ -625,8 +627,10 @@ up to two days.
 moves, it carries the two records mail needs, `MX 10 mail.harpguru.com` and `mail.harpguru.com A`
 Heart's mail host, because once delegated, the zone is the only thing answering, and a record
 missing from it stops existing. The registration stays with Heart, and the nameserver switch is
-made by hand in Heart's panel. **As of 2026-10-26 the zone is deployed but the switch has not
-been made**, so the internet still asks Heart. The zone is `Retain` and the stack termination protected: a
+made by hand in Heart's panel. **The switch was made on 2026-10-27**, and Google's public DNS
+was asking Route 53 within minutes, not days. Heart's nameservers went on answering for the
+domain with the same records, so for a while two paths were live and a mail test passed either
+way: only a sender whose DNS had already moved, here Gmail, tested the new zone. The zone is `Retain` and the stack termination protected: a
 replacement zone would come with four new nameservers. Route 53 adds the zone's own `NS` and
 `SOA` records itself, so the deployed zone holds four record sets, not two. *(PR `1-dns-zone`)*
 
@@ -643,6 +647,48 @@ What the zone would answer, before anything points at it:
 Without `--profile harpguru` these ask the management account, and `test-dns-answer` fails
 with `AccessDenied` rather than saying the zone is elsewhere.
 Who the internet asks today: `curl -s 'https://dns.google/resolve?name=harpguru.com&type=NS'`.
+
+### Mail
+
+#### SES identities, the sandbox and DKIM
+
+**What:** SES (Simple Email Service) sends email. It sends only as an **identity** you have
+verified: a whole domain, or a single address. A new account starts in the **sandbox**, per
+region, where it may also only send **to** verified identities, at most 200 a day. **DKIM**
+(DomainKeys Identified Mail) signs each message; the receiving server checks the signature
+against public keys published in the sender's DNS, which is how it knows the mail really came
+from the domain. With **Easy DKIM**, SES holds the keys and you publish three `CNAME` records.
+
+**Here:** step 6a's `HarpguruMailCanary` makes harpguru.com an identity, and CDK writes its
+three DKIM records into the zone. The forwarding address is an identity too, verified by a
+click, so the canary can stay in the sandbox: the domain covers `contact@` as a recipient.
+*(PR `1-mail-canary`)*
+
+**Say it:** "Verify the domain, not the address, and publish DKIM: receivers trust signed mail,
+and the sandbox is fine for as long as you only mail yourself."
+
+**See it:** after the deploy,
+`aws sesv2 get-email-identity --email-identity harpguru.com --profile harpguru --query '[VerifiedForSendingStatus,DkimAttributes.Status,DkimAttributes.Tokens]'`,
+and `aws sesv2 get-account --profile harpguru --query '[ProductionAccessEnabled,SendQuota]'`,
+where `false` means the sandbox.
+
+#### EventBridge Scheduler and universal targets
+
+**What:** runs an action on a schedule, once or on a `cron` or `rate`, in a time zone you
+choose, so a 9am schedule stays 9am through the clock change. A **universal target** lets it
+call almost any AWS API action directly, such as SES's `SendEmail`, with no Lambda function in
+between. It acts through an IAM role you give it.
+
+**Here:** step 6a's two Wednesday-morning schedules each call `sesv2:sendEmail`. CDK guesses the
+role's permission from the service name, as `sesv2:sendEmail`, but IAM names it
+`ses:SendEmail`, so the stack writes it out. *(PR `1-mail-canary`)*
+
+**Say it:** "If all a schedule does is make one API call, a universal target replaces the
+Lambda: less code, nothing to patch, and the permission is exactly that one action."
+
+**See it:** after the deploy,
+`aws scheduler list-schedules --profile harpguru --query 'Schedules[].[Name,State]'`, then
+`aws scheduler get-schedule --name <name> --profile harpguru --query '[ScheduleExpression,ScheduleExpressionTimezone,Target.Arn]'`.
 
 ### Audit and detection
 

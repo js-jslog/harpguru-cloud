@@ -1,6 +1,7 @@
 {
   "alertEmail": "you@example.com",
   "workloadAccountEmail": "you+harpguru@example.com",
+  "forwardingAddress": "you@example.com",
   "organizationRootId": "r-xxxx",
   "identityCenterInstanceArn": "arn:aws:sso:::instance/ssoins-xxxxxxxxxxxxxxxx",
   "adminPermissionSetArn": "arn:aws:sso:::permissionSet/ssoins-xxxxxxxxxxxxxxxx/ps-xxxxxxxxxxxxxxxx",

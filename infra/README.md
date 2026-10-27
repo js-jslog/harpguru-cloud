@@ -44,16 +44,17 @@ signed in, through `CDK_DEFAULT_ACCOUNT`, which the CLI fills in from the SSO lo
 
 ## Layout
 
-| Path                        | Holds                                                                                               |
-| --------------------------- | --------------------------------------------------------------------------------------------------- |
-| `bin/harpguru.ts`           | the app: creates each stack and applies the project tags                                            |
-| `lib/config.ts`             | regions, the deploy-time values, the management and workload account environments                   |
-| `lib/tags.ts`               | the tags every resource carries                                                                     |
-| `lib/budget-stack.ts`       | `HarpguruBudget`: the $10 monthly budget, in the management account                                 |
-| `lib/identity-stack.ts`     | `HarpguruIdentity`: the permission set and management account assignment, imported from the console |
-| `lib/policy-types-stack.ts` | `HarpguruPolicyTypes`: the custom resource that switches SCPs on                                    |
-| `lib/guardrails-stack.ts`   | `HarpguruGuardrails`: the `Workloads` OU and its SCPs                                               |
-| `lib/accounts-stack.ts`     | `HarpguruAccounts`: the `harpguru` account and its Identity Center access                           |
-| `lib/dns-stack.ts`          | `HarpguruDns`: the harpguru.com hosted zone and its mail records, in the workload account           |
-| `scripts/`                  | read-only helpers, such as printing values for `deploy.local.json`                                  |
-| `test/`                     | one test file per module or stack, and `app.ts`, which gives tests `cdk.json`'s flags               |
+| Path                        | Holds                                                                                                  |
+| --------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `bin/harpguru.ts`           | the app: creates each stack and applies the project tags                                               |
+| `lib/config.ts`             | regions, the deploy-time values, the management and workload account environments                      |
+| `lib/tags.ts`               | the tags every resource carries                                                                        |
+| `lib/budget-stack.ts`       | `HarpguruBudget`: the $10 monthly budget, in the management account                                    |
+| `lib/identity-stack.ts`     | `HarpguruIdentity`: the permission set and management account assignment, imported from the console    |
+| `lib/policy-types-stack.ts` | `HarpguruPolicyTypes`: the custom resource that switches SCPs on                                       |
+| `lib/guardrails-stack.ts`   | `HarpguruGuardrails`: the `Workloads` OU and its SCPs                                                  |
+| `lib/accounts-stack.ts`     | `HarpguruAccounts`: the `harpguru` account and its Identity Center access                              |
+| `lib/dns-stack.ts`          | `HarpguruDns`: the harpguru.com hosted zone and its mail records, in the workload account              |
+| `lib/mail-canary-stack.ts`  | `HarpguruMailCanary`: the weekly messages that show `contact@` still forwards, in the workload account |
+| `scripts/`                  | read-only helpers, such as printing values for `deploy.local.json`                                     |
+| `test/`                     | one test file per module or stack, and `app.ts`, which gives tests `cdk.json`'s flags                  |

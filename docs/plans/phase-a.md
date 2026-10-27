@@ -26,8 +26,9 @@ Update this table in the PR that moves a row. **You** means the user.
 | 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | **merged**, imported and deployed 2026-10-22 | — |
 | 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | not started | — |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
-| 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **merged**; zone deployed 2026-10-26, from the branch; switch not made | *you*: the switch and mail tests |
-| 7 | `1-certificate`: ACM in `us-east-1` | not started | #6 propagated |
+| 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **done**: zone deployed 2026-10-26; switch made and mail tested 2026-10-27 | — |
+| 6a | `1-mail-canary`: a weekly pair of messages showing `contact@` still forwards, in `HarpguruMailCanary` | **in review**; deployed 2026-10-27, from the branch | the first send, 2026-10-28 09:00 |
+| 7 | `1-certificate`: ACM in `us-east-1` | not started | — |
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
 
 ## Accounts
@@ -205,12 +206,90 @@ which has no HTTPS, and #8 points them at CloudFront. Until then they won't reso
 up DNS. Both are left behind too. Mail is forwarded, not kept in a mailbox, so nothing reads
 mail through those names.
 
+Checked 2026-10-27, before the switch:
+- **DNSSEC is off**: `.com` holds no `DS` record for harpguru.com. Were it on, moving to
+  unsigned nameservers would stop the whole domain resolving, with a two-day TTL on the way
+  back.
+- Heart serves no `TXT` at the apex and nothing at `_dmarc`, so there is no SPF, DKIM or DMARC
+  to carry across.
+- Route 53 answers `MX 10 mail.harpguru.com` and `mail A 79.170.44.72`, both with a one-hour TTL,
+  as Heart does.
+
+Step 3 done 2026-10-27: the baseline message arrived. Step 4's check the same day found nothing
+on Heart's forwarding page about its nameservers. Its nameservers page warns that offsite
+nameservers stop "features such as web forwarding and web hosting", which doesn't name mail
+forwarding but doesn't rule it out, so step 5's test is what settles it. No DNSSEC setting in
+the panel; the registration runs to September 2027.
+
+Steps 4 and 5 done 2026-10-27, at about 21:00 UTC. A message from Hotmail, under three minutes
+after the switch, arrived, but proves little: Heart's nameservers still answer for the domain
+with the same `MX`, so a resolver that hasn't moved yet gets the same answer. Google's and
+Cloudflare's public DNS already listed the Route 53 nameservers, so a message from a Gmail
+address, which then arrived, took the new path. The wait was minutes, not the two days allowed.
+By 2026-10-29 every resolver must have moved, since the `.com` delegation's TTL is two days.
+
+**After the switch, `79.170.44.72` is ours to keep right.** Heart kept `mail.harpguru.com` up
+to date in its own zone; from the switch on, it is a fixed value in `HarpguruDns`, and if Heart
+moves its mail server, mail stops without anything saying so. Hence #6a.
+
 Steps 1 and 2 done 2026-10-26, from the branch. The diff showed only the zone, the two record
 sets and the output, all in the workload account. The deploy took about 90 seconds. Route 53
 added the zone's own `NS` and `SOA` records, so it holds four record sets; asked directly with
 `aws route53 test-dns-answer`, it answers the `MX` correctly. The public answer is still
 Heart's, as expected. The `.com` zone hands out the delegation with a two-day TTL, so a
 resolver may keep asking Heart for up to two days after the switch; allow that long for step 5.
+
+**6a · `1-mail-canary`.** Not in the roadmap: added 2026-10-27 at the user's request, against
+the silent failure above. One stack in the workload account, `HarpguruMailCanary`:
+- **SES** sends as `canary@harpguru.com`. The domain is an SES identity with Easy DKIM, and CDK
+  writes its three `CNAME` records into the zone. SES can only verify them once the public DNS
+  answers from Route 53, so this deploys **after #6 has propagated**.
+- **Two EventBridge Scheduler schedules**, Wednesdays at 09:00 London time, each calling SES's
+  `SendEmail` directly as a universal target, with no Lambda:
+  - one straight to the forwarding address, saying the other should be beside it
+  - one to `contact@`, which arrives only if forwarding works
+
+  Separate sends, not one message to both: Gmail can hide a second copy of a message it has
+  already delivered, so a shared message's forwarded copy could be dropped, the very failure
+  being looked for.
+- **SES stays in its sandbox.** The sandbox sends only to verified identities, which the
+  domain (covering `contact@`) and the forwarding address both are. No production access is
+  requested.
+- The forwarding address is `forwardingAddress` in `deploy.local.json`.
+- The universal target's default permission would be `sesv2:sendEmail`, but IAM names SES's
+  actions `ses:`, so the stack writes `ses:SendEmail` itself. It names the forwarding
+  address's identity as well as the domain's, in case SES checks the recipient in the sandbox;
+  that wasn't confirmed, and the first Wednesday is the test.
+- Wednesdays, the user's choice on 2026-10-27, a Tuesday, so the first run came the next
+  morning.
+- `HarpguruDns` gains one output, the zone's ID, which the canary reads as a weak reference.
+- Cost: SES charges about $0.10 per thousand messages; Scheduler's free tier covers this.
+
+**What it doesn't catch:** a failure on the AWS side sends nothing at all, and a missing pair
+is as easy to overlook as a missing single message. A CloudWatch alarm on Scheduler's
+`TargetErrorCount`, emailing through SNS, would close that for about $0.10 a month; not built
+yet.
+
+Doing it, all *you*, once #6's step 5 shows the Route 53 nameservers:
+1. `cdk diff HarpguruDns HarpguruMailCanary --profile harpguru`. `HarpguruDns` gains only the
+   zone ID output; the canary is all `[+]`: two identities, three `CNAME` records, two
+   schedules, and one role with its policy.
+2. `cdk deploy HarpguruDns HarpguruMailCanary --profile harpguru --require-approval never`.
+3. SES mails a verification link to the forwarding address. Click it.
+4. `aws sesv2 get-email-identity --email-identity harpguru.com --profile harpguru --query '[VerifiedForSendingStatus,DkimAttributes.Status]'`
+   shows `true` and `SUCCESS`, usually within minutes, up to 72 hours.
+5. Optional, if the first Wednesday is days away: send the pair once by hand. This tests SES
+   and the content, not the schedules' role:
+   `aws scheduler get-schedule --name <name> --profile harpguru --query Target.Input --output text > /tmp/in.json && aws sesv2 send-email --cli-input-json file:///tmp/in.json --profile harpguru`,
+   for each schedule, with names from `aws scheduler list-schedules --profile harpguru --query 'Schedules[].Name'`.
+6. On the first Wednesday, both arrive. If not, `aws cloudwatch get-metric-statistics` on
+   `AWS/Scheduler` `TargetErrorCount` says whether the role was refused.
+
+Steps 1 to 4 done 2026-10-27, from the branch; step 5 skipped, since the first Wednesday was
+the next morning. The diff showed only what step 1 lists, and the role's trust policy limited to
+this account's `default` schedule group. The canary's deploy took about two and a half minutes.
+Straight afterwards both identities showed `SUCCESS`, the domain's DKIM included, and the
+account showed `ProductionAccessEnabled: false`, a 200-message daily quota.
 
 **7 · `1-certificate`.** An ACM certificate in `us-east-1` covering the apex and `www`,
 validated through DNS in the zone. It reaches the site stack as a cross-region reference.
@@ -326,3 +405,7 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
   day: `cdk diff HarpguruDns`, signed in to the management account, printed no diff, only
   `Could not assume role in target account` for the workload account's
   `cdk-hnb659fds-lookup-role` and `cdk-hnb659fds-deploy-role`.
+- 2026-10-27: **a weekly mail canary, #6a**, at the user's request: after the switch, Heart's
+  mail server address is a fixed value in our zone, and a stale one would fail silently. SES
+  and EventBridge Scheduler, with no Lambda, and SES left in its sandbox. Not in the roadmap,
+  which it doesn't change: it is an operational check, not a product feature.
