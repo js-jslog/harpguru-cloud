@@ -26,7 +26,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | **merged**, imported and deployed 2026-10-22 | — |
 | 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | not started | — |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
-| 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **merged**; zone deployed 2026-10-26, from the branch; switch not made | *you*: the switch and mail tests |
+| 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **merged**; zone deployed 2026-10-26, from the branch; switch not made | *you*: the switch and the second mail test; baseline sent 2026-10-27 |
 | 6a | `1-mail-canary`: a weekly pair of messages showing `contact@` still forwards, in `HarpguruMailCanary` | **in review**; not deployed | #6 propagated |
 | 7 | `1-certificate`: ACM in `us-east-1` | not started | #6 propagated |
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
@@ -214,6 +214,12 @@ Checked 2026-10-27, before the switch:
   to carry across.
 - Route 53 answers `MX 10 mail.harpguru.com` and `mail A 79.170.44.72`, both with a one-hour TTL,
   as Heart does.
+
+Step 3 done 2026-10-27: the baseline message arrived. Step 4's check the same day found nothing
+on Heart's forwarding page about its nameservers. Its nameservers page warns that offsite
+nameservers stop "features such as web forwarding and web hosting", which doesn't name mail
+forwarding but doesn't rule it out, so step 5's test is what settles it. No DNSSEC setting in
+the panel; the registration runs to September 2027.
 
 **After the switch, `79.170.44.72` is ours to keep right.** Heart kept `mail.harpguru.com` up
 to date in its own zone; from the switch on, it is a fixed value in `HarpguruDns`, and if Heart
