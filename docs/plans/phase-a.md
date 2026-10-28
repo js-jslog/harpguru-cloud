@@ -24,12 +24,20 @@ Update this table in the PR that moves a row. **You** means the user.
 | 3 | `1-org-accounts`: workload account, OU, SCPs | **merged** and deployed 2026-10-22; `harpguru` profile added | — |
 | 3a | `1-scp-custom-resource`: SCPs switched on by a custom resource in its own stack; the four decisions settled | **merged** and deployed 2026-10-22 | — |
 | 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | **merged**, imported and deployed 2026-10-22 | — |
-| 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | not started | — |
+| 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | split into 4a–4c on 2026-10-27; **4a is on the branch `1-org-trail`**, pushed and not deployed, whose copy of this file has the detailed plan | *you*: 4a's deploy, in a new session |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **done**: zone deployed 2026-10-26; switch made and mail tested 2026-10-27 | — |
-| 6a | `1-mail-canary`: a weekly pair of messages showing `contact@` still forwards, in `HarpguruMailCanary` | **in review**; deployed 2026-10-27, from the branch | the first send, 2026-10-28 09:00 |
+| 6a | `1-mail-canary`: a weekly pair of messages showing `contact@` still forwards, in `HarpguruMailCanary` | **merged** and deployed 2026-10-27; first pair arrived 2026-10-28 | — |
 | 7 | `1-certificate`: ACM in `us-east-1` | not started | — |
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
+
+**Next up, as of 2026-10-28**, in the order the user asked for:
+1. ~~Run the `refresh-learning` skill.~~ **Done** 2026-10-28 on `1-canary-confirmed`, in the
+   same PR as the canary's result: the syllabus now covers the switch (#6) and the canary
+   (#6a). Not on `1-org-trail`, because the skill teaches only what is on `master`.
+2. **Continue #4a** from the branch `1-org-trail`: its copy of this file, step 4a, says exactly
+   what is left.
+3. Then #4b, #4c and #7, which are all unblocked.
 
 ## Accounts
 
@@ -171,7 +179,7 @@ Done 2026-10-22, in one run with `--profile harpguru` and the project's three ta
 - **Mail is live.** `contact@harpguru.com` forwards through Heart's mail hosting. So the zone
   has to carry `MX 10 mail.harpguru.com` and `mail.harpguru.com A 79.170.44.72` before
   anything moves. That is Heart's mail host, a different machine from `79.170.40.4`, the
-  parked web address the apex and `www` point at today.
+  parked web address the apex and `www` pointed at until the switch.
 - Send a test message to `contact@`.
 - You switch the nameservers at Heart. Delegate the domain; do not transfer it.
 - Confirm the change has propagated, then send a second test message.
@@ -198,10 +206,11 @@ Heart until the nameservers move, so the steps can be split across sessions at t
    forwarding worked before anything moved. Sent earlier, the sender's mail server may still be
    asking Heart.
 
-The apex and `www` are left out of the zone on purpose. Today they point at Heart's parked page,
-which has no HTTPS, and #8 points them at CloudFront. Until then they won't resolve. So is
-`ftp.harpguru.com` (`79.170.44.11`), which nothing uses. Heart also serves a wildcard,
-`*.harpguru.com` to the parked address, so every made-up name resolves there, `webmail` and
+The apex and `www` are left out of the zone on purpose. Before the switch they pointed at
+Heart's parked page, which has no HTTPS, and #8 points them at CloudFront. Since the switch they
+don't resolve, and won't until #8. Nor does `ftp.harpguru.com` (`79.170.44.11`), which nothing
+uses. Heart also served a wildcard,
+`*.harpguru.com` to the parked address, so every made-up name resolved there, `webmail` and
 `imap` included; and a `_domainconnect` TXT record, Heart's hook for letting third parties set
 up DNS. Both are left behind too. Mail is forwarded, not kept in a mailbox, so nothing reads
 mail through those names.
@@ -210,7 +219,7 @@ Checked 2026-10-27, before the switch:
 - **DNSSEC is off**: `.com` holds no `DS` record for harpguru.com. Were it on, moving to
   unsigned nameservers would stop the whole domain resolving, with a two-day TTL on the way
   back.
-- Heart serves no `TXT` at the apex and nothing at `_dmarc`, so there is no SPF, DKIM or DMARC
+- Heart serves no `TXT` at the apex or at `_dmarc` (its wildcard answers only `A`), so there is no SPF, DKIM or DMARC
   to carry across.
 - Route 53 answers `MX 10 mail.harpguru.com` and `mail A 79.170.44.72`, both with a one-hour TTL,
   as Heart does.
@@ -290,6 +299,11 @@ the next morning. The diff showed only what step 1 lists, and the role's trust p
 this account's `default` schedule group. The canary's deploy took about two and a half minutes.
 Straight afterwards both identities showed `SUCCESS`, the domain's DKIM included, and the
 account showed `ProductionAccessEnabled: false`, a 200-message daily quota.
+
+Step 6 done 2026-10-28: both messages, "direct" and "via contact@", arrived just after
+09:00 London time. So forwarding works through the new zone, and the schedules' role may send.
+It doesn't settle whether SES checks the recipient's identity in the sandbox, since the policy
+names both; that question stays open and harmless.
 
 **7 · `1-certificate`.** An ACM certificate in `us-east-1` covering the apex and `www`,
 validated through DNS in the zone. It reaches the site stack as a cross-region reference.
