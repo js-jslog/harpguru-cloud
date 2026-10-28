@@ -198,9 +198,9 @@ Doing it, all *you*, signed in to the management account:
 **Where 4a stands, 2026-10-28, for the next session.** The code, its tests (42 pass), the
 concept entries (**Trusted access**, **S3 buckets, bucket policies and lifecycle rules**, and the
 updated **CloudTrail**) and the `outside-cdk.md` row are done and pushed. Nothing is deployed,
-and trusted access is not yet switched on. The branch is based on `1-canary-confirmed`; if that
-has merged, rebase onto `master`, which should be clean. The PR is opened after the deploy, so it
-describes what is real.
+and trusted access is not yet switched on. The branch was rebased onto `master` on 2026-10-28,
+after `1-canary-confirmed` merged, so it needs no rebase to start. The PR is opened after the
+deploy, so it describes what is real.
 - **Before any `cdk` command on this branch works**, `organizationId` must be in
   `deploy.local.json`: user step 1 above. It wasn't on 2026-10-28; synth fails naming the key.
 - **The user's steps 1 to 5 above**, in order. Step 2 needs the management account's login, so
