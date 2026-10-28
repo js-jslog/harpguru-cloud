@@ -195,6 +195,26 @@ Doing it, all *you*, signed in to the management account:
    Within about 15 minutes, `aws s3 ls s3://<bucket>/AWSLogs/ --recursive | head` shows the
    first log files. Where each account's logs land under `AWSLogs/` is recorded here once seen.
 
+**Where 4a stands, 2026-10-28, for the next session.** The code, its tests (42 pass), the
+concept entries (**Trusted access**, **S3 buckets, bucket policies and lifecycle rules**, and the
+updated **CloudTrail**) and the `outside-cdk.md` row are done and pushed. Nothing is deployed,
+and trusted access is not yet switched on. The branch is based on `1-canary-confirmed`; if that
+has merged, rebase onto `master`, which should be clean. The PR is opened after the deploy, so it
+describes what is real.
+- **Before any `cdk` command on this branch works**, `organizationId` must be in
+  `deploy.local.json`: user step 1 above. It wasn't on 2026-10-28; synth fails naming the key.
+- **The user's steps 1 to 5 above**, in order. Step 2 needs the management account's login, so
+  no `--profile`; this stack is not pinned to the workload account.
+- **The agent's steps after the deploy:**
+  1. Run the "See it" commands in the three concept entries against the account.
+  2. Add the trusted-access command, with its date, to "Changes made outside CDK" in
+     `docs/outside-cdk.md`.
+  3. Record what step 2 showed (whether `AWSServiceRoleForCloudTrail` appeared, which the
+     Organizations guide says it should) and where each account's logs land under `AWSLogs/`,
+     here and in the findings doc in `/harpguru`.
+  4. Move this step's row in the status table, bump the learning cache stamps, push, and tell
+     the user the branch is ready for its PR, naming the three concept entries.
+
 **4b · `1-config`.**
 - Config in the workload account only, in `eu-west-2` and `us-east-1`, with periodic (daily)
   rather than continuous recording. Config charges for each change it records, so it is the
