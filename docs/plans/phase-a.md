@@ -24,10 +24,10 @@ Update this table in the PR that moves a row. **You** means the user.
 | 3 | `1-org-accounts`: workload account, OU, SCPs | **merged** and deployed 2026-10-22; `harpguru` profile added | — |
 | 3a | `1-scp-custom-resource`: SCPs switched on by a custom resource in its own stack; the four decisions settled | **merged** and deployed 2026-10-22 | — |
 | 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | **merged**, imported and deployed 2026-10-22 | — |
-| 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | not started | — |
+| 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | split into 4a–4c on 2026-10-27; **4a is on the branch `1-org-trail`**, pushed and not deployed, whose copy of this file has the detailed plan | *you*: 4a's deploy, in a new session |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **done**: zone deployed 2026-10-26; switch made and mail tested 2026-10-27 | — |
-| 6a | `1-mail-canary`: a weekly pair of messages showing `contact@` still forwards, in `HarpguruMailCanary` | **in review**; deployed 2026-10-27, from the branch | the first send, 2026-10-28 09:00 |
+| 6a | `1-mail-canary`: a weekly pair of messages showing `contact@` still forwards, in `HarpguruMailCanary` | **merged** and deployed 2026-10-27; first pair arrived 2026-10-28 | — |
 | 7 | `1-certificate`: ACM in `us-east-1` | not started | — |
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
 
@@ -290,6 +290,11 @@ the next morning. The diff showed only what step 1 lists, and the role's trust p
 this account's `default` schedule group. The canary's deploy took about two and a half minutes.
 Straight afterwards both identities showed `SUCCESS`, the domain's DKIM included, and the
 account showed `ProductionAccessEnabled: false`, a 200-message daily quota.
+
+Step 6 done 2026-10-28: both messages, "direct" and "via contact@", arrived just after
+09:00 London time. So forwarding works through the new zone, and the schedules' role may send.
+It doesn't settle whether SES checks the recipient's identity in the sandbox, since the policy
+names both; that question stays open and harmless.
 
 **7 · `1-certificate`.** An ACM certificate in `us-east-1` covering the apex and `www`,
 validated through DNS in the zone. It reaches the site stack as a cross-region reference.
