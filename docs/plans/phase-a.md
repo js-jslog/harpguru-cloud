@@ -32,10 +32,12 @@ Update this table in the PR that moves a row. **You** means the user.
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
 
 **Next up, as of 2026-10-28**, in the order the user asked for:
-1. **Run the `refresh-learning` skill**, on a branch of its own from `master`. The syllabus is
-   "As of 2026-10-26" and still says the nameserver switch has not been made; since then the
-   switch (#6) and the mail canary (#6a) have merged. The user wants this before further
-   progress.
+1. **Run the `refresh-learning` skill on the branch `1-canary-confirmed`**, the branch that
+   holds this list. The user chose this on 2026-10-28, so the refresh and the canary's result
+   go to `master` in one PR, and **that PR is not opened until the refresh is on it**. The
+   syllabus is "As of 2026-10-26" and still says the nameserver switch has not been made; since
+   then the switch (#6) and the mail canary (#6a) have merged. Not on `1-org-trail`: the skill
+   teaches only what is on `master`. The user wants this before further progress.
 2. **Continue #4a** from the branch `1-org-trail`: its copy of this file, step 4a, says exactly
    what is left.
 3. Then #4b, #4c and #7, which are all unblocked.
