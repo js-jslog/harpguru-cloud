@@ -1,24 +1,24 @@
 # Syllabus
 
-**As of 2026-10-26.** Covers Phase A steps 0–3b, 5 and the first half of 6: the SSO login, the
-CDK app skeleton, the $10 budget, and the workload account with its OU and guardrails,
-including step 3a, which switches SCPs on through a custom resource, and step 3b, which
-imported the console-made permission set into a stack and listed everything CDK doesn't
-manage. Step 1 is the skeleton and deploys nothing itself; the rest are **deployed**: step 2 on
-2026-10-13, and step 3's three stacks on 2026-10-22. Step 3b's `HarpguruIdentity` was imported
-and deployed, and step 5, bootstrapping the workload account in two regions, was done, both the
-same day. So the account really does hold the `Workloads` OU, its three SCPs and the `harpguru`
-workload account.
+**As of 2026-10-28.** Covers Phase A steps 0–3b, 5, 6 and 6a: the SSO login, the CDK app
+skeleton, the $10 budget, and the workload account with its OU and guardrails, including step
+3a, which switches SCPs on through a custom resource, and step 3b, which imported the
+console-made permission set into a stack and listed everything CDK doesn't manage. Step 1 is the
+skeleton and deploys nothing itself; the rest are **deployed**: step 2 on 2026-10-13, and step
+3's three stacks on 2026-10-22. Step 3b's `HarpguruIdentity` was imported and deployed, and step
+5, bootstrapping the workload account in two regions, was done, both the same day. So the
+account really does hold the `Workloads` OU, its three SCPs and the `harpguru` workload account.
 
-Step 6's hosted zone, `HarpguruDns`, was **deployed** on 2026-10-26, but **the nameserver
-switch at Heart has not been made**, so the zone answers nobody yet: the internet still asks
-Heart. Teach everything after the deploy as what comes next, not as done: the first mail test,
-the check in Heart's panel, the switch itself, the wait, and the second mail test. The
-status table in `docs/plans/phase-a.md` says the same. Step 4, the rest of step 6, and steps 7
-and 8 are out of scope; see the last section.
+Step 6 is **done**. The hosted zone, `HarpguruDns`, was deployed on 2026-10-26, and the
+nameserver switch at Heart was made on 2026-10-27, with mail tested before and after: the
+internet now asks Route 53 for harpguru.com, and `contact@` still forwards through Heart. Step
+6a, the weekly mail canary `HarpguruMailCanary`, was **deployed** on 2026-10-27, and its first
+pair of messages arrived on 2026-10-28. The status table in `docs/plans/phase-a.md` says the
+same. Step 4 is partly coded on a branch but not merged, and steps 7 and 8 are not started; all
+are out of scope; see the last section.
 
-**Priority now: topic 9**, before I make the nameserver switch, which is the one risky step
-left in step 6. Then topics 4, 7 and 8 if they are still shaky.
+**Priority now: topics 9 and 10**, the switch and the canary that watches what it left behind.
+Then topics 4, 7 and 8 if they are still shaky.
 
 Each topic gives its tier and why, what I should be able to answer, and its sources. The
 sources hold the facts; this file deliberately does not restate them. Sources are named by
@@ -186,35 +186,61 @@ in the README, and the tiering here is a proposal, to be argued with.
 
 ### 9. Moving harpguru.com's DNS without breaking its mail
 
-- **Covers:** the Route 53 hosted zone in the workload account, deployed but not yet answering;
-  the records it carries and the ones left behind at Heart; and the nameserver switch still to
-  come, with the two mail tests around it. Also what NS, SOA and TTL mean.
-- **Why must own:** the switch is the first change in this project that can break something
-  live: customers write to `contact@harpguru.com`. I make it by hand, in Heart's panel, with no
-  diff to read first, so understanding is the only safety check.
-- **Be able to answer:** what a hosted zone is, and why it answers nothing yet; the difference
-  between delegating a domain and transferring it, and why this project delegates; what an NS
-  record is, and the two places one appears; what an SOA record is, and what it holds; why
-  Route 53 shows four record sets when the code made two; what a TTL is, and why the switch may
-  take up to two days to reach everyone; why the `MX` and `mail` records had to be in the zone
-  before the switch, and what would happen to mail if they were not; what is deliberately left
-  behind at Heart, including the wildcard, and why nothing is lost by it; why the first mail test
-  proves nothing about the new zone, and when the second one counts; how I can see what the
-  zone would answer before anything points at it; why the zone is `Retain` and its stack
+- **Covers:** the Route 53 hosted zone in the workload account; the records it carries and the
+  ones left behind at Heart; and the nameserver switch, made on 2026-10-27, with the checks
+  before it and the mail tests around it. Also what NS, SOA and TTL mean.
+- **Why must own:** the switch was the first change in this project that could break something
+  live: customers write to `contact@harpguru.com`. I made it by hand, in Heart's panel, with no
+  diff to read first, so understanding was the only safety check, and it is the change I would
+  have to reason about if mail ever stopped.
+- **Be able to answer:** what a hosted zone is, and why it answered nothing until the switch;
+  the difference between delegating a domain and transferring it, and why this project
+  delegates; what an NS record is, and the two places one appears; what an SOA record is, and
+  what it holds; why Route 53 shows four record sets when the code made two; what a TTL is, why
+  the switch was allowed two days, and how long it actually took; why the `MX` and `mail` records
+  had to be in the zone before the switch, and what would have happened to mail if they were
+  not; what is deliberately left behind at Heart, including the wildcard, and why nothing is
+  lost by it; why DNSSEC was the check that mattered most before the switch, and what was found;
+  why the baseline mail test proved nothing about the new zone, why the Hotmail message after
+  the switch proved little either, and why the Gmail one counted; whether Heart keeps
+  forwarding with its nameservers moved away, and how that was settled; how I could see what the
+  zone would answer before anything pointed at it; why the zone is `Retain` and its stack
   termination protected; why its `cdk` commands need `--profile harpguru`, and what happens
   without it; what the zone costs.
 - **Sources:** `docs/aws-concepts.md` "Route 53 hosted zones and delegation" and
   "Environments"; `docs/plans/phase-a.md` "Status" and "Steps" (item 6);
   `infra/lib/dns-stack.ts`; `infra/test/dns-stack.test.ts`; `infra/bin/harpguru.ts`;
   `infra/README.md` "Deploy-time values"; `docs/outside-cdk.md`;
-  `roadmap-planning/aws-pathway-findings.md` "harpguru.com, re-checked 2026-10-26, and the
-  hosted zone", "harpguru.com, re-checked 2026-09-25" and "harpguru.com, checked 2026-08-31".
+  `roadmap-planning/aws-pathway-findings.md` "harpguru.com, checked 2026-10-27, before the
+  nameserver switch", "harpguru.com, re-checked 2026-10-26, and the hosted zone",
+  "harpguru.com, re-checked 2026-09-25" and "harpguru.com, checked 2026-08-31".
+
+### 10. The weekly mail canary, and the failure it watches for
+
+- **Covers:** why the switch left a way for mail to stop silently, and step 6a's answer: every
+  Wednesday at 09:00 London time, one message straight to my forwarding address and one to
+  `contact@`, sent by SES from EventBridge Scheduler. What it catches, and what it doesn't.
+- **Why must own:** it is a decision I asked for, against a risk the switch created, and it is
+  now the only thing that tells me `contact@` works. I should be able to say what each missing
+  message would mean, and where it leaves me blind.
+- **Be able to answer:** what Heart used to keep right that is now a fixed value in my zone, and
+  what happens to mail if Heart moves its mail server; why two messages, and why two separate
+  sends rather than one message to both addresses; what it means if only the direct one
+  arrives, and if neither does; why Wednesday; why SES stays in its sandbox, and why that is
+  enough here; why there is no Lambda; what the canary doesn't catch, what would close the gap,
+  and whether that is built; what the first Wednesday showed, and the one question it left open.
+- **Sources:** `docs/plans/phase-a.md` "Steps" (item 6, its paragraph on `79.170.44.72`, and
+  item 6a) and "Decisions" (the 2026-10-27 entry about the canary);
+  `infra/lib/mail-canary-stack.ts`; `docs/aws-concepts.md` "SES identities, the sandbox and DKIM"
+  and "EventBridge Scheduler and universal targets";
+  `roadmap-planning/aws-pathway-findings.md` "harpguru.com, checked 2026-10-27, before the
+  nameserver switch".
 
 ---
 
 ## Should understand
 
-### 10. Regions, environments and bootstrap
+### 11. Regions, environments and bootstrap
 
 - **Covers:** where things run, how a stack is pinned to an account and region without the
   account ID being in the code, and what bootstrap prepares.
@@ -228,14 +254,14 @@ in the README, and the tiering here is a proposal, to be argued with.
   `infra/lib/config.ts`; `docs/plans/phase-a.md` "Steps" (item 5) and "Decisions" (the
   2026-10-26 entry).
 
-### 11. Tags and cost allocation
+### 12. Tags and cost allocation
 
 - **Covers:** tagging once at the app root, the budget's exception to it, and why a cost
   allocation tag needs activating.
 - **Sources:** `docs/aws-concepts.md` "Tags and cost allocation tags" and
   "L1 and L2 constructs"; `infra/lib/tags.ts`; `infra/lib/budget-stack.ts`.
 
-### 12. Testing infrastructure code
+### 13. Testing infrastructure code
 
 - **Covers:** what assertions against a synthesised template can and cannot prove, including a
   test that exists to stop an expensive mistake rather than to check behaviour, and tests that
@@ -246,14 +272,14 @@ in the README, and the tiering here is a proposal, to be argued with.
   `infra/test/accounts-stack.test.ts`; `infra/test/guardrails-stack.test.ts`;
   `infra/test/policy-types-stack.test.ts`.
 
-### 13. Account IDs, ARNs and keeping them out of a public repo
+### 14. Account IDs, ARNs and keeping them out of a public repo
 
 - **Covers:** what an ARN is made of, why an account ID is not a secret but is still kept out,
   and how the repo avoids ever committing one.
 - **Sources:** `docs/aws-concepts.md` "Account ID and ARNs";
   `infra/README.md` "Deploy-time values"; `infra/lib/config.ts`.
 
-### 14. Three stacks, cross-stack references and deploy order
+### 15. Three stacks, cross-stack references and deploy order
 
 - **Covers:** why step 3 is three stacks; how the OU's ID gets from the guardrails to the
   accounts stack, and how that forces the guardrails to deploy first; and how the guardrails
@@ -264,7 +290,7 @@ in the README, and the tiering here is a proposal, to be argued with.
   "Apps, stacks and constructs"; `docs/plans/phase-a.md` "Decisions" and "Steps" (item 3);
   `infra/bin/harpguru.ts`.
 
-### 15. How I get into the new account
+### 16. How I get into the new account
 
 - **Covers:** the Identity Center assignment that gives my existing login access to the new
   account, the second CLI profile that uses it, and `OrganizationAccountAccessRole` as the way
@@ -272,6 +298,23 @@ in the README, and the tiering here is a proposal, to be argued with.
 - **Sources:** `docs/aws-concepts.md` "IAM Identity Center" and
   "OrganizationAccountAccessRole"; `infra/lib/accounts-stack.ts`; `docs/plans/phase-a.md`
   "Steps" (item 3).
+
+### 17. SES and Scheduler, the mechanics
+
+- **Covers:** how the canary is wired: the domain and the forwarding address as SES identities,
+  Easy DKIM's three records written into the zone, the universal target that calls SES's
+  `SendEmail` with no code, and the IAM action name CDK gets wrong. Also how the canary finds
+  the zone, through `HarpguruDns`'s new output.
+- **Why not must own:** the decisions are topic 10's; this is how they are carried out. Know
+  what DKIM proves to a receiving server; why the domain identity covers `contact@` but my own
+  address needed a click; why the stack writes `ses:SendEmail` rather than accept CDK's
+  `sesv2:sendEmail`, and which test guards it; why the schedule names a time zone; and why the
+  canary had to deploy after the switch had propagated.
+- **Sources:** `docs/aws-concepts.md` "SES identities, the sandbox and DKIM", "EventBridge
+  Scheduler and universal targets" and "Cross-stack references";
+  `infra/lib/mail-canary-stack.ts`; `infra/test/mail-canary-stack.test.ts`;
+  `infra/bin/harpguru.ts`; `docs/plans/phase-a.md` "Steps" (item 6a); `docs/outside-cdk.md`
+  "Workload account `harpguru`".
 
 ---
 
@@ -290,8 +333,8 @@ These are worth your time if they interest you. Skipping them leaves no gap.
 
 ## Not yet built, so not for study
 
-- CloudTrail, Config and GuardDuty (step 4); the nameserver switch (the rest of step 6), which
-  topic 9 covers as the next step but which has not happened; ACM, S3 and CloudFront (steps 7
-  and 8); and everything in phases B–F. Some of these already
+- CloudTrail, Config and GuardDuty (step 4; the CloudTrail part is coded on a branch, not
+  merged or deployed); ACM, S3 and CloudFront (steps 7 and 8); the CloudWatch alarm that would
+  catch the canary failing on the AWS side; and everything in phases B–F. Some of these already
   have concept entries, written ahead of the work; read them as reading ahead, and do not test
   me on them.
