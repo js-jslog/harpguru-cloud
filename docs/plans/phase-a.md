@@ -209,8 +209,8 @@ Heart until the nameservers move, so the steps can be split across sessions at t
 The apex and `www` are left out of the zone on purpose. Before the switch they pointed at
 Heart's parked page, which has no HTTPS, and #8 points them at CloudFront. Since the switch they
 don't resolve, and won't until #8. Nor does `ftp.harpguru.com` (`79.170.44.11`), which nothing
-uses. Heart also serves a wildcard,
-`*.harpguru.com` to the parked address, so every made-up name resolves there, `webmail` and
+uses. Heart also served a wildcard,
+`*.harpguru.com` to the parked address, so every made-up name resolved there, `webmail` and
 `imap` included; and a `_domainconnect` TXT record, Heart's hook for letting third parties set
 up DNS. Both are left behind too. Mail is forwarded, not kept in a mailbox, so nothing reads
 mail through those names.
