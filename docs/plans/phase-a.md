@@ -32,12 +32,9 @@ Update this table in the PR that moves a row. **You** means the user.
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
 
 **Next up, as of 2026-10-28**, in the order the user asked for:
-1. **Run the `refresh-learning` skill on the branch `1-canary-confirmed`**, the branch that
-   holds this list. The user chose this on 2026-10-28, so the refresh and the canary's result
-   go to `master` in one PR, and **that PR is not opened until the refresh is on it**. The
-   syllabus is "As of 2026-10-26" and still says the nameserver switch has not been made; since
-   then the switch (#6) and the mail canary (#6a) have merged. Not on `1-org-trail`: the skill
-   teaches only what is on `master`. The user wants this before further progress.
+1. ~~Run the `refresh-learning` skill.~~ **Done** 2026-10-28 on `1-canary-confirmed`, in the
+   same PR as the canary's result: the syllabus now covers the switch (#6) and the canary
+   (#6a). Not on `1-org-trail`, because the skill teaches only what is on `master`.
 2. **Continue #4a** from the branch `1-org-trail`: its copy of this file, step 4a, says exactly
    what is left.
 3. Then #4b, #4c and #7, which are all unblocked.
@@ -182,7 +179,7 @@ Done 2026-10-22, in one run with `--profile harpguru` and the project's three ta
 - **Mail is live.** `contact@harpguru.com` forwards through Heart's mail hosting. So the zone
   has to carry `MX 10 mail.harpguru.com` and `mail.harpguru.com A 79.170.44.72` before
   anything moves. That is Heart's mail host, a different machine from `79.170.40.4`, the
-  parked web address the apex and `www` point at today.
+  parked web address the apex and `www` pointed at until the switch.
 - Send a test message to `contact@`.
 - You switch the nameservers at Heart. Delegate the domain; do not transfer it.
 - Confirm the change has propagated, then send a second test message.
@@ -209,9 +206,10 @@ Heart until the nameservers move, so the steps can be split across sessions at t
    forwarding worked before anything moved. Sent earlier, the sender's mail server may still be
    asking Heart.
 
-The apex and `www` are left out of the zone on purpose. Today they point at Heart's parked page,
-which has no HTTPS, and #8 points them at CloudFront. Until then they won't resolve. So is
-`ftp.harpguru.com` (`79.170.44.11`), which nothing uses. Heart also serves a wildcard,
+The apex and `www` are left out of the zone on purpose. Before the switch they pointed at
+Heart's parked page, which has no HTTPS, and #8 points them at CloudFront. Since the switch they
+don't resolve, and won't until #8. Nor does `ftp.harpguru.com` (`79.170.44.11`), which nothing
+uses. Heart also serves a wildcard,
 `*.harpguru.com` to the parked address, so every made-up name resolves there, `webmail` and
 `imap` included; and a `_domainconnect` TXT record, Heart's hook for letting third parties set
 up DNS. Both are left behind too. Mail is forwarded, not kept in a mailbox, so nothing reads
@@ -221,7 +219,7 @@ Checked 2026-10-27, before the switch:
 - **DNSSEC is off**: `.com` holds no `DS` record for harpguru.com. Were it on, moving to
   unsigned nameservers would stop the whole domain resolving, with a two-day TTL on the way
   back.
-- Heart serves no `TXT` at the apex and nothing at `_dmarc`, so there is no SPF, DKIM or DMARC
+- Heart serves no `TXT` at the apex or at `_dmarc` (its wildcard answers only `A`), so there is no SPF, DKIM or DMARC
   to carry across.
 - Route 53 answers `MX 10 mail.harpguru.com` and `mail A 79.170.44.72`, both with a one-hour TTL,
   as Heart does.

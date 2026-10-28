@@ -211,7 +211,7 @@ in the README, and the tiering here is a proposal, to be argued with.
   "Environments"; `docs/plans/phase-a.md` "Status" and "Steps" (item 6);
   `infra/lib/dns-stack.ts`; `infra/test/dns-stack.test.ts`; `infra/bin/harpguru.ts`;
   `infra/README.md` "Deploy-time values"; `docs/outside-cdk.md`;
-  `roadmap-planning/aws-pathway-findings.md` "harpguru.com, checked 2026-10-27, before the
+  `roadmap-planning/aws-pathway-findings.md` "harpguru.com, checked 2026-10-27, and the
   nameserver switch", "harpguru.com, re-checked 2026-10-26, and the hosted zone",
   "harpguru.com, re-checked 2026-09-25" and "harpguru.com, checked 2026-08-31".
 
@@ -229,11 +229,11 @@ in the README, and the tiering here is a proposal, to be argued with.
   arrives, and if neither does; why Wednesday; why SES stays in its sandbox, and why that is
   enough here; why there is no Lambda; what the canary doesn't catch, what would close the gap,
   and whether that is built; what the first Wednesday showed, and the one question it left open.
-- **Sources:** `docs/plans/phase-a.md` "Steps" (item 6, its paragraph on `79.170.44.72`, and
-  item 6a) and "Decisions" (the 2026-10-27 entry about the canary);
+- **Sources:** `docs/plans/phase-a.md` "Steps" (item 6, its bold paragraph "After the switch,
+  `79.170.44.72` is ours to keep right", and item 6a) and "Decisions" (the 2026-10-27 entry about the canary);
   `infra/lib/mail-canary-stack.ts`; `docs/aws-concepts.md` "SES identities, the sandbox and DKIM"
   and "EventBridge Scheduler and universal targets";
-  `roadmap-planning/aws-pathway-findings.md` "harpguru.com, checked 2026-10-27, before the
+  `roadmap-planning/aws-pathway-findings.md` "harpguru.com, checked 2026-10-27, and the
   nameserver switch".
 
 ---
@@ -304,15 +304,15 @@ in the README, and the tiering here is a proposal, to be argued with.
 - **Covers:** how the canary is wired: the domain and the forwarding address as SES identities,
   Easy DKIM's three records written into the zone, the universal target that calls SES's
   `SendEmail` with no code, and the IAM action name CDK gets wrong. Also how the canary finds
-  the zone, through `HarpguruDns`'s new output.
+  the zone, through `HarpguruDns`'s new output, read as a weak reference.
 - **Why not must own:** the decisions are topic 10's; this is how they are carried out. Know
   what DKIM proves to a receiving server; why the domain identity covers `contact@` but my own
   address needed a click; why the stack writes `ses:SendEmail` rather than accept CDK's
   `sesv2:sendEmail`, and which test guards it; why the schedule names a time zone; and why the
   canary had to deploy after the switch had propagated.
 - **Sources:** `docs/aws-concepts.md` "SES identities, the sandbox and DKIM", "EventBridge
-  Scheduler and universal targets" and "Cross-stack references";
-  `infra/lib/mail-canary-stack.ts`; `infra/test/mail-canary-stack.test.ts`;
+  Scheduler and universal targets", and "Cross-stack references" for what a weak
+  reference is; `infra/lib/mail-canary-stack.ts`; `infra/test/mail-canary-stack.test.ts`;
   `infra/bin/harpguru.ts`; `docs/plans/phase-a.md` "Steps" (item 6a); `docs/outside-cdk.md`
   "Workload account `harpguru`".
 
