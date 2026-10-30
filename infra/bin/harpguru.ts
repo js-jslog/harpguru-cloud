@@ -2,9 +2,11 @@
 import { App } from 'aws-cdk-lib'
 import { AccountsStack } from '../lib/accounts-stack'
 import { BudgetStack } from '../lib/budget-stack'
+import { ConfigStack } from '../lib/config-stack'
 import { DnsStack } from '../lib/dns-stack'
 import { MailCanaryStack } from '../lib/mail-canary-stack'
 import {
+  EDGE_REGION,
   managementEnv,
   readDeployConfig,
   requireSetting,
@@ -105,3 +107,20 @@ new MailCanaryStack(app, 'HarpguruMailCanary', {
   zone: dns.zone,
   forwardingAddress: requireSetting(config, 'forwardingAddress'),
 })
+
+// Config, recording daily in both regions. Protected, like the trail, and
+// guarded by the harpguru-protect-config SCP. London holds the bucket and the
+// service-linked role, so it deploys first.
+const configLondon = new ConfigStack(app, 'HarpguruConfig', {
+  env: workloadEnv(config),
+  description: 'Config in London: the recorder, its bucket and its role',
+  terminationProtection: true,
+  primary: true,
+})
+const configEdge = new ConfigStack(app, 'HarpguruConfigEdge', {
+  env: workloadEnv(config, EDGE_REGION),
+  description: 'Config in us-east-1, delivering to the London bucket',
+  terminationProtection: true,
+  primary: false,
+})
+configEdge.addDependency(configLondon)

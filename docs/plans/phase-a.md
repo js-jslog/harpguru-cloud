@@ -25,7 +25,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | 3a | `1-scp-custom-resource`: SCPs switched on by a custom resource in its own stack; the four decisions settled | **merged** and deployed 2026-10-22 | — |
 | 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | **merged**, imported and deployed 2026-10-22 | — |
 | 4a | `1-org-trail`: the Organization trail and its bucket, in `HarpguruTrail` | **deployed** 2026-10-30; PR to open | *you*: open the PR |
-| 4b | `1-config`: Config recorders in the workload account, and the SCP that protects them | not started | — |
+| 4b | `1-config`: Config recorders in the workload account, and the SCP that protects them | pushed, **not deployed**; PR opened after the deploy | *you*: the deploy |
 | 4c | `1-guardduty`: GuardDuty detectors in both accounts, both regions | not started | *you*: bootstrap the management account in `us-east-1` |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **done**: zone deployed 2026-10-26; switch made and mail tested 2026-10-27 | — |
@@ -34,11 +34,11 @@ Update this table in the PR that moves a row. **You** means the user.
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
 
 **Next up, as of 2026-10-30:**
-1. **Open the PR for `1-org-trail`** (#4a), which is deployed.
-2. Then #4b, #4c and #7, which are all unblocked. #4c needs the management account bootstrapped
-   in `us-east-1` first.
-3. Once #4a has merged, the `refresh-learning` skill can teach the trail. It teaches only what
-   is on `master`.
+1. **Deploy #4b** from the branch `1-config`: its steps are in "Steps" below. The PR is opened
+   after the deploy.
+2. Then #4c and #7, which are unblocked. #4c needs the management account bootstrapped in
+   `us-east-1` first.
+3. The `refresh-learning` skill can now teach the trail, which is on `master`.
 
 ## Accounts
 
@@ -216,17 +216,51 @@ Done 2026-10-30, from the branch. What each step showed:
   a minute after the deploy, and listed `harpguru-org-trail` as an organisation trail six
   minutes later.
 
-**4b · `1-config`.**
-- Config in the workload account only, in `eu-west-2` and `us-east-1`, with periodic (daily)
-  rather than continuous recording. Config charges for each change it records, so it is the
-  item most likely to creep. Global resources such as IAM are recorded in one region only.
-- An SCP denying anyone from turning Config off in `Workloads`, moved here from #3 (see
-  Decisions). Whatever deploys and updates the recorder must be allowed to change it, so the
-  SCP exempts CDK's `cdk-hnb659fds-cfn-exec-role-*`. That also bounds what it protects: an
-  admin can still change Config by deploying through CDK. It guards against accidents and
-  against credentials used outside CDK, not against the owner.
+**4b · `1-config`.** Config in the workload account only, in `eu-west-2` and `us-east-1`, as
+two termination-protected stacks from one class, `ConfigStack`:
+- **`HarpguruConfig`**, London: Config's service-linked role, `AWSServiceRoleForConfig`; one
+  bucket for both regions, `harpguru-config-<account id>`; a recorder; and a delivery channel.
+  The bucket is like the trail's: private, SSE-S3, TLS only, `Retain`, files deleted after 365
+  days to match. Its policy follows the Config guide's, every grant conditioned on
+  `AWS:SourceAccount`, the confused-deputy guard. It records IAM's global types, once.
+- **`HarpguruConfigEdge`**, `us-east-1`: a recorder and a channel delivering to the London
+  bucket, which it finds by name rather than a cross-region reference. It doesn't record IAM
+  again. It does record Route 53 zones and, from #8, CloudFront distributions, which Config
+  records only in `us-east-1`. It depends on `HarpguruConfig`, which deploys first.
+- **Periodic (daily)** rather than continuous recording, of every supported type. Config charges
+  for each change it records, so it is the item most likely to creep; a daily item is written
+  only if the resource changed that day. No rules or conformance packs, which cost per
+  evaluation.
+- **Service-linked role, not a role of our own.** AWS maintains its permissions. It can't write
+  to S3, so Config delivers as the `config.amazonaws.com` principal, and the bucket policy
+  lets that in.
+- **`harpguru-protect-config`**, a fourth SCP on `Workloads` in `HarpguruGuardrails`, moved here
+  from #3 (see Decisions). It denies stopping, deleting or changing the recorder and channel,
+  and changing which types are recorded. It exempts CDK's `cdk-hnb659fds-cfn-exec-role-*`, by
+  `aws:PrincipalArn`, so a deploy can still change Config. That also bounds what it protects:
+  an admin can still change Config by deploying through CDK. It guards against accidents and
+  against credentials used outside CDK, not against the owner. It doesn't protect the bucket,
+  which is retained and in a termination-protected stack.
 - The CloudTrail half of that SCP is dropped. The org trail lives in the management account,
   where SCPs never apply, and a member account can't alter an org trail anyway.
+- Two assumptions to check at the deploy: that a channel in `us-east-1` may deliver to a bucket
+  in London (the Config guide's `AWS:SourceArn` format, one per region, implies it; nothing
+  states it), and that CloudFormation starts the recorders itself, as CDK's docs say.
+
+Doing it, all *you*. Config first, then the SCP, so the SCP can't get in the way of the first
+deploy if its exemption were wrong:
+1. `cdk diff HarpguruConfig HarpguruConfigEdge --profile harpguru`. London is all `[+]`: the
+   role, the bucket and its policy, the recorder and the channel; `us-east-1` only a recorder
+   and a channel. The policy shows as IAM-style statements, each with `AWS:SourceAccount`.
+2. `cdk deploy HarpguruConfig HarpguruConfigEdge --profile harpguru --require-approval never`.
+3. `aws configservice describe-configuration-recorder-status --profile harpguru` shows
+   `recording: true`, `lastStatus: SUCCESS`, and the same with `--region us-east-1`. The agent
+   can check this.
+4. `cdk diff HarpguruGuardrails`, signed in to the management account, so no `--profile`. Only
+   one new `[+]` policy, `harpguru-protect-config`, attached to `Workloads`.
+5. `cdk deploy HarpguruGuardrails --require-approval never`.
+6. The agent checks the SCP with the IAM policy simulator, which reads only: stopping a recorder
+   should be denied by Organizations for the SSO role, and allowed for CDK's execution role.
 
 **4c · `1-guardduty`.**
 - A GuardDuty detector in each account, in both regions: four in all. The management account
@@ -502,3 +536,7 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
   mail server address is a fixed value in our zone, and a stale one would fail silently. SES
   and EventBridge Scheduler, with no Lambda, and SES left in its sandbox. Not in the roadmap,
   which it doesn't change: it is an operational check, not a product feature.
+- 2026-10-30: **Config uses its service-linked role and one bucket, in London, for both
+  regions**, with files kept for a year like the trail's. Proposed by the agent: the role is
+  maintained by AWS, and a second bucket would hold nothing different. Easy to revisit: both
+  are in `ConfigStack`, and the bucket is retained.

@@ -18,7 +18,8 @@ the account ID, it fetches it with `aws sts get-caller-identity`.
 **Index:** [Regions](#regions) · [Account ID and ARNs](#account-id-and-arns) ·
 [Default VPC](#default-vpc) · [Root user](#root-user) · [IAM users](#iam-users) ·
 [IAM Identity Center](#iam-identity-center) · [Organizations](#organizations) ·
-[Trusted access](#trusted-access) · [Organizational Unit (OU)](#organizational-unit-ou) ·
+[Trusted access](#trusted-access) · [Service-linked roles](#service-linked-roles) ·
+[Organizational Unit (OU)](#organizational-unit-ou) ·
 [Service Control Policy (SCP)](#service-control-policy-scp) ·
 [OrganizationAccountAccessRole](#organizationaccountaccessrole) · [Budgets](#budgets) ·
 [Cost Anomaly Detection](#cost-anomaly-detection) ·
@@ -223,6 +224,23 @@ infrastructure as code makes you take it yourself."
 
 **See it:** `aws organizations list-aws-service-access-for-organization --query 'EnabledServicePrincipals[].ServicePrincipal'`
 
+#### Service-linked roles
+
+**What:** an IAM role that belongs to an AWS service, under the path `/aws-service-role/`.
+The service defines what it may do, and only the service can change it. You can create or
+delete one, but not edit it. SCPs don't apply to them.
+
+**Here:** most arrived on their own: Organizations', Identity Center's and CloudTrail's, the
+last in both accounts, made by the org trail. `HarpguruConfig` creates Config's,
+`AWSServiceRoleForConfig`, and both regions' recorders use it. It can read resources but not
+write to S3, so Config delivers as the `config.amazonaws.com` service principal, which the
+bucket policy lets in. *(PR `1-config`)*
+
+**Say it:** "A service-linked role is the service's own identity in your account, with
+permissions AWS maintains, so nobody has to write or update that policy."
+
+**See it:** `aws iam list-roles --path-prefix /aws-service-role/ --profile harpguru --query 'Roles[].RoleName'`
+
 #### Organizational Unit (OU)
 
 **What:** a folder for accounts inside an organisation. OUs can be nested, and policies
@@ -249,7 +267,7 @@ management account.
 CloudFormation resource does it, so `HarpguruPolicyTypes` does it through a custom resource.
 Switching them on also attaches AWS's `FullAWSAccess` policy
 everywhere, because every target needs at least one SCP; the deny policies then cut
-holes in it. `HarpguruGuardrails` attaches three to `Workloads`, each a separate policy so
+holes in it. `HarpguruGuardrails` attaches four to `Workloads`, each a separate policy so
 each is readable on its own (the limit is 10 per target, checked against AWS's quotas page on
 2026-10-14; it was once 5):
 - `harpguru-region-lock` denies actions outside `eu-west-2` and `us-east-1`, exempting the five
@@ -260,10 +278,15 @@ each is readable on its own (the limit is 10 per target, checked against AWS's q
   there (see [Regions](#regions)); without it, step 7 could not create the certificate
 - `harpguru-deny-root` denies the root user
 - `harpguru-deny-leave-org` denies leaving the organisation
+- `harpguru-protect-config` denies stopping, deleting or changing Config's recorder and
+  delivery channel, **except to CloudFormation acting as CDK's `cdk-hnb659fds-cfn-exec-role-*`**,
+  so a deploy can still change it. That's a condition on `aws:PrincipalArn`, the role making
+  the call. It guards against accidents and credentials used outside CDK, not against the
+  owner. The trail needs no such policy: it lives in the management account, where SCPs never
+  apply, and member accounts can't change an org trail anyway
 
-Denying anyone from turning off CloudTrail or Config comes in step 4, alongside the services it
-protects, a decision in the Phase A plan. How SCPs are switched on is in
-[Custom resources](#custom-resources). *(PRs `1-org-accounts`, `1-scp-custom-resource`)*
+How SCPs are switched on is in [Custom resources](#custom-resources).
+*(PRs `1-org-accounts`, `1-scp-custom-resource`, `1-config`)*
 
 **Say it:** "An action is only allowed if IAM allows it and no SCP denies it. An explicit deny
 anywhere wins."
@@ -271,7 +294,7 @@ anywhere wins."
 **See it:** `aws organizations list-roots --query 'Roots[0].PolicyTypes'` is empty until SCPs
 are switched on, which they have been since 2026-10-22.
 `aws organizations list-policies --filter SERVICE_CONTROL_POLICY --query 'Policies[].Name'`
-lists the four SCPs, and
+lists the five SCPs, `FullAWSAccess` included, and
 `aws organizations describe-policy --policy-id <id> --query Policy.Content --output text | jq`
 shows one policy exactly as written in `lib/guardrails-stack.ts`.
 To watch the region lock refuse a call from inside the workload account:
@@ -767,14 +790,23 @@ from `aws cloudtrail describe-trails --query 'trailList[0].S3BucketName' --outpu
 **What:** a record of how each resource is **configured** over time, where CloudTrail records
 **actions**. It can also check resources against rules, such as "no public S3 buckets".
 
-**Here:** step 4 turns it on, limited to the two regions and using **periodic** (daily)
-recording rather than continuous. Config charges for each change it records, so at full
-settings it's the service most likely to creep past a few pounds.
+**Here:** `HarpguruConfig` and `HarpguruConfigEdge` turn it on in the workload account, in
+London and `us-east-1`, each with a **configuration recorder** (what to record) and a
+**delivery channel** (where to send it), both named `default`; there can be one of each per
+region. Recording is **daily** rather than continuous: Config charges for each configuration
+item it records, and a daily item is written only if the resource changed that day. Both
+deliver to one bucket in London. IAM's resources are the same in every region, so only London
+records them. Route 53 zones and CloudFront distributions are recorded only in `us-east-1`,
+which is one reason to record there at all. The `harpguru-protect-config` SCP stops anyone but
+a CDK deploy from turning it off. *(PR `1-config`)*
 
 **Say it:** "CloudTrail tells you who did it; Config tells you what the resource looked like
 before and after."
 
-**See it:** `aws configservice describe-configuration-recorders`, which is empty until step 4.
+**See it:** `aws configservice describe-configuration-recorder-status --profile harpguru --region us-east-1`
+shows whether it's recording and when it last did. After a day,
+`aws configservice list-discovered-resources --resource-type AWS::Route53::HostedZone --profile harpguru --region us-east-1`
+finds the hosted zone, which London's recorder never will.
 
 #### GuardDuty
 

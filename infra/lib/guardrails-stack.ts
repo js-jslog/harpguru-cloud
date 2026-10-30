@@ -5,6 +5,11 @@ import { EDGE_REGION, PRIMARY_REGION } from './config'
 
 export const ALLOWED_REGIONS = [PRIMARY_REGION, EDGE_REGION]
 
+// CDK's CloudFormation execution role in any account and region, under the
+// default bootstrap qualifier.
+export const CDK_EXEC_ROLE_PATTERN =
+  'arn:aws:iam::*:role/cdk-hnb659fds-cfn-exec-role-*'
+
 // Each SCP is a plain policy document, so what is written here is exactly
 // what Organizations stores. SCPs only ever limit: an action needs an IAM
 // allow and no SCP deny.
@@ -62,6 +67,35 @@ export const SCPS = {
           Effect: 'Deny',
           Action: 'organizations:LeaveOrganization',
           Resource: '*',
+        },
+      ],
+    },
+  },
+  'harpguru-protect-config': {
+    description: 'Deny changing Config, except through a CDK deploy',
+    content: {
+      Version: '2012-10-17',
+      Statement: [
+        {
+          Sid: 'DenyConfigChangesOutsideCdk',
+          Effect: 'Deny',
+          // Everything that could stop, narrow or redirect what is recorded.
+          Action: [
+            'config:DeleteConfigurationRecorder',
+            'config:DeleteDeliveryChannel',
+            'config:PutConfigurationRecorder',
+            'config:PutDeliveryChannel',
+            'config:StopConfigurationRecorder',
+            'config:AssociateResourceTypes',
+            'config:DisassociateResourceTypes',
+          ],
+          Resource: '*',
+          // CloudFormation acts as the role CDK's bootstrap made, so a deploy
+          // can still change Config. That bounds what this protects: it stops
+          // accidents and credentials used outside CDK, not the owner.
+          Condition: {
+            ArnNotLike: { 'aws:PrincipalArn': CDK_EXEC_ROLE_PATTERN },
+          },
         },
       ],
     },
