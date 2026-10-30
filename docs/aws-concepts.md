@@ -745,12 +745,16 @@ rule** deletes or moves objects once they reach a given age, without anything ru
 
 **Here:** the trail's bucket in step 4a. Public access is blocked, it accepts only TLS, and
 its policy lets `cloudtrail.amazonaws.com` write under `AWSLogs/`, but only for this trail.
-A lifecycle rule deletes logs after 365 days. Step 8's site bucket meets the same ideas again,
+That last part is an `aws:SourceArn` condition naming the trail. Without it, the policy admits
+CloudTrail acting for **any** account's trail, so a stranger who knew the bucket's name could
+point a trail at it: the **confused deputy**, a trusted service tricked into acting for someone
+else. CDK adds the condition to the Organization's statement but not to the management
+account's own, so the stack adds it there. A lifecycle rule deletes logs after 365 days. Step 8's site bucket meets the same ideas again,
 with CloudFront as the reader. *(PR `1-org-trail`)*
 
 **Say it:** "An identity policy says what a principal may do; a bucket policy says who may
 touch this bucket. A service like CloudTrail has no identity in your account, so a resource
-policy is how you let it in."
+policy is how you let it in, and `aws:SourceArn` keeps it to your resource, not anyone's."
 
 **See it:** after the deploy, `aws s3api get-bucket-policy --bucket <bucket> --query Policy --output text | jq`
 and `aws s3api get-bucket-lifecycle-configuration --bucket <bucket>`, with the bucket's name

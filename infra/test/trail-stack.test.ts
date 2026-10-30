@@ -72,6 +72,20 @@ test("member accounts' logs may land under the Organization's prefix", () => {
   })
 })
 
+test("both PutObject statements admit only this trail, not any account's", () => {
+  const statements = synth().findResources('AWS::S3::BucketPolicy')
+  const document = Object.values(statements)[0].Properties.PolicyDocument
+  const puts = document.Statement.filter(
+    (s: { Action: string }) => s.Action === 's3:PutObject'
+  )
+  expect(puts).toHaveLength(2)
+  for (const put of puts) {
+    expect(
+      JSON.stringify(put.Condition.StringEquals['aws:SourceArn'])
+    ).toContain(`:trail/${TRAIL_NAME}`)
+  }
+})
+
 test('the stack holds the bucket, its policy and the trail, and nothing else', () => {
   const resources = Object.values(synth().toJSON().Resources) as {
     Type: string

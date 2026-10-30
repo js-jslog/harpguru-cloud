@@ -4,6 +4,7 @@ import {
   BlockPublicAccess,
   Bucket,
   BucketEncryption,
+  type CfnBucketPolicy,
   ObjectOwnership,
 } from 'aws-cdk-lib/aws-s3'
 import type { Construct } from 'constructs'
@@ -57,5 +58,20 @@ export class TrailStack extends Stack {
       // deleted after delivery.
       enableFileValidation: true,
     })
+
+    // CDK conditions the Organization's statement on this trail's ARN but
+    // not the management account's own, which would let any account's trail
+    // write under AWSLogs/<this account>/ if it knew the bucket's name: the
+    // confused deputy. The CloudTrail guide conditions both. Statement 2 is
+    // that one, after the TLS deny and GetBucketAcl; a test holds the index.
+    const policy = this.bucket.policy!.node.defaultChild as CfnBucketPolicy
+    policy.addPropertyOverride(
+      'PolicyDocument.Statement.2.Condition.StringEquals.aws:SourceArn',
+      this.formatArn({
+        service: 'cloudtrail',
+        resource: 'trail',
+        resourceName: TRAIL_NAME,
+      })
+    )
   }
 }

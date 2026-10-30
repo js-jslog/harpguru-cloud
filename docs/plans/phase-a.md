@@ -172,6 +172,10 @@ protected:
 - The bucket policy, written by CDK, lets CloudTrail write under `AWSLogs/<org id>/`, so the
   Organization's ID joins `deploy.local.json` as `organizationId`.
   `scripts/identity-center-values.sh` now prints it.
+- Both of the policy's `PutObject` statements carry an `aws:SourceArn` condition naming the
+  trail. CDK's `Trail` puts one on the Organization's statement only; the management account's
+  own, `AWSLogs/<account>/*`, would otherwise admit any account's trail. Found in the first
+  `cdk diff`, 2026-10-30, and fixed before the deploy by an escape hatch on the policy.
 
 **Trusted access comes first.** Organizations has to trust `cloudtrail.amazonaws.com` before an
 org trail can be made through the API, and CloudFormation is the API. The console does this
@@ -195,7 +199,7 @@ Doing it, all *you*, signed in to the management account:
    Within about 15 minutes, `aws s3 ls s3://<bucket>/AWSLogs/ --recursive | head` shows the
    first log files. Where each account's logs land under `AWSLogs/` is recorded here once seen.
 
-**Where 4a stands, 2026-10-28, for the next session.** The code, its tests (42 pass), the
+**Where 4a stands, 2026-10-28, for the next session.** The code, its tests (43 pass since 2026-10-30), the
 concept entries (**Trusted access**, **S3 buckets, bucket policies and lifecycle rules**, and the
 updated **CloudTrail**) and the `outside-cdk.md` row are done and pushed. Nothing is deployed,
 and trusted access is not yet switched on. The branch was rebased onto `master` on 2026-10-28,
