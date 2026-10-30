@@ -14,6 +14,7 @@ import { GuardrailsStack } from '../lib/guardrails-stack'
 import { IdentityStack } from '../lib/identity-stack'
 import { PolicyTypesStack } from '../lib/policy-types-stack'
 import { applyProjectTags } from '../lib/tags'
+import { TrailStack } from '../lib/trail-stack'
 
 const app = new App()
 applyProjectTags(app)
@@ -76,6 +77,15 @@ new AccountsStack(app, 'HarpguruAccounts', {
   ),
   adminPermissionSetArn: requireSetting(config, 'adminPermissionSetArn'),
   adminPrincipalId: requireSetting(config, 'adminPrincipalId'),
+})
+
+// The Organization's audit log. Protected, and its bucket retained: the
+// record of who did what should outlast any mistake made in this code.
+new TrailStack(app, 'HarpguruTrail', {
+  env: managementEnv(),
+  description: 'The Organization trail and the bucket its logs land in',
+  terminationProtection: true,
+  organizationId: requireSetting(config, 'organizationId'),
 })
 
 // From here on, stacks live in the workload account, pinned to its ID: deploy

@@ -24,20 +24,21 @@ Update this table in the PR that moves a row. **You** means the user.
 | 3 | `1-org-accounts`: workload account, OU, SCPs | **merged** and deployed 2026-10-22; `harpguru` profile added | — |
 | 3a | `1-scp-custom-resource`: SCPs switched on by a custom resource in its own stack; the four decisions settled | **merged** and deployed 2026-10-22 | — |
 | 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | **merged**, imported and deployed 2026-10-22 | — |
-| 4 | `1-org-audit`: CloudTrail, Config, GuardDuty | split into 4a–4c on 2026-10-27; **4a is on the branch `1-org-trail`**, pushed and not deployed, whose copy of this file has the detailed plan | *you*: 4a's deploy, in a new session |
+| 4a | `1-org-trail`: the Organization trail and its bucket, in `HarpguruTrail` | **deployed** 2026-10-30; PR to open | *you*: open the PR |
+| 4b | `1-config`: Config recorders in the workload account, and the SCP that protects them | not started | — |
+| 4c | `1-guardduty`: GuardDuty detectors in both accounts, both regions | not started | *you*: bootstrap the management account in `us-east-1` |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **done**: zone deployed 2026-10-26; switch made and mail tested 2026-10-27 | — |
 | 6a | `1-mail-canary`: a weekly pair of messages showing `contact@` still forwards, in `HarpguruMailCanary` | **merged** and deployed 2026-10-27; first pair arrived 2026-10-28 | — |
 | 7 | `1-certificate`: ACM in `us-east-1` | not started | — |
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
 
-**Next up, as of 2026-10-28**, in the order the user asked for:
-1. ~~Run the `refresh-learning` skill.~~ **Done** 2026-10-28 on `1-canary-confirmed`, in the
-   same PR as the canary's result: the syllabus now covers the switch (#6) and the canary
-   (#6a). Not on `1-org-trail`, because the skill teaches only what is on `master`.
-2. **Continue #4a** from the branch `1-org-trail`: its copy of this file, step 4a, says exactly
-   what is left.
-3. Then #4b, #4c and #7, which are all unblocked.
+**Next up, as of 2026-10-30:**
+1. **Open the PR for `1-org-trail`** (#4a), which is deployed.
+2. Then #4b, #4c and #7, which are all unblocked. #4c needs the management account bootstrapped
+   in `us-east-1` first.
+3. Once #4a has merged, the `refresh-learning` skill can teach the trail. It teaches only what
+   is on `master`.
 
 ## Accounts
 
@@ -154,19 +155,88 @@ accounts. What steps 1 to 3 showed:
   stack manages. It skipped the assignment, saying tags there would force a replacement.
   Drift detection ignores those tags.
 
-**4 · `1-org-audit`.**
-- An organisation CloudTrail trail to S3.
-- An SCP denying anyone from turning off CloudTrail or Config in `Workloads`, moved here from #3
-  (see Decisions).
-  - **Config:** the recorder will run in the workload account, and whatever role deploys and
-    updates it must be allowed to stop or change it. So the SCP needs an exemption naming that
-    role, and the role is not known until this step designs the Config deployment.
-  - **CloudTrail:** the org trail lives in the management account, where SCPs never apply, and
-    a member account can't alter an org trail anyway. The CloudTrail half would only protect a
-    trail made inside the workload account, and none is planned; this step may drop it.
-- Config limited to the two regions, with periodic rather than continuous recording. Config
-  charges for each change it records, so it is the item most likely to creep.
-- GuardDuty, which is free for 30 days and then pennies at this volume.
+**4 · audit: CloudTrail, Config, GuardDuty.** Planned as one branch, `1-org-audit`, and split
+into three on 2026-10-27 (see Decisions), so each diff can be read in one sitting and each
+brings its own concepts.
+
+**4a · `1-org-trail`.** One stack in the management account, `HarpguruTrail`, termination
+protected:
+- An **organisation trail**, `harpguru-org-trail`: every account, every region, global service
+  events included, management events only, with log file validation. The first copy of
+  management events is free; data events, charged per event, are left off.
+- A private bucket for it: public access blocked, SSE-S3 encryption, TLS only, `Retain`, and a
+  lifecycle rule that deletes logs after 365 days. CloudTrail's own Event history already keeps
+  90 days for free; the bucket is what lasts beyond that. No KMS key: $1 a month for nothing
+  this project needs.
+- The bucket policy, written by CDK, lets CloudTrail write under `AWSLogs/<org id>/`, so the
+  Organization's ID joins `deploy.local.json` as `organizationId`.
+  `scripts/identity-center-values.sh` now prints it.
+- Both of the policy's `PutObject` statements carry an `aws:SourceArn` condition naming the
+  trail. CDK's `Trail` puts one on the Organization's statement only; the management account's
+  own, `AWSLogs/<account>/*`, would otherwise admit any account's trail. Found in the first
+  `cdk diff`, 2026-10-30, and fixed before the deploy by an escape hatch on the policy.
+
+**Trusted access comes first.** Organizations has to trust `cloudtrail.amazonaws.com` before an
+org trail can be made through the API, and CloudFormation is the API. The console does this
+itself; nothing else does
+([CloudTrail guide](https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-create-and-update-an-organizational-trail-by-using-the-aws-cli.html),
+read 2026-10-27). It is a one-off CLI command, logged in `docs/outside-cdk.md`, rather than a
+custom resource like `HarpguruPolicyTypes`: there is no resource type for it, and switching it
+off would only stop new org trails being made.
+
+Doing it, all *you*, signed in to the management account:
+1. `scripts/identity-center-values.sh` and copy `organizationId` into `deploy.local.json`.
+   Until it is there, every `cdk` command fails at synth, naming the key.
+2. `aws organizations enable-aws-service-access --service-principal cloudtrail.amazonaws.com`.
+   It prints nothing. `aws organizations list-aws-service-access-for-organization` should now
+   list it beside `sso.amazonaws.com`. The Organizations guide says the management account
+   should gain `AWSServiceRoleForCloudTrail` here too; in fact it arrives with the trail, in
+   step 4.
+3. `cdk diff HarpguruTrail`. It shows the bucket, its policy and the trail as `[+]`, in the
+   management account, and IAM-style statements for the bucket policy.
+4. `cdk deploy HarpguruTrail --require-approval never`.
+5. `aws cloudtrail get-trail-status --name harpguru-org-trail --query IsLogging` is `true`.
+   Within about 15 minutes, `aws s3 ls s3://<bucket>/AWSLogs/ --recursive | head` shows the
+   first log files.
+
+Done 2026-10-30, from the branch. What each step showed:
+- Step 2: trusted access listed `cloudtrail.amazonaws.com` beside `sso.amazonaws.com`, but
+  **`AWSServiceRoleForCloudTrail` did not appear.** It appeared ten minutes later, in the same
+  second CloudFormation made the trail. So it's the trail that makes it, not trusted access.
+- Step 3's first diff showed the open account statement above, which was fixed before going on.
+  The second showed the condition on both `PutObject` rows, and nothing else changed.
+- Step 4 took 27 seconds. The stack is `CREATE_COMPLETE` with termination protection on.
+- Step 5: `IsLogging` was `true` straight away. In the same second as the trail, CloudTrail wrote
+  empty `CloudTrail/` and `CloudTrail-Digest/` markers under both `AWSLogs/<management account>/`
+  and `AWSLogs/<org id>/<management account>/`, so the account statement is used at creation,
+  and its new condition let it through. **Every log file since, the management account's
+  included, lands under `AWSLogs/<org id>/<account id>/CloudTrail/<region>/<yyyy>/<mm>/<dd>/`.**
+  The first delivery was three minutes after the trail was made, and the workload account's
+  first file came within seven. From the workload account, `describe-trails` returned nothing
+  a minute after the deploy, and listed `harpguru-org-trail` as an organisation trail six
+  minutes later.
+
+**4b · `1-config`.**
+- Config in the workload account only, in `eu-west-2` and `us-east-1`, with periodic (daily)
+  rather than continuous recording. Config charges for each change it records, so it is the
+  item most likely to creep. Global resources such as IAM are recorded in one region only.
+- An SCP denying anyone from turning Config off in `Workloads`, moved here from #3 (see
+  Decisions). Whatever deploys and updates the recorder must be allowed to change it, so the
+  SCP exempts CDK's `cdk-hnb659fds-cfn-exec-role-*`. That also bounds what it protects: an
+  admin can still change Config by deploying through CDK. It guards against accidents and
+  against credentials used outside CDK, not against the owner.
+- The CloudTrail half of that SCP is dropped. The org trail lives in the management account,
+  where SCPs never apply, and a member account can't alter an org trail anyway.
+
+**4c · `1-guardduty`.**
+- A GuardDuty detector in each account, in both regions: four in all. The management account
+  holds the Organization and the login, so it is watched too. Free for 30 days, then pennies.
+- Standalone detectors, not GuardDuty managed through Organizations with a delegated
+  administrator, which earns its keep with more than two accounts.
+- Optional protection plans are left at their defaults unless the diff shows one with a cost
+  worth questioning.
+- **The management account needs `cdk bootstrap` in `us-east-1` first** (*you*). It has only
+  `eu-west-2` so far.
 
 **5 · you: bootstrap.** `cdk bootstrap` for the workload account in **both** `eu-west-2` and
 `us-east-1`. The certificate stack lives in `us-east-1`, which is easy to miss.
@@ -419,6 +489,15 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
   day: `cdk diff HarpguruDns`, signed in to the management account, printed no diff, only
   `Could not assume role in target account` for the workload account's
   `cdk-hnb659fds-lookup-role` and `cdk-hnb659fds-deploy-role`.
+- 2026-10-27: **step 4 is three branches**, `1-org-trail`, `1-config` and `1-guardduty`, in that
+  order, rather than one. The user's choice.
+- 2026-10-27: **GuardDuty runs in both accounts**, as standalone detectors, rather than in the
+  workload account only or through a delegated administrator. The user's choice.
+- 2026-10-27: **the trail's logs are kept for a year**, then deleted by a lifecycle rule. The
+  user's choice, over 90 days or forever.
+- 2026-10-27: **trusted access for CloudTrail is a one-off CLI command**, logged in
+  `docs/outside-cdk.md`, not a custom resource. See #4a. Proposed by the agent; easy to revisit,
+  since the command is idempotent and a custom resource could adopt it later.
 - 2026-10-27: **a weekly mail canary, #6a**, at the user's request: after the switch, Heart's
   mail server address is a fixed value in our zone, and a stale one would fail silently. SES
   and EventBridge Scheduler, with no Lambda, and SES left in its sandbox. Not in the roadmap,

@@ -8,6 +8,7 @@ set -euo pipefail
 username=${1:-jslog}
 
 root_id=$(aws organizations list-roots --query 'Roots[0].Id' --output text)
+org_id=$(aws organizations describe-organization --query 'Organization.Id' --output text)
 instance_arn=$(aws sso-admin list-instances --query 'Instances[0].InstanceArn' --output text)
 store_id=$(aws sso-admin list-instances --query 'Instances[0].IdentityStoreId' --output text)
 
@@ -28,7 +29,8 @@ principal_id=$(aws identitystore get-user-id --identity-store-id "$store_id" \
   --query UserId --output text)
 
 jq -n \
-  --arg root "$root_id" --arg instance "$instance_arn" \
+  --arg root "$root_id" --arg org "$org_id" --arg instance "$instance_arn" \
   --arg ps "$permission_set_arn" --arg principal "$principal_id" \
-  '{organizationRootId: $root, identityCenterInstanceArn: $instance,
+  '{organizationRootId: $root, organizationId: $org,
+    identityCenterInstanceArn: $instance,
     adminPermissionSetArn: $ps, adminPrincipalId: $principal}'

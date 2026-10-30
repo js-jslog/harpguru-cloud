@@ -3,6 +3,7 @@
   "workloadAccountEmail": "you+harpguru@example.com",
   "forwardingAddress": "you@example.com",
   "organizationRootId": "r-xxxx",
+  "organizationId": "o-xxxxxxxxxx",
   "identityCenterInstanceArn": "arn:aws:sso:::instance/ssoins-xxxxxxxxxxxxxxxx",
   "adminPermissionSetArn": "arn:aws:sso:::permissionSet/ssoins-xxxxxxxxxxxxxxxx/ps-xxxxxxxxxxxxxxxx",
   "adminPrincipalId": "xxxxxxxxxx-xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",

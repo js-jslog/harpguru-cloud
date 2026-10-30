@@ -54,6 +54,7 @@ signed in, through `CDK_DEFAULT_ACCOUNT`, which the CLI fills in from the SSO lo
 | `lib/policy-types-stack.ts` | `HarpguruPolicyTypes`: the custom resource that switches SCPs on                                       |
 | `lib/guardrails-stack.ts`   | `HarpguruGuardrails`: the `Workloads` OU and its SCPs                                                  |
 | `lib/accounts-stack.ts`     | `HarpguruAccounts`: the `harpguru` account and its Identity Center access                              |
+| `lib/trail-stack.ts`        | `HarpguruTrail`: the Organization trail and its log bucket, in the management account                  |
 | `lib/dns-stack.ts`          | `HarpguruDns`: the harpguru.com hosted zone and its mail records, in the workload account              |
 | `lib/mail-canary-stack.ts`  | `HarpguruMailCanary`: the weekly messages that show `contact@` still forwards, in the workload account |
 | `scripts/`                  | read-only helpers, such as printing values for `deploy.local.json`                                     |

@@ -19,6 +19,7 @@ export type DeployConfig = {
   // the same kind of identifier as the account ID, so kept out of the repo
   // too. scripts/identity-center-values.sh prints them.
   organizationRootId?: string
+  organizationId?: string
   identityCenterInstanceArn?: string
   adminPermissionSetArn?: string
   adminPrincipalId?: string
