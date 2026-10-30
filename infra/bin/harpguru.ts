@@ -65,7 +65,7 @@ const guardrails = new GuardrailsStack(app, 'HarpguruGuardrails', {
   terminationProtection: true,
   organizationRootId: requireSetting(config, 'organizationRootId'),
 })
-guardrails.addDependency(policyTypes)
+guardrails.addStackDependency(policyTypes)
 
 new AccountsStack(app, 'HarpguruAccounts', {
   env: managementEnv(),
@@ -123,4 +123,4 @@ const configEdge = new ConfigStack(app, 'HarpguruConfigEdge', {
   terminationProtection: true,
   primary: false,
 })
-configEdge.addDependency(configLondon)
+configEdge.addStackDependency(configLondon)

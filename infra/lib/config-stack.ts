@@ -114,16 +114,23 @@ export class ConfigStack extends Stack {
       },
       recordingMode: { recordingFrequency: 'DAILY' },
     })
-    if (serviceLinkedRole) recorder.addResourceDependency(serviceLinkedRole)
-
-    // A delivery channel needs a recorder to exist first. CloudFormation starts
-    // the recorder as soon as the channel does.
+    // Neither may wait for the other. A channel needs a recorder to exist, and
+    // the recorder's create isn't done until it has started recording, which
+    // needs the channel. Made to wait for the recorder, the channel was never
+    // made: the recorder spent nine minutes failing to start, and the first
+    // deploy rolled back (2026-10-30). So, as in AWS's own sample template,
+    // both are created side by side.
     const channel = new CfnDeliveryChannel(this, 'DeliveryChannel', {
       name: 'default',
       s3BucketName: bucketName,
     })
-    channel.addResourceDependency(recorder)
-    // Config checks it may write to the bucket when the channel is made.
+    // But both wait for the role, which takes CloudFormation about twenty
+    // seconds, so the channel doesn't run ahead of the recorder. And Config
+    // checks it may write to the bucket when the channel is made.
+    if (serviceLinkedRole) {
+      recorder.addResourceDependency(serviceLinkedRole)
+      channel.addResourceDependency(serviceLinkedRole)
+    }
     if (bucket?.policy) channel.node.addDependency(bucket.policy)
   }
 }

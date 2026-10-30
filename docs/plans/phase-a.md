@@ -25,7 +25,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | 3a | `1-scp-custom-resource`: SCPs switched on by a custom resource in its own stack; the four decisions settled | **merged** and deployed 2026-10-22 | — |
 | 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | **merged**, imported and deployed 2026-10-22 | — |
 | 4a | `1-org-trail`: the Organization trail and its bucket, in `HarpguruTrail` | **deployed** 2026-10-30; PR to open | *you*: open the PR |
-| 4b | `1-config`: Config recorders in the workload account, and the SCP that protects them | pushed, **not deployed**; PR opened after the deploy | *you*: the deploy |
+| 4b | `1-config`: Config recorders in the workload account, and the SCP that protects them | pushed; **first deploy rolled back**, fixed; PR opened after the deploy | *you*: clear up, then the deploy |
 | 4c | `1-guardduty`: GuardDuty detectors in both accounts, both regions | not started | *you*: bootstrap the management account in `us-east-1` |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **done**: zone deployed 2026-10-26; switch made and mail tested 2026-10-27 | — |
@@ -243,9 +243,9 @@ two termination-protected stacks from one class, `ConfigStack`:
   which is retained and in a termination-protected stack.
 - The CloudTrail half of that SCP is dropped. The org trail lives in the management account,
   where SCPs never apply, and a member account can't alter an org trail anyway.
-- Two assumptions to check at the deploy: that a channel in `us-east-1` may deliver to a bucket
-  in London (the Config guide's `AWS:SourceArn` format, one per region, implies it; nothing
-  states it), and that CloudFormation starts the recorders itself, as CDK's docs say.
+- An assumption to check at the deploy: that a channel in `us-east-1` may deliver to a bucket
+  in London. The Config guide's `AWS:SourceArn` format, one per region, implies it; nothing
+  states it. CloudFormation does start the recorder itself, as CDK's docs say, but see below.
 
 Doing it, all *you*. Config first, then the SCP, so the SCP can't get in the way of the first
 deploy if its exemption were wrong:
@@ -261,6 +261,24 @@ deploy if its exemption were wrong:
 5. `cdk deploy HarpguruGuardrails --require-approval never`.
 6. The agent checks the SCP with the IAM policy simulator, which reads only: stopping a recorder
    should be denied by Organizations for the SSO role, and allowed for CDK's execution role.
+
+**The first deploy failed, 2026-10-30, and rolled back.** The channel was made to wait for the
+recorder, since a channel needs a recorder to exist. But CloudFormation's create of the recorder
+isn't finished until the recorder has *started*, which needs the channel: CloudTrail showed
+`PutConfigurationRecorder`, then nine minutes of `StartConfigurationRecorder` refused with
+`NoAvailableDeliveryChannelException`, then "did not stabilize". `HarpguruConfigEdge` never
+started. The fix, as in AWS's sample template, is no dependency between the two; in London both
+wait for the service-linked role, so the channel can't run ahead of the recorder. The rollback
+left `HarpguruConfig` empty in `ROLLBACK_COMPLETE`, termination protected, and the bucket,
+`Retain`, empty, holding the name the next deploy needs. The role and the recorder went.
+
+Clearing up before the retry, all *you*, in the workload account:
+1. `aws cloudformation update-termination-protection --no-enable-termination-protection --stack-name HarpguruConfig --profile harpguru`
+2. `aws cloudformation delete-stack --stack-name HarpguruConfig --profile harpguru`
+3. `aws s3 rb s3://harpguru-config-$(aws sts get-caller-identity --profile harpguru --query Account --output text) --profile harpguru`,
+   which refuses a bucket that isn't empty. It was empty on 2026-10-30.
+4. Then steps 1 and 2 above again. The diff is unchanged but for the dependencies, which it
+   doesn't show.
 
 **4c · `1-guardduty`.**
 - A GuardDuty detector in each account, in both regions: four in all. The management account
@@ -470,7 +488,7 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
     SCPs off, but it detaches every SCP in the Organization as it does, and nothing in this repo
     ever calls it. Going back to a one-off command would mean switching termination protection
     off and deleting `HarpguruPolicyTypes`. Its resource is `Retain`, so SCPs stay on; only the
-    Lambda and its role go. Then the stack and the guardrails' `addDependency` on it come out of `infra/bin/harpguru.ts`. How
+    Lambda and its role go. Then the stack and the guardrails' `addStackDependency` on it come out of `infra/bin/harpguru.ts`. How
     the delete risk is designed out is in the "Custom resources" entry in
     `docs/aws-concepts.md`.
   - The CloudTrail/Config SCP: it is one more policy on `Workloads`, so it can go into #3 or #4

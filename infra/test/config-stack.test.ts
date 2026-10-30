@@ -45,20 +45,30 @@ test.each([true, false])(
   }
 )
 
-test('the channel waits for the recorder and the bucket policy', () => {
-  const resources = synth(true).toJSON().Resources
-  const [channel] = Object.values(resources).filter(
-    (r: any) => r.Type === 'AWS::Config::DeliveryChannel'
-  ) as { DependsOn: string[] }[]
-  const logicalId = (type: string) =>
-    Object.keys(resources).find((id) => resources[id].Type === type)
-  expect(channel.DependsOn).toEqual(
-    expect.arrayContaining([
-      logicalId('AWS::Config::ConfigurationRecorder'),
-      logicalId('AWS::S3::BucketPolicy'),
-    ])
-  )
-})
+// The first deploy deadlocked: the recorder's create waits until it is
+// recording, which needs the channel, so the channel must never wait for it.
+test.each([true, false])(
+  'the channel never waits for the recorder (primary: %s)',
+  (primary) => {
+    const resources = synth(primary).toJSON().Resources
+    const idOf = (type: string) =>
+      Object.keys(resources).find((id) => resources[id].Type === type)!
+    const dependsOn = (type: string): string[] =>
+      resources[idOf(type)].DependsOn ?? []
+    expect(dependsOn('AWS::Config::DeliveryChannel')).not.toContain(
+      idOf('AWS::Config::ConfigurationRecorder')
+    )
+    if (primary) {
+      // Both wait for the role, so the channel can't run ahead of the
+      // recorder; the channel waits for the bucket policy too.
+      const role = idOf('AWS::IAM::ServiceLinkedRole')
+      expect(dependsOn('AWS::Config::ConfigurationRecorder')).toEqual([role])
+      expect(dependsOn('AWS::Config::DeliveryChannel').sort()).toEqual(
+        [role, idOf('AWS::S3::BucketPolicy')].sort()
+      )
+    }
+  }
+)
 
 test('London holds the bucket and the role; us-east-1 holds neither', () => {
   const primary = synth(true)
