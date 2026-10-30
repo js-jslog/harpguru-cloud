@@ -798,7 +798,9 @@ item it records, and a daily item is written only if the resource changed that d
 deliver to one bucket in London. IAM's resources are the same in every region, so only London
 records them. Route 53 zones and CloudFront distributions are recorded only in `us-east-1`,
 which is one reason to record there at all. The `harpguru-protect-config` SCP stops anyone but
-a CDK deploy from turning it off. *(PR `1-config`)*
+a CDK deploy from turning it off. The first deploy deadlocked: CloudFormation doesn't count a
+recorder as created until it is recording, which needs the channel, so the channel mustn't be
+made to wait for the recorder. *(PR `1-config`)*
 
 **Say it:** "CloudTrail tells you who did it; Config tells you what the resource looked like
 before and after."

@@ -25,7 +25,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | 3a | `1-scp-custom-resource`: SCPs switched on by a custom resource in its own stack; the four decisions settled | **merged** and deployed 2026-10-22 | — |
 | 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | **merged**, imported and deployed 2026-10-22 | — |
 | 4a | `1-org-trail`: the Organization trail and its bucket, in `HarpguruTrail` | **deployed** 2026-10-30; PR to open | *you*: open the PR |
-| 4b | `1-config`: Config recorders in the workload account, and the SCP that protects them | pushed; **first deploy rolled back**, fixed; PR opened after the deploy | *you*: clear up, then the deploy |
+| 4b | `1-config`: Config recorders in the workload account, and the SCP that protects them | **deployed** 2026-10-30, after a first deploy rolled back; PR to open. First delivery to be checked | *you*: open the PR |
 | 4c | `1-guardduty`: GuardDuty detectors in both accounts, both regions | not started | *you*: bootstrap the management account in `us-east-1` |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **done**: zone deployed 2026-10-26; switch made and mail tested 2026-10-27 | — |
@@ -34,11 +34,12 @@ Update this table in the PR that moves a row. **You** means the user.
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
 
 **Next up, as of 2026-10-30:**
-1. **Deploy #4b** from the branch `1-config`: its steps are in "Steps" below. The PR is opened
-   after the deploy.
-2. Then #4c and #7, which are unblocked. #4c needs the management account bootstrapped in
+1. **Open the PR for `1-config`** (#4b), which is deployed.
+2. On or after 2026-10-31, check Config's first delivery from both regions, and that
+   `us-east-1` has found the hosted zone; #4b says how. Record it in #4b and the findings doc.
+3. Then #4c and #7, which are unblocked. #4c needs the management account bootstrapped in
    `us-east-1` first.
-3. The `refresh-learning` skill can now teach the trail, which is on `master`.
+4. The `refresh-learning` skill can now teach the trail, and Config once #4b merges.
 
 ## Accounts
 
@@ -279,6 +280,26 @@ Clearing up before the retry, all *you*, in the workload account:
    which refuses a bucket that isn't empty. It was empty on 2026-10-30.
 4. Then steps 1 and 2 above again. The diff is unchanged but for the dependencies, which it
    doesn't show.
+
+Done 2026-10-30, after the clear-up, which is logged in `docs/outside-cdk.md`. What it showed:
+- The retry took 74 seconds in London and about 30 in `us-east-1`. Both stacks are
+  `CREATE_COMPLETE` and protected, and both recorders show `recording: true`, `SUCCESS`.
+- **The race is harmless.** In London the channel did run first, a second ahead of the recorder,
+  and was refused with `NoAvailableConfigurationRecorderException`. Its handler retried 25
+  seconds later and succeeded, and the recorder started two seconds after. So CloudFormation's
+  channel handler retries; the recorder's start is what can't wait on a dependency.
+- `us-east-1`'s channel was accepted with the London bucket. Whether it delivers there is seen
+  only when the first files arrive, within a day: `aws s3 ls s3://harpguru-config-<account id>/AWSLogs/ --recursive --profile harpguru`
+  should show `Config/eu-west-2/` and `Config/us-east-1/`. Open until then, and recorded here
+  when seen, with whether `us-east-1` has found the hosted zone (see "Config" in
+  `docs/aws-concepts.md`).
+- `cdk diff HarpguruGuardrails` showed only the new policy, and now includes the stacks it
+  depends on: `HarpguruPolicyTypes`, with no differences. The deploy used `--exclusively` to
+  leave it out, and took 17 seconds.
+- **The SCP works**, checked with `aws iam simulate-principal-policy`, which takes SCPs into
+  account: for the SSO role, `config:StopConfigurationRecorder` and `config:PutDeliveryChannel`
+  are `explicitDeny`, not allowed by Organizations, while `config:DescribeConfigurationRecorders`
+  is allowed. For CDK's execution role all three are allowed.
 
 **4c · `1-guardduty`.**
 - A GuardDuty detector in each account, in both regions: four in all. The management account
