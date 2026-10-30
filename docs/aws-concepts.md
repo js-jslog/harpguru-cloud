@@ -51,9 +51,12 @@ the account ID, it fetches it with `aws sts get-caller-identity`.
 (London). Most resources live in one region. A few services are **global**, among them IAM,
 Organizations, CloudFront and Route 53.
 
-**Here:** everything runs in `eu-west-2`. **`us-east-1` is the exception.** CloudFront only
-accepts certificates issued there, so the certificate stack in step 7 lives there, and it
-needs its own CDK bootstrap in step 5. Some billing APIs also answer only in `us-east-1`.
+**Here:** almost everything runs in `eu-west-2`. **`us-east-1` is the exception**, and the
+reason the workload account was bootstrapped there too in step 5. CloudFront only accepts
+certificates issued there, so step 7's certificate stack will live there. Since step 4b,
+`HarpguruConfigEdge` does, because Config records Route 53 zones and CloudFront distributions
+only in `us-east-1`. Some billing APIs also answer only there. The org trail lives in
+London but records every region, refused calls included.
 
 **Say it:** "Most of the stack is in London, but the CloudFront certificate has to be in
 `us-east-1`, because CloudFront is a global service anchored there."
@@ -506,16 +509,22 @@ protection, because deleting the first would strip the guardrails off the OU.
 it as well, and its imported permission set and assignment are both `Retain`, as every
 imported resource must have a deletion policy. `HarpguruDns`, in the workload account, has
 both: its hosted zone is `Retain`, because once the domain is delegated to it, a replacement
-would come with new nameservers. `HarpguruBudget` has neither.
-*(PRs `1-org-accounts`, `1-scp-custom-resource`, `1-identity-import`, `1-dns-zone`)*
+would come with new nameservers. `HarpguruTrail`, `HarpguruConfig` and `HarpguruConfigEdge`
+have termination protection, and the trail's and Config's buckets are `Retain`, so the record
+outlives a stack. That has a cost: Config's bucket has a fixed name, so when its first deploy
+rolled back, the retained, empty bucket held the name the retry needed, and had to be deleted
+by hand first. `HarpguruBudget` and `HarpguruMailCanary` have neither.
+*(PRs `1-org-accounts`, `1-scp-custom-resource`, `1-identity-import`, `1-dns-zone`,
+`1-org-trail`, `1-config`)*
 
 **Say it:** "Retain protects a resource from its stack; termination protection protects the
 stack from a careless delete. Anything stateful or irreplaceable gets both."
 
 **See it:**
 `aws cloudformation describe-stacks --query 'Stacks[].[StackName,EnableTerminationProtection]' --output table`.
-Since 2026-10-22, step 3's three stacks and `HarpguruIdentity` show `True`. Add
-`--profile harpguru` to see `HarpguruDns`, which shows `True` since 2026-10-26.
+Since 2026-10-22, step 3's three stacks and `HarpguruIdentity` show `True`, and
+`HarpguruTrail` since 2026-10-30. Add `--profile harpguru` to see `HarpguruDns` and
+`HarpguruConfig`, and `--region us-east-1` as well for `HarpguruConfigEdge`; all show `True`.
 
 #### Resource import and drift
 
@@ -749,8 +758,8 @@ trail**, `harpguru-org-trail`: one trail covering every account and every region
 events only, writing to an S3 bucket that keeps logs for a year. It's the record you'd check to
 find out who changed that DNS record. **Log file validation** adds a signed digest file every
 hour, so you can prove later that no log was altered or deleted. A member account sees the
-trail but can't change or stop it, which is why no SCP is needed to protect it. GuardDuty
-reads the same events. *(PR `1-org-trail`)*
+trail but can't change or stop it, which is why no SCP is needed to protect it. GuardDuty,
+planned for step 4c, reads the same events. *(PR `1-org-trail`)*
 
 **Say it:** "Event history gives you 90 days for free; an org trail gives durable, central
 retention that member accounts can't switch off."
@@ -819,9 +828,10 @@ network flow data, reading them directly without you turning those logs on, and 
 **findings**. Examples include credentials used from an unusual place, calls to known
 crypto-mining domains, and someone probing permissions.
 
-**Here:** enabled in step 4. It's free for 30 days, then pennies at this volume.
+**Here:** **not built yet.** Step 4c plans a detector in each account, in both regions. It's
+free for 30 days, then pennies at this volume.
 
 **Say it:** "Prevention with SCPs, detection with GuardDuty; you want both, because
 prevention is never complete."
 
-**See it:** `aws guardduty list-detectors`, which is empty until step 4.
+**See it:** `aws guardduty list-detectors`, which is empty until step 4c.

@@ -19,7 +19,7 @@ Steps 4a and 4b are **merged and deployed**, both on 2026-10-30: the Organizatio
 with a fourth SCP that protects it. Config's first deploy rolled back and was retried the same
 day. One thing about it is still open: its first history files hadn't arrived when this was
 written, though the `us-east-1` channel had already written a check file to the London bucket.
-So the account really does hold the `Workloads` OU with four SCPs, the `harpguru` workload
+So the Organization really does hold the `Workloads` OU with four SCPs, the `harpguru` workload
 account, a trail over both accounts, and Config recording daily. The status table in
 `docs/plans/phase-a.md` says the same. Step 4c, GuardDuty, and steps 7 and 8 are not started;
 see the last section.
@@ -322,8 +322,8 @@ in the README, and the tiering here is a proposal, to be argued with.
   prove something is absent, such as a custom resource's delete call. Also why every test
   builds its app with `cdk.json`'s feature flags: until 2026-10-22 they did not, and the
   cross-stack test passed while asserting an export the deployed app never used. And two tests
-  added after something went wrong or nearly did: one pinning an escape hatch to the policy
-  statement it edits, and one forbidding the dependency that deadlocked Config's first deploy.
+  added after something went wrong or nearly did: one that fails if an escape hatch lands on
+  the wrong policy statement, and one forbidding the dependency that deadlocked Config's first deploy.
 - **Sources:** `infra/README.md`; `infra/test/app.ts`; `infra/test/budget-stack.test.ts`;
   `infra/test/accounts-stack.test.ts`; `infra/test/guardrails-stack.test.ts`;
   `infra/test/policy-types-stack.test.ts`; `infra/test/trail-stack.test.ts`;
