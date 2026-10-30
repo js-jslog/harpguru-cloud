@@ -1,24 +1,31 @@
 # Syllabus
 
-**As of 2026-10-28.** Covers Phase A steps 0–3b, 5, 6 and 6a: the SSO login, the CDK app
+**As of 2026-10-30.** Covers Phase A steps 0–6a, except step 4c: the SSO login, the CDK app
 skeleton, the $10 budget, and the workload account with its OU and guardrails, including step
 3a, which switches SCPs on through a custom resource, and step 3b, which imported the
 console-made permission set into a stack and listed everything CDK doesn't manage. Step 1 is the
 skeleton and deploys nothing itself; the rest are **deployed**: step 2 on 2026-10-13, and step
 3's three stacks on 2026-10-22. Step 3b's `HarpguruIdentity` was imported and deployed, and step
-5, bootstrapping the workload account in two regions, was done, both the same day. So the
-account really does hold the `Workloads` OU, its three SCPs and the `harpguru` workload account.
+5, bootstrapping the workload account in two regions, was done, both the same day.
 
 Step 6 is **done**. The hosted zone, `HarpguruDns`, was deployed on 2026-10-26, and the
 nameserver switch at Heart was made on 2026-10-27, with mail tested before and after: the
 internet now asks Route 53 for harpguru.com, and `contact@` still forwards through Heart. Step
 6a, the weekly mail canary `HarpguruMailCanary`, was **deployed** on 2026-10-27, and its first
-pair of messages arrived on 2026-10-28. The status table in `docs/plans/phase-a.md` says the
-same. Step 4 is partly coded on a branch but not merged, and steps 7 and 8 are not started; all
-are out of scope; see the last section.
+pair of messages arrived on 2026-10-28.
 
-**Priority now: topics 9 and 10**, the switch and the canary that watches what it left behind.
-Then topics 4, 7 and 8 if they are still shaky.
+Steps 4a and 4b are **merged and deployed**, both on 2026-10-30: the Organization trail,
+`HarpguruTrail`, in the management account; and Config in the workload account, in two regions,
+with a fourth SCP that protects it. Config's first deploy rolled back and was retried the same
+day. One thing about it is still open: its first history files hadn't arrived when this was
+written, though the `us-east-1` channel had already written a check file to the London bucket.
+So the account really does hold the `Workloads` OU with four SCPs, the `harpguru` workload
+account, a trail over both accounts, and Config recording daily. The status table in
+`docs/plans/phase-a.md` says the same. Step 4c, GuardDuty, and steps 7 and 8 are not started;
+see the last section.
+
+**Priority now: topics 11 and 12**, the trail and Config, which watch the accounts. Then
+topics 9 and 10 if they are still shaky.
 
 Each topic gives its tier and why, what I should be able to answer, and its sources. The
 sources hold the facts; this file deliberately does not restate them. Sources are named by
@@ -81,13 +88,13 @@ in the README, and the tiering here is a proposal, to be argued with.
 ### 4. The account structure and its guardrails
 
 - **Covers:** what step 3 built and deployed: the Organization, a member account for the
-  workload, the OU it sits in, and the three SCPs on that OU. Also what SCP, OU and ARN stand
-  for.
+  workload, the OU it sits in, and the SCPs on that OU: three from step 3, and a fourth from
+  step 4b, which is topic 12's. Also what SCP, OU and ARN stand for.
 - **Why must own:** keeping workloads out of the management account is a security property, and
   the SCPs are the guardrails I will rely on without seeing them work day to day.
 - **Be able to answer:** what SCP and OU stand for, and what each is; why the workload goes in a
   member account rather than the management account; why an SCP grants nothing, and what
-  `FullAWSAccess` is for; what each of the three SCPs denies, and why the region lock exempts
+  `FullAWSAccess` is for; what each of step 3's three SCPs denies, and why the region lock exempts
   some services; why `us-east-1` is one of the two allowed regions; what happens to the new
   account's root user; why the account was created inside an OU that is already governed; how
   the region lock was seen working, and what the refusal said.
@@ -103,7 +110,8 @@ in the README, and the tiering here is a proposal, to be argued with.
 - **Covers:** four choices in step 3 that I accepted on 2026-10-14 without having studied them,
   and settled on 2026-10-21 after studying them:
   - how SCPs are switched on: **changed** from a one-off CLI command to a custom resource
-  - the SCP protecting CloudTrail and Config moved to step 4: confirmed
+  - the SCP protecting CloudTrail and Config moved to step 4: confirmed, and built in step 4b
+    without its CloudTrail half
   - the Identity Center and root identifiers kept in `deploy.local.json`, out of the repo:
     confirmed
   - centralised root access deferred to a later step: confirmed
@@ -111,9 +119,10 @@ in the README, and the tiering here is a proposal, to be argued with.
   defend each one with a reason, including the one I changed against the agent's
   recommendation. Test my reasons; do not just restate them.
 - **Be able to answer, for each one:** what was decided and what the alternative was; why I
-  chose as I did; what it would take to change later, and what that would cost.
+  chose as I did; what it would take to change later, and what that would cost. For the moved
+  SCP, also: why waiting for step 4 paid off, and why its CloudTrail half was dropped.
 - **Sources:** `docs/plans/phase-a.md` "Decisions" (the entries dated 2026-10-14 and 2026-10-21)
-  and "Steps" (items 3 and 4); `docs/aws-concepts.md` "Service Control Policy (SCP)",
+  and "Steps" (items 3, 4 and 4b); `docs/aws-concepts.md` "Service Control Policy (SCP)",
   "Custom resources", "Root user", "CloudTrail" and "Config"; `infra/README.md`
   "Deploy-time values"; `infra/scripts/identity-center-values.sh`.
 
@@ -236,11 +245,55 @@ in the README, and the tiering here is a proposal, to be argued with.
   `roadmap-planning/aws-pathway-findings.md` "harpguru.com, checked 2026-10-27, and the
   nameserver switch".
 
+### 11. The Organization trail: who did what, kept for a year
+
+- **Covers:** step 4a's `HarpguruTrail`: one CloudTrail trail in the management account covering
+  every account and region, its bucket and the policy that lets CloudTrail write to it, and the
+  trusted access switched on by hand first.
+- **Why must own:** it is the record I would turn to after anything went wrong, and its design
+  is a set of security and cost choices: where it lives, what it records, how long it keeps
+  logs, and who may write to its bucket.
+- **Be able to answer:** what CloudTrail records, and what Event history already gives for free
+  without a trail; why one organisation trail in the management account rather than a trail in
+  each account, and why no SCP protects it; what "management events only" leaves out, and why;
+  what log file validation proves; why logs are kept a year, and what deletes them; why there is
+  no KMS key; what trusted access is, why it had to be switched on by hand, and what it did and
+  didn't create; what the bucket policy lets CloudTrail do; what `aws:SourceArn` adds, which
+  statement CDK left without it, and why that was a missing second lock rather than an open
+  door; where each account's logs land under `AWSLogs/`; how soon the first logs arrived, and
+  when the workload account could see the trail.
+- **Sources:** `docs/aws-concepts.md` "CloudTrail", "Trusted access" and
+  "S3 buckets, bucket policies and lifecycle rules"; `docs/plans/phase-a.md` "Steps" (items 4
+  and 4a) and "Decisions" (the 2026-10-27 entries about the trail's logs and trusted access);
+  `infra/lib/trail-stack.ts`; `infra/test/trail-stack.test.ts`; `docs/outside-cdk.md`;
+  `roadmap-planning/aws-pathway-findings.md` "Step 4a deployed: the Organization trail,
+  2026-10-30".
+
+### 12. Config, and the SCP only a deploy can get past
+
+- **Covers:** step 4b: Config recording daily in the workload account, in London and
+  `us-east-1`, delivering to one bucket; and `harpguru-protect-config`, the SCP that stops
+  anyone turning it off except CloudFormation acting for a CDK deploy.
+- **Why must own:** the SCP's exemption is a security design whose limits I should state
+  unprompted, and daily recording is a cost decision against the service most likely to creep.
+- **Be able to answer:** what Config records that CloudTrail doesn't; why daily rather than continuous recording, and what that changes about cost; why
+  two regions, why IAM is recorded only in London, and what only `us-east-1` can record; why one
+  bucket, and how the `us-east-1` stack finds it; what the SCP denies, whom it exempts and how,
+  and therefore what it doesn't protect against; why the trail needs no such SCP; how the SCP
+  was shown to work without trying to stop a recorder; what was still open after the deploy,
+  and what evidence there already is.
+- **Sources:** `docs/aws-concepts.md` "Config" and "Service Control Policy (SCP)";
+  `docs/plans/phase-a.md` "Steps" (item 4b) and "Decisions" (the 2026-10-14 entry about the
+  CloudTrail/Config SCP, and the 2026-10-30 entry); `infra/lib/config-stack.ts`;
+  `infra/lib/guardrails-stack.ts`; `infra/test/guardrails-stack.test.ts`;
+  `roadmap-planning/aws-pathway-findings.md` "Step 4b deployed: Config in the workload account,
+  2026-10-30".
+
 ---
 
 ## Should understand
 
-### 11. Regions, environments and bootstrap
+### 13. Regions, environments and bootstrap
 
 - **Covers:** where things run, how a stack is pinned to an account and region without the
   account ID being in the code, and what bootstrap prepares.
@@ -249,48 +302,53 @@ in the README, and the tiering here is a proposal, to be argued with.
   what the two defaults kept at bootstrap mean, in particular who is in effect an admin of the
   account. Also why the workload account's stacks are pinned to an account ID kept in
   `deploy.local.json`, while the management account's follow the login; what happens when I
-  forget `--profile harpguru` for a workload stack, and which mistake is still not caught.
+  forget `--profile harpguru` for a workload stack, and which mistake is still not caught; and
+  how `HarpguruConfigEdge` is pinned to the same account in `us-east-1`.
 - **Sources:** `docs/aws-concepts.md` "Regions", "Environments" and "CDK bootstrap";
-  `infra/lib/config.ts`; `docs/plans/phase-a.md` "Steps" (item 5) and "Decisions" (the
+  `infra/lib/config.ts`; `infra/bin/harpguru.ts`; `docs/plans/phase-a.md` "Steps" (item 5) and "Decisions" (the
   2026-10-26 entry).
 
-### 12. Tags and cost allocation
+### 14. Tags and cost allocation
 
 - **Covers:** tagging once at the app root, the budget's exception to it, and why a cost
   allocation tag needs activating.
 - **Sources:** `docs/aws-concepts.md` "Tags and cost allocation tags" and
   "L1 and L2 constructs"; `infra/lib/tags.ts`; `infra/lib/budget-stack.ts`.
 
-### 13. Testing infrastructure code
+### 15. Testing infrastructure code
 
 - **Covers:** what assertions against a synthesised template can and cannot prove, including a
   test that exists to stop an expensive mistake rather than to check behaviour, and tests that
   prove something is absent, such as a custom resource's delete call. Also why every test
   builds its app with `cdk.json`'s feature flags: until 2026-10-22 they did not, and the
-  cross-stack test passed while asserting an export the deployed app never used.
+  cross-stack test passed while asserting an export the deployed app never used. And two tests
+  added after something went wrong or nearly did: one pinning an escape hatch to the policy
+  statement it edits, and one forbidding the dependency that deadlocked Config's first deploy.
 - **Sources:** `infra/README.md`; `infra/test/app.ts`; `infra/test/budget-stack.test.ts`;
   `infra/test/accounts-stack.test.ts`; `infra/test/guardrails-stack.test.ts`;
-  `infra/test/policy-types-stack.test.ts`.
+  `infra/test/policy-types-stack.test.ts`; `infra/test/trail-stack.test.ts`;
+  `infra/test/config-stack.test.ts`.
 
-### 14. Account IDs, ARNs and keeping them out of a public repo
+### 16. Account IDs, ARNs and keeping them out of a public repo
 
 - **Covers:** what an ARN is made of, why an account ID is not a secret but is still kept out,
   and how the repo avoids ever committing one.
 - **Sources:** `docs/aws-concepts.md` "Account ID and ARNs";
   `infra/README.md` "Deploy-time values"; `infra/lib/config.ts`.
 
-### 15. Three stacks, cross-stack references and deploy order
+### 17. Three stacks, cross-stack references and deploy order
 
 - **Covers:** why step 3 is three stacks; how the OU's ID gets from the guardrails to the
   accounts stack, and how that forces the guardrails to deploy first; and how the guardrails
   are made to wait for `HarpguruPolicyTypes`, which they take no value from. Also the
   difference between a strong and a weak reference, which one this repo uses, and what
-  therefore protects the guardrails stack instead.
+  therefore protects the guardrails stack instead. Also how `HarpguruConfigEdge`, in another
+  region, reaches the London bucket with no reference at all, and is made to deploy second.
 - **Sources:** `docs/aws-concepts.md` "Cross-stack references" and
-  "Apps, stacks and constructs"; `docs/plans/phase-a.md` "Decisions" and "Steps" (item 3);
-  `infra/bin/harpguru.ts`.
+  "Apps, stacks and constructs"; `docs/plans/phase-a.md` "Decisions" and "Steps" (items 3 and
+  4b); `infra/bin/harpguru.ts`; `infra/lib/config-stack.ts`.
 
-### 16. How I get into the new account
+### 18. How I get into the new account
 
 - **Covers:** the Identity Center assignment that gives my existing login access to the new
   account, the second CLI profile that uses it, and `OrganizationAccountAccessRole` as the way
@@ -299,7 +357,7 @@ in the README, and the tiering here is a proposal, to be argued with.
   "OrganizationAccountAccessRole"; `infra/lib/accounts-stack.ts`; `docs/plans/phase-a.md`
   "Steps" (item 3).
 
-### 17. SES and Scheduler, the mechanics
+### 19. SES and Scheduler, the mechanics
 
 - **Covers:** how the canary is wired: the domain and the forwarding address as SES identities,
   Easy DKIM's three records written into the zone, the universal target that calls SES's
@@ -315,6 +373,36 @@ in the README, and the tiering here is a proposal, to be argued with.
   reference is; `infra/lib/mail-canary-stack.ts`; `infra/test/mail-canary-stack.test.ts`;
   `infra/bin/harpguru.ts`; `docs/plans/phase-a.md` "Steps" (item 6a); `docs/outside-cdk.md`
   "Workload account `harpguru`".
+
+### 20. Service principals, service-linked roles and the confused deputy
+
+- **Covers:** how an AWS service is let into my resources: a service-linked role it acts as
+  inside the account, or a bucket policy granting its service principal; and the conditions
+  that keep a grant to a service from being used on someone else's behalf.
+- **Why not must own:** the security decisions are topics 11 and 12's; this is the mechanism
+  under both. Know what a service-linked role is and who can change it; which ones arrived on
+  their own and which one a stack created; why Config's role can't deliver to S3, and how Config
+  delivers instead; what `aws:SourceArn` and `AWS:SourceAccount` each narrow a grant to, and
+  which bucket uses which.
+- **Sources:** `docs/aws-concepts.md` "Service-linked roles" and
+  "S3 buckets, bucket policies and lifecycle rules"; `infra/lib/config-stack.ts`;
+  `infra/lib/trail-stack.ts`; `docs/outside-cdk.md`.
+
+### 21. When a deploy rolls back: Config's deadlock
+
+- **Covers:** Config's first deploy on 2026-10-30, which waited nine minutes, failed and rolled
+  back; how the cause was found; the fix; and the clear-up the rollback left.
+- **Why not must own:** it is a lesson in reading failures, not a design I defend. Know what
+  "did not stabilize" meant here, and how CloudTrail showed the cause; why the channel mustn't
+  wait for the recorder, though Config's docs say a channel needs a recorder first; why the
+  retry still raced, and why that was harmless; what the rollback left behind, and why a fixed
+  name on a retained bucket made the clear-up necessary; where that clear-up is recorded; and
+  which test stops the deadlock coming back.
+- **Sources:** `docs/plans/phase-a.md` "Steps" (item 4b); `docs/aws-concepts.md` "Config" and
+  "Deletion policy and termination protection"; `infra/lib/config-stack.ts`;
+  `infra/test/config-stack.test.ts`; `docs/outside-cdk.md` "Changes made outside CDK";
+  `roadmap-planning/aws-pathway-findings.md` "Step 4b deployed: Config in the workload account,
+  2026-10-30".
 
 ---
 
@@ -333,8 +421,7 @@ These are worth your time if they interest you. Skipping them leaves no gap.
 
 ## Not yet built, so not for study
 
-- CloudTrail, Config and GuardDuty (step 4; the CloudTrail part is coded on a branch, not
-  merged or deployed); ACM, S3 and CloudFront (steps 7 and 8); the CloudWatch alarm that would
-  catch the canary failing on the AWS side; and everything in phases B–F. Some of these already
-  have concept entries, written ahead of the work; read them as reading ahead, and do not test
-  me on them.
+- GuardDuty (step 4c); ACM, S3 for the site and CloudFront (steps 7 and 8); the CloudWatch alarm
+  that would catch the canary failing on the AWS side; and everything in phases B–F. Some of
+  these already have concept entries, written ahead of the work; read them as reading ahead,
+  and do not test me on them.

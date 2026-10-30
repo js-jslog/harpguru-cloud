@@ -24,8 +24,8 @@ Update this table in the PR that moves a row. **You** means the user.
 | 3 | `1-org-accounts`: workload account, OU, SCPs | **merged** and deployed 2026-10-22; `harpguru` profile added | — |
 | 3a | `1-scp-custom-resource`: SCPs switched on by a custom resource in its own stack; the four decisions settled | **merged** and deployed 2026-10-22 | — |
 | 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | **merged**, imported and deployed 2026-10-22 | — |
-| 4a | `1-org-trail`: the Organization trail and its bucket, in `HarpguruTrail` | **deployed** 2026-10-30; PR to open | *you*: open the PR |
-| 4b | `1-config`: Config recorders in the workload account, and the SCP that protects them | **deployed** 2026-10-30, after a first deploy rolled back; PR to open. First delivery to be checked | *you*: open the PR |
+| 4a | `1-org-trail`: the Organization trail and its bucket, in `HarpguruTrail` | **merged** and deployed 2026-10-30 | — |
+| 4b | `1-config`: Config recorders in the workload account, and the SCP that protects them | **merged** and deployed 2026-10-30, after a first deploy rolled back. First history files still to be seen | — |
 | 4c | `1-guardduty`: GuardDuty detectors in both accounts, both regions | not started | *you*: bootstrap the management account in `us-east-1` |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **done**: zone deployed 2026-10-26; switch made and mail tested 2026-10-27 | — |
@@ -34,12 +34,11 @@ Update this table in the PR that moves a row. **You** means the user.
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
 
 **Next up, as of 2026-10-30:**
-1. **Open the PR for `1-config`** (#4b), which is deployed.
-2. On or after 2026-10-31, check Config's first delivery from both regions, and that
+1. ~~Run the `refresh-learning` skill~~ for #4a and #4b: on the branch `1-learning-audit`.
+2. On or after 2026-10-31, check Config's first history files from both regions, and that
    `us-east-1` has found the hosted zone; #4b says how. Record it in #4b and the findings doc.
 3. Then #4c and #7, which are unblocked. #4c needs the management account bootstrapped in
    `us-east-1` first.
-4. The `refresh-learning` skill can now teach the trail, and Config once #4b merges.
 
 ## Accounts
 
@@ -291,8 +290,10 @@ Done 2026-10-30, after the clear-up, which is logged in `docs/outside-cdk.md`. W
   and was refused with `NoAvailableConfigurationRecorderException`. Its handler retried 25
   seconds later and succeeded, and the recorder started two seconds after. So CloudFormation's
   channel handler retries; the recorder's start is what can't wait on a dependency.
-- `us-east-1`'s channel was accepted with the London bucket. Whether it delivers there is seen
-  only when the first files arrive, within a day: `aws s3 ls s3://harpguru-config-<account id>/AWSLogs/ --recursive --profile harpguru`
+- `us-east-1`'s channel was accepted with the London bucket, and wrote to it at once: each
+  channel writes `AWSLogs/<account id>/Config/ConfigWritabilityCheckFile`, and the copy there was
+  last written at 22:00:03, the second `HarpguruConfigEdge`'s channel was made (checked
+  22:12). That is strong evidence, not yet a history file. The first files arrive within a day: `aws s3 ls s3://harpguru-config-<account id>/AWSLogs/ --recursive --profile harpguru`
   should show `Config/eu-west-2/` and `Config/us-east-1/`. Open until then, and recorded here
   when seen, with whether `us-east-1` has found the hosted zone (see "Config" in
   `docs/aws-concepts.md`).
