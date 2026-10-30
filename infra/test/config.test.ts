@@ -31,6 +31,15 @@ test('workload stacks are pinned to the configured account, not the signed-in on
   })
 })
 
+test('a workload stack can be pinned to another region, in the same account', () => {
+  expect(
+    workloadEnv({ workloadAccountId: '111122223333' }, 'us-east-1')
+  ).toEqual({
+    account: '111122223333',
+    region: 'us-east-1',
+  })
+})
+
 test('without the workload account ID, workload stacks fail at synth', () => {
   expect(() => workloadEnv({})).toThrow(/Missing "workloadAccountId"/)
 })

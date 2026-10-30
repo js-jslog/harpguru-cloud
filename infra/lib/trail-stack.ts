@@ -60,9 +60,10 @@ export class TrailStack extends Stack {
     })
 
     // CDK conditions the Organization's statement on this trail's ARN but
-    // not the management account's own, which would let any account's trail
-    // write under AWSLogs/<this account>/ if it knew the bucket's name: the
-    // confused deputy. The CloudTrail guide conditions both. Statement 2 is
+    // not the management account's own, which then trusts CloudTrail acting
+    // for any trail. The path limits that already, since CloudTrail writes
+    // under the trail's own account ID, but the CloudTrail guide conditions
+    // both, against the confused deputy. Statement 2 is
     // that one, after the TLS deny and GetBucketAcl; a test holds the index.
     const policy = this.bucket.policy!.node.defaultChild as CfnBucketPolicy
     policy.addPropertyOverride(

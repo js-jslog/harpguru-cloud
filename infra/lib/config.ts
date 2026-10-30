@@ -61,7 +61,10 @@ export const managementEnv = (): Environment => ({
 // deploy.local.json, so they are deployed with `--profile harpguru`. Signed in
 // to any other account, CDK refuses: those credentials can't reach this
 // account's bootstrap roles.
-export const workloadEnv = (config: DeployConfig): Environment => ({
+export const workloadEnv = (
+  config: DeployConfig,
+  region = PRIMARY_REGION
+): Environment => ({
   account: requireSetting(config, 'workloadAccountId'),
-  region: PRIMARY_REGION,
+  region,
 })

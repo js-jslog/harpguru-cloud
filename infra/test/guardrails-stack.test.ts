@@ -1,5 +1,10 @@
 import { Match, Template } from 'aws-cdk-lib/assertions'
-import { ALLOWED_REGIONS, GuardrailsStack, SCPS } from '../lib/guardrails-stack'
+import {
+  ALLOWED_REGIONS,
+  CDK_EXEC_ROLE_PATTERN,
+  GuardrailsStack,
+  SCPS,
+} from '../lib/guardrails-stack'
 import { applyProjectTags, PROJECT_TAGS } from '../lib/tags'
 import { appWithFlags } from './app'
 
@@ -19,9 +24,9 @@ test('the Workloads OU sits directly under the root', () => {
   })
 })
 
-test('there are exactly three SCPs, all attached to the OU', () => {
+test('there are exactly four SCPs, all attached to the OU', () => {
   const template = synth()
-  template.resourceCountIs('AWS::Organizations::Policy', 3)
+  template.resourceCountIs('AWS::Organizations::Policy', 4)
   for (const name of Object.keys(SCPS)) {
     template.hasResourceProperties('AWS::Organizations::Policy', {
       Name: name,
@@ -46,6 +51,26 @@ test('the region lock allows exactly London and us-east-1', () => {
       ],
     },
   })
+})
+
+test("Config can't be stopped, narrowed or redirected, except by CDK's deploys", () => {
+  const [statement] = SCPS['harpguru-protect-config'].content.Statement
+  expect(statement.Action).toEqual(
+    expect.arrayContaining([
+      'config:StopConfigurationRecorder',
+      'config:DeleteConfigurationRecorder',
+      'config:DeleteDeliveryChannel',
+      'config:PutConfigurationRecorder',
+      'config:PutDeliveryChannel',
+    ])
+  )
+  expect(statement.Condition).toEqual({
+    ArnNotLike: { 'aws:PrincipalArn': CDK_EXEC_ROLE_PATTERN },
+  })
+  // The bootstrap qualifier and role name CDK's deploys actually use.
+  expect(CDK_EXEC_ROLE_PATTERN).toBe(
+    'arn:aws:iam::*:role/cdk-hnb659fds-cfn-exec-role-*'
+  )
 })
 
 test('every SCP only denies; none grants anything', () => {
