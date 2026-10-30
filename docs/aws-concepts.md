@@ -755,7 +755,11 @@ S3, across all regions and accounts.
 
 **Here:** step 4a's `HarpguruTrail`, in the management account, holds an **organisation
 trail**, `harpguru-org-trail`: one trail covering every account and every region, management
-events only, writing to an S3 bucket that keeps logs for a year. It's the record you'd check to
+events only, writing to an S3 bucket that keeps logs for a year. **Management events** are calls
+that change or describe resources, such as creating a bucket; **data events** are calls on what
+is inside them, such as reading an object, charged per event, and left off. One org trail, rather
+than a trail made in each account, means a new account is covered from the start, and an admin
+inside a member account can't stop it. It's the record you'd check to
 find out who changed that DNS record. **Log file validation** adds a signed digest file every
 hour, so you can prove later that no log was altered or deleted. A member account sees the
 trail but can't change or stop it, which is why no SCP is needed to protect it. GuardDuty,
