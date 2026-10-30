@@ -174,8 +174,11 @@ protected:
   `scripts/identity-center-values.sh` now prints it.
 - Both of the policy's `PutObject` statements carry an `aws:SourceArn` condition naming the
   trail. CDK's `Trail` puts one on the Organization's statement only; the management account's
-  own, `AWSLogs/<account>/*`, would otherwise admit any account's trail. Found in the first
-  `cdk diff`, 2026-10-30, and fixed before the deploy by an escape hatch on the policy.
+  own, `AWSLogs/<account>/*`, would otherwise trust CloudTrail acting for any trail. The path
+  already limits that, since CloudTrail writes under the trail's own account ID, so this is the
+  second lock the CloudTrail guide recommends, not an open door. Found in the first `cdk diff`,
+  2026-10-30, and added before the deploy by an escape hatch on the policy. *Corrected
+  2026-10-30: this first said any account's trail could write there.*
 
 **Trusted access comes first.** Organizations has to trust `cloudtrail.amazonaws.com` before an
 org trail can be made through the API, and CloudFormation is the API. The console does this
@@ -204,7 +207,7 @@ Done 2026-10-30, from the branch. What each step showed:
 - Step 2: trusted access listed `cloudtrail.amazonaws.com` beside `sso.amazonaws.com`, but
   **`AWSServiceRoleForCloudTrail` did not appear.** It appeared ten minutes later, in the same
   second CloudFormation made the trail. So it's the trail that makes it, not trusted access.
-- Step 3's first diff showed the open account statement above, which was fixed before going on.
+- Step 3's first diff showed the unconditioned account statement above, fixed before going on.
   The second showed the condition on both `PutObject` rows, and nothing else changed.
 - Step 4 took 27 seconds. The stack is `CREATE_COMPLETE` with termination protection on.
 - Step 5: `IsLogging` was `true` straight away. In the same second as the trail, CloudTrail wrote
@@ -293,8 +296,8 @@ Done 2026-10-30, after the clear-up, which is logged in `docs/outside-cdk.md`. W
   should show `Config/eu-west-2/` and `Config/us-east-1/`. Open until then, and recorded here
   when seen, with whether `us-east-1` has found the hosted zone (see "Config" in
   `docs/aws-concepts.md`).
-- `cdk diff HarpguruGuardrails` showed only the new policy, and now includes the stacks it
-  depends on: `HarpguruPolicyTypes`, with no differences. The deploy used `--exclusively` to
+- `cdk diff HarpguruGuardrails` showed only the new policy. It also included the stack it
+  depends on, `HarpguruPolicyTypes`, with no differences. The deploy used `--exclusively` to
   leave it out, and took 17 seconds.
 - **The SCP works**, checked with `aws iam simulate-principal-policy`, which takes SCPs into
   account: for the SSO role, `config:StopConfigurationRecorder` and `config:PutDeliveryChannel`

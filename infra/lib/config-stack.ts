@@ -17,8 +17,8 @@ import {
 import type { Construct } from 'constructs'
 
 // The same year the trail's logs are kept. Config keeps its own history of
-// each resource for seven years regardless; the bucket holds the files it
-// delivers, which are what can be read without Config.
+// each resource too, for seven years by default; the bucket holds the files
+// it delivers, which are what can be read without Config.
 export const CONFIG_RETENTION_DAYS = 365
 
 export const SERVICE_LINKED_ROLE_NAME = 'AWSServiceRoleForConfig'
@@ -56,8 +56,8 @@ export class ConfigStack extends Stack {
       })
 
       // Like the trail's bucket: retained, private, TLS only. Every grant is
-      // conditioned on this account, so no other account's Config can
-      // deliver here: the confused deputy again.
+      // conditioned on this account, as the Config guide recommends against
+      // the confused deputy.
       bucket = new Bucket(this, 'Bucket', {
         bucketName,
         blockPublicAccess: BlockPublicAccess.BLOCK_ALL,

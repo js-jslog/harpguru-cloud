@@ -209,8 +209,8 @@ and it's the only way SCPs can apply to them."
 #### Trusted access
 
 **What:** an Organization-wide switch that lets a named AWS service act across every account,
-for example CloudTrail writing one trail for all of them. Switching it on usually creates a
-**service-linked role** for that service. The console flips it for you when you set a
+for example CloudTrail writing one trail for all of them. AWS's guides say switching it on
+creates the service's **service-linked role**; for CloudTrail it didn't, see below. The console flips it for you when you set a
 service up there; the API, and so CloudFormation, expects it to be on already.
 
 **Here:** `sso.amazonaws.com` was switched on by Identity Center. Step 4a switches on
@@ -770,10 +770,12 @@ rule** deletes or moves objects once they reach a given age, without anything ru
 
 **Here:** the trail's bucket in step 4a. Public access is blocked, it accepts only TLS, and
 its policy lets `cloudtrail.amazonaws.com` write under `AWSLogs/`, but only for this trail.
-That last part is an `aws:SourceArn` condition naming the trail. Without it, the policy admits
-CloudTrail acting for **any** account's trail, so a stranger who knew the bucket's name could
-point a trail at it: the **confused deputy**, a trusted service tricked into acting for someone
-else. CDK adds the condition to the Organization's statement but not to the management
+That last part is an `aws:SourceArn` condition naming the trail. A grant to a service
+principal trusts that service acting for **anyone**, and the condition narrows it to acting for
+this trail: the guard against the **confused deputy**, a trusted service tricked into acting
+for someone else. Here the path already does most of that work, since CloudTrail writes under
+the trail's own account ID and the policy grants only ours; the condition is the second lock
+AWS recommends. CDK adds it to the Organization's statement but not to the management
 account's own, so the stack adds it there. A lifecycle rule deletes logs after 365 days. Step 8's site bucket meets the same ideas again,
 with CloudFront as the reader. *(PR `1-org-trail`)*
 
