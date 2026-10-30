@@ -3,7 +3,7 @@
 *For humans:* this file is the tutor's entry point. Start a session by sending the tutor its
 raw URL, with this file's current cache stamp, and "Please read this and follow its
 instructions":
-`https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/README.md?v=2026-10-30T2209Z`.
+`https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/README.md?v=2026-10-30T2227Z`.
 The tutor replies with a block of links. Paste it back as your next message, unchanged, and
 repeat until it says the last batch is in; then the session starts.
 
@@ -45,44 +45,48 @@ the most your tool fetches in one turn.
 ### Batch 1 of 2
 
 ```
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/syllabus.md?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/plans/phase-a.md?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/outside-cdk.md?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-conventions.md?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/aws-pathway-findings.md?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/roadmap.md?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/budget-stack.ts?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/policy-types-stack.ts?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/guardrails-stack.ts?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/accounts-stack.ts?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/identity-stack.ts?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/dns-stack.ts?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/mail-canary-stack.ts?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/bin/harpguru.ts?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/config.ts?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/tags.ts?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/accounts-stack.test.ts?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/guardrails-stack.test.ts?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/policy-types-stack.test.ts?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/identity-stack.test.ts?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/dns-stack.test.ts?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/mail-canary-stack.test.ts?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/app.ts?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/budget-stack.test.ts?v=2026-10-30T2209Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/syllabus.md?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/plans/phase-a.md?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/outside-cdk.md?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-conventions.md?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/aws-pathway-findings.md?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/roadmap.md?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/budget-stack.ts?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/policy-types-stack.ts?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/guardrails-stack.ts?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/accounts-stack.ts?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/identity-stack.ts?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/dns-stack.ts?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/mail-canary-stack.ts?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/trail-stack.ts?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/config-stack.ts?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/bin/harpguru.ts?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/config.ts?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/tags.ts?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/accounts-stack.test.ts?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/guardrails-stack.test.ts?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/policy-types-stack.test.ts?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/identity-stack.test.ts?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/dns-stack.test.ts?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/mail-canary-stack.test.ts?v=2026-10-30T2227Z
 ```
 
 ### Batch 2 of 2
 
 ```
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/scripts/identity-center-values.sh?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/scripts/identity-import-mapping.sh?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/README.md?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/orientation.md?v=2026-10-30T2209Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/CLAUDE.md?v=2026-10-30T2209Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/trail-stack.test.ts?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/config-stack.test.ts?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/app.ts?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/budget-stack.test.ts?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/scripts/identity-center-values.sh?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/scripts/identity-import-mapping.sh?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/README.md?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/orientation.md?v=2026-10-30T2227Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/CLAUDE.md?v=2026-10-30T2227Z
 ```
 
-## The 30 sources
+## The 34 sources
 
 What each one is, in the order of the batches, most important first. These are paths, not
 links; the links are in the batches.
@@ -99,14 +103,14 @@ links; the links are in the batches.
 - `roadmap-planning/aws-pathway-findings.md` (in `harpguru`): Verified facts, the domain
   vocabulary, the AWS account state, what the step 3 deploy showed, and the DNS records Heart
   served for harpguru.com, with what the hosted zone's deploy, the nameserver switch and the
-  mail canary's first send showed.
+  mail canary's first send showed, and what the trail's and Config's deploys showed.
 - `roadmap-planning/roadmap.md` (in `harpguru`): The decisions, sequence and scope. Its
   decisions section matters more than its phase list.
 - `infra/lib/budget-stack.ts`: `HarpguruBudget`: the $10 monthly budget. Deployed 2026-10-13.
 - `infra/lib/policy-types-stack.ts`: `HarpguruPolicyTypes`: the custom resource that switches
   SCPs on. Deployed 2026-10-22.
-- `infra/lib/guardrails-stack.ts`: `HarpguruGuardrails`: the `Workloads` OU and its three SCPs.
-  Deployed 2026-10-22.
+- `infra/lib/guardrails-stack.ts`: `HarpguruGuardrails`: the `Workloads` OU and its four SCPs.
+  Deployed 2026-10-22; the fourth, protecting Config, on 2026-10-30.
 - `infra/lib/accounts-stack.ts`: `HarpguruAccounts`: the `harpguru` workload account and my
   access to it. Deployed 2026-10-22.
 - `infra/lib/identity-stack.ts`: `HarpguruIdentity`: the permission set and its management
@@ -116,6 +120,10 @@ links; the links are in the batches.
   2026-10-27.
 - `infra/lib/mail-canary-stack.ts`: `HarpguruMailCanary`: the weekly pair of messages that show
   `contact@` still forwards. Deployed 2026-10-27.
+- `infra/lib/trail-stack.ts`: `HarpguruTrail`: the Organization trail and its log bucket, in the
+  management account. Deployed 2026-10-30.
+- `infra/lib/config-stack.ts`: `HarpguruConfig` and `HarpguruConfigEdge`: Config in the workload
+  account, in London and `us-east-1`. Deployed 2026-10-30, after a first deploy rolled back.
 - `infra/bin/harpguru.ts`: The app: creates the stacks and applies the tags.
 - `infra/lib/config.ts`: Regions, deploy-time values, and the management and workload account
   environments.
@@ -132,6 +140,10 @@ links; the links are in the batches.
   there and that the zone is public.
 - `infra/test/mail-canary-stack.test.ts`: The canary's tests, including the one that keeps the
   IAM action name CDK guesses out of its role.
+- `infra/test/trail-stack.test.ts`: The trail's tests, including the one that fails if the escape
+  hatch lands on the wrong policy statement.
+- `infra/test/config-stack.test.ts`: Config's tests, including the one that forbids the
+  dependency that deadlocked its first deploy.
 - `infra/test/app.ts`: The helper every test builds its app with, so tests see the same feature
   flags as the real app.
 - `infra/test/budget-stack.test.ts`: An example of how the stacks are tested.
@@ -198,7 +210,7 @@ probably said. Also collect these as you go and list them at the end of the sess
 
 1. **Once the last batch is in, check freshness before anything else.** This page reached you
    fresh, because its link was in my message, so it is the reference: the syllabus you fetched
-   should say **"As of 2026-10-28"**. If it says anything else, every copy may be stale: tell
+   should say **"As of 2026-10-30"**. If it says anything else, every copy may be stale: tell
    me so before relying on any of them. Then read the status table in
    `docs/plans/phase-a.md`. If the status table
    shows a numbered step merged or deployed that the syllabus does not cover (rows marked "—"
