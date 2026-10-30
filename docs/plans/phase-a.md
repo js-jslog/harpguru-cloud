@@ -34,7 +34,8 @@ Update this table in the PR that moves a row. **You** means the user.
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
 
 **Next up, as of 2026-10-30:**
-1. ~~Run the `refresh-learning` skill~~ for #4a and #4b: on the branch `1-learning-audit`.
+1. **Merge `1-learning-audit`**, the `refresh-learning` run for #4a and #4b, then try the live
+   check from the README's raw URL.
 2. On or after 2026-10-31, check Config's first history files from both regions, and that
    `us-east-1` has found the hosted zone; #4b says how. Record it in #4b and the findings doc.
 3. Then #4c and #7, which are unblocked. #4c needs the management account bootstrapped in
@@ -292,8 +293,8 @@ Done 2026-10-30, after the clear-up, which is logged in `docs/outside-cdk.md`. W
   channel handler retries; the recorder's start is what can't wait on a dependency.
 - `us-east-1`'s channel was accepted with the London bucket, and wrote to it at once: each
   channel writes `AWSLogs/<account id>/Config/ConfigWritabilityCheckFile`, and the copy there was
-  last written at 22:00:03, the second `HarpguruConfigEdge`'s channel was made (checked
-  22:12). That is strong evidence, not yet a history file. The first files arrive within a day: `aws s3 ls s3://harpguru-config-<account id>/AWSLogs/ --recursive --profile harpguru`
+  last written at 22:00:03 UTC, the second `HarpguruConfigEdge`'s channel was made (checked
+  22:12 UTC). That is strong evidence, not yet a history file. The first files arrive within a day: `aws s3 ls s3://harpguru-config-<account id>/AWSLogs/ --recursive --profile harpguru`
   should show `Config/eu-west-2/` and `Config/us-east-1/`. Open until then, and recorded here
   when seen, with whether `us-east-1` has found the hosted zone (see "Config" in
   `docs/aws-concepts.md`).

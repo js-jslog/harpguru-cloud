@@ -276,12 +276,12 @@ in the README, and the tiering here is a proposal, to be argued with.
   anyone turning it off except CloudFormation acting for a CDK deploy.
 - **Why must own:** the SCP's exemption is a security design whose limits I should state
   unprompted, and daily recording is a cost decision against the service most likely to creep.
-- **Be able to answer:** what Config records that CloudTrail doesn't; why daily rather than continuous recording, and what that changes about cost; why
-  two regions, why IAM is recorded only in London, and what only `us-east-1` can record; why one
-  bucket, and how the `us-east-1` stack finds it; what the SCP denies, whom it exempts and how,
-  and therefore what it doesn't protect against; why the trail needs no such SCP; how the SCP
-  was shown to work without trying to stop a recorder; what was still open after the deploy,
-  and what evidence there already is.
+- **Be able to answer:** what Config records that CloudTrail doesn't; why daily rather than
+  continuous recording, and what that changes about cost; why two regions, why IAM is recorded
+  only in London, and what only `us-east-1` can record; why one bucket, and how the `us-east-1`
+  stack finds it; what the SCP denies, whom it exempts and how, and therefore what it doesn't
+  protect against; why the trail needs no such SCP; how the SCP was shown to work without trying
+  to stop a recorder; what was still open after the deploy, and what evidence there already is.
 - **Sources:** `docs/aws-concepts.md` "Config" and "Service Control Policy (SCP)";
   `docs/plans/phase-a.md` "Steps" (item 4b) and "Decisions" (the 2026-10-14 entry about the
   CloudTrail/Config SCP, and the 2026-10-30 entry); `infra/lib/config-stack.ts`;
@@ -305,8 +305,8 @@ in the README, and the tiering here is a proposal, to be argued with.
   forget `--profile harpguru` for a workload stack, and which mistake is still not caught; and
   how `HarpguruConfigEdge` is pinned to the same account in `us-east-1`.
 - **Sources:** `docs/aws-concepts.md` "Regions", "Environments" and "CDK bootstrap";
-  `infra/lib/config.ts`; `infra/bin/harpguru.ts`; `docs/plans/phase-a.md` "Steps" (item 5) and "Decisions" (the
-  2026-10-26 entry).
+  `infra/lib/config.ts`; `infra/bin/harpguru.ts`; `docs/plans/phase-a.md` "Steps" (item 5)
+  and "Decisions" (the 2026-10-26 entry).
 
 ### 14. Tags and cost allocation
 
@@ -323,7 +323,8 @@ in the README, and the tiering here is a proposal, to be argued with.
   builds its app with `cdk.json`'s feature flags: until 2026-10-22 they did not, and the
   cross-stack test passed while asserting an export the deployed app never used. And two tests
   added after something went wrong or nearly did: one that fails if an escape hatch lands on
-  the wrong policy statement, and one forbidding the dependency that deadlocked Config's first deploy.
+  the wrong policy statement, and one forbidding the dependency that deadlocked Config's first
+  deploy.
 - **Sources:** `infra/README.md`; `infra/test/app.ts`; `infra/test/budget-stack.test.ts`;
   `infra/test/accounts-stack.test.ts`; `infra/test/guardrails-stack.test.ts`;
   `infra/test/policy-types-stack.test.ts`; `infra/test/trail-stack.test.ts`;

@@ -789,7 +789,9 @@ this trail: the guard against the **confused deputy**, a trusted service tricked
 for someone else. Here the path already does most of that work, since CloudTrail writes under
 the trail's own account ID and the policy grants only ours; the condition is the second lock
 AWS recommends. CDK adds it to the Organization's statement but not to the management
-account's own, so the stack adds it there. A lifecycle rule deletes logs after 365 days. Step 8's site bucket meets the same ideas again,
+account's own, so the stack adds it there. Config's bucket, in step 4b, uses
+`AWS:SourceAccount` instead, as the Config guide recommends: it narrows each grant to Config
+acting for this account, rather than for one named resource. A lifecycle rule deletes logs after 365 days. Step 8's site bucket meets the same ideas again,
 with CloudFront as the reader. *(PR `1-org-trail`)*
 
 **Say it:** "An identity policy says what a principal may do; a bucket policy says who may
