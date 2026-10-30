@@ -24,7 +24,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | 3 | `1-org-accounts`: workload account, OU, SCPs | **merged** and deployed 2026-10-22; `harpguru` profile added | — |
 | 3a | `1-scp-custom-resource`: SCPs switched on by a custom resource in its own stack; the four decisions settled | **merged** and deployed 2026-10-22 | — |
 | 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | **merged**, imported and deployed 2026-10-22 | — |
-| 4a | `1-org-trail`: the Organization trail and its bucket, in `HarpguruTrail` | pushed, **not deployed**; PR opened after the deploy | *you*: `organizationId`, trusted access, then the deploy |
+| 4a | `1-org-trail`: the Organization trail and its bucket, in `HarpguruTrail` | **deployed** 2026-10-30; PR to open | *you*: open the PR |
 | 4b | `1-config`: Config recorders in the workload account, and the SCP that protects them | not started | — |
 | 4c | `1-guardduty`: GuardDuty detectors in both accounts, both regions | not started | *you*: bootstrap the management account in `us-east-1` |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
@@ -33,13 +33,12 @@ Update this table in the PR that moves a row. **You** means the user.
 | 7 | `1-certificate`: ACM in `us-east-1` | not started | — |
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
 
-**Next up, as of 2026-10-28**, in the order the user asked for:
-1. ~~Run the `refresh-learning` skill.~~ **Done** 2026-10-28 on `1-canary-confirmed`, in the
-   same PR as the canary's result: the syllabus now covers the switch (#6) and the canary
-   (#6a). Not on `1-org-trail`, because the skill teaches only what is on `master`.
-2. **Continue #4a** from the branch `1-org-trail`: its copy of this file, step 4a, says exactly
-   what is left.
-3. Then #4b, #4c and #7, which are all unblocked.
+**Next up, as of 2026-10-30:**
+1. **Open the PR for `1-org-trail`** (#4a), which is deployed.
+2. Then #4b, #4c and #7, which are all unblocked. #4c needs the management account bootstrapped
+   in `us-east-1` first.
+3. Once #4a has merged, the `refresh-learning` skill can teach the trail. It teaches only what
+   is on `master`.
 
 ## Accounts
 
@@ -190,34 +189,32 @@ Doing it, all *you*, signed in to the management account:
    Until it is there, every `cdk` command fails at synth, naming the key.
 2. `aws organizations enable-aws-service-access --service-principal cloudtrail.amazonaws.com`.
    It prints nothing. `aws organizations list-aws-service-access-for-organization` should now
-   list it beside `sso.amazonaws.com`, and the management account should have gained
-   `AWSServiceRoleForCloudTrail`.
+   list it beside `sso.amazonaws.com`. The Organizations guide says the management account
+   should gain `AWSServiceRoleForCloudTrail` here too; in fact it arrives with the trail, in
+   step 4.
 3. `cdk diff HarpguruTrail`. It shows the bucket, its policy and the trail as `[+]`, in the
    management account, and IAM-style statements for the bucket policy.
 4. `cdk deploy HarpguruTrail --require-approval never`.
 5. `aws cloudtrail get-trail-status --name harpguru-org-trail --query IsLogging` is `true`.
    Within about 15 minutes, `aws s3 ls s3://<bucket>/AWSLogs/ --recursive | head` shows the
-   first log files. Where each account's logs land under `AWSLogs/` is recorded here once seen.
+   first log files.
 
-**Where 4a stands, 2026-10-28, for the next session.** The code, its tests (43 pass since 2026-10-30), the
-concept entries (**Trusted access**, **S3 buckets, bucket policies and lifecycle rules**, and the
-updated **CloudTrail**) and the `outside-cdk.md` row are done and pushed. Nothing is deployed,
-and trusted access is not yet switched on. The branch was rebased onto `master` on 2026-10-28,
-after `1-canary-confirmed` merged, so it needs no rebase to start. The PR is opened after the
-deploy, so it describes what is real.
-- **Before any `cdk` command on this branch works**, `organizationId` must be in
-  `deploy.local.json`: user step 1 above. It wasn't on 2026-10-28; synth fails naming the key.
-- **The user's steps 1 to 5 above**, in order. Step 2 needs the management account's login, so
-  no `--profile`; this stack is not pinned to the workload account.
-- **The agent's steps after the deploy:**
-  1. Run the "See it" commands in the three concept entries against the account.
-  2. Add the trusted-access command, with its date, to "Changes made outside CDK" in
-     `docs/outside-cdk.md`.
-  3. Record what step 2 showed (whether `AWSServiceRoleForCloudTrail` appeared, which the
-     Organizations guide says it should) and where each account's logs land under `AWSLogs/`,
-     here and in the findings doc in `/harpguru`.
-  4. Move this step's row in the status table, bump the learning cache stamps, push, and tell
-     the user the branch is ready for its PR, naming the three concept entries.
+Done 2026-10-30, from the branch. What each step showed:
+- Step 2: trusted access listed `cloudtrail.amazonaws.com` beside `sso.amazonaws.com`, but
+  **`AWSServiceRoleForCloudTrail` did not appear.** It appeared ten minutes later, in the same
+  second CloudFormation made the trail. So it's the trail that makes it, not trusted access.
+- Step 3's first diff showed the open account statement above, which was fixed before going on.
+  The second showed the condition on both `PutObject` rows, and nothing else changed.
+- Step 4 took 27 seconds. The stack is `CREATE_COMPLETE` with termination protection on.
+- Step 5: `IsLogging` was `true` straight away. In the same second as the trail, CloudTrail wrote
+  empty `CloudTrail/` and `CloudTrail-Digest/` markers under both `AWSLogs/<management account>/`
+  and `AWSLogs/<org id>/<management account>/`, so the account statement is used at creation,
+  and its new condition let it through. **Every log file since, the management account's
+  included, lands under `AWSLogs/<org id>/<account id>/CloudTrail/<region>/<yyyy>/<mm>/<dd>/`.**
+  The first delivery was three minutes after the trail was made, and the workload account's
+  first file came within seven. From the workload account, `describe-trails` returned nothing
+  a minute after the deploy, and listed `harpguru-org-trail` as an organisation trail six
+  minutes later.
 
 **4b · `1-config`.**
 - Config in the workload account only, in `eu-west-2` and `us-east-1`, with periodic (daily)

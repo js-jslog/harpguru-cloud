@@ -214,7 +214,9 @@ service up there; the API, and so CloudFormation, expects it to be on already.
 
 **Here:** `sso.amazonaws.com` was switched on by Identity Center. Step 4a switches on
 `cloudtrail.amazonaws.com` with one CLI command before the trail's deploy. There is no
-resource type for it, so it is logged in `docs/outside-cdk.md`. *(PR `1-org-trail`)*
+resource type for it, so it is logged in `docs/outside-cdk.md`. CloudTrail's service-linked
+role didn't come with the switch, as the guide said it would; it arrived with the trail.
+*(PR `1-org-trail`)*
 
 **Say it:** "Org-wide features need trusted access first; the console hides that step, and
 infrastructure as code makes you take it yourself."
