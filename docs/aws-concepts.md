@@ -763,7 +763,7 @@ inside a member account can't stop it. It's the record you'd check to
 find out who changed that DNS record. **Log file validation** adds a signed digest file every
 hour, so you can prove later that no log was altered or deleted. A member account sees the
 trail but can't change or stop it, which is why no SCP is needed to protect it. GuardDuty,
-planned for step 4c, reads the same events. *(PR `1-org-trail`)*
+step 4c, reads the same events. *(PR `1-org-trail`)*
 
 **Say it:** "Event history gives you 90 days for free; an org trail gives durable, central
 retention that member accounts can't switch off."
@@ -837,10 +837,22 @@ network flow data, reading them directly without you turning those logs on, and 
 **findings**. Examples include credentials used from an unusual place, calls to known
 crypto-mining domains, and someone probing permissions.
 
-**Here:** **not built yet.** Step 4c plans a detector in each account, in both regions. It's
-free for 30 days, then pennies at this volume.
+A **detector** is GuardDuty switched on in one account and one region, and there can be only one per account per region.
+**Protection plans** extend it to S3 data events, EKS, RDS logins, Lambda's network traffic and
+malware scans of EC2 disks; each is charged only for what it scans.
+
+**Here:** step 4c's `GuardDutyStack` holds one detector, deployed four times: each account,
+in London and `us-east-1`. The management account is watched too, because it holds the
+Organization and the login. The detectors are **standalone**: with two accounts, letting one
+account manage GuardDuty for the Organization, a **delegated administrator**, adds more than
+it saves. The protection plans are left to GuardDuty's defaults, and have nothing to scan yet.
+Each detector is free for its first 30 days, then pennies at this volume. GuardDuty creates its
+own service-linked role. *(PR `1-guardduty`)*
 
 **Say it:** "Prevention with SCPs, detection with GuardDuty; you want both, because
 prevention is never complete."
 
-**See it:** `aws guardduty list-detectors`, which is empty until step 4c.
+**See it:** `aws guardduty list-detectors --region us-east-1 --profile harpguru` gives the
+detector's ID; `aws guardduty get-detector --detector-id <id> --region us-east-1 --profile harpguru`
+shows which protection plans are on, and `aws guardduty list-findings --detector-id <id>` lists
+what it has raised.

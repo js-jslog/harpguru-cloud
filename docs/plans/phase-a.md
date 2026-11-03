@@ -26,7 +26,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | **merged**, imported and deployed 2026-10-22 | — |
 | 4a | `1-org-trail`: the Organization trail and its bucket, in `HarpguruTrail` | **merged** and deployed 2026-10-30 | — |
 | 4b | `1-config`: Config recorders in the workload account, and the SCP that protects them | **merged** and deployed 2026-10-30, after a first deploy rolled back; both regions' history files confirmed 2026-11-03 | — |
-| 4c | `1-guardduty`: GuardDuty detectors in both accounts, both regions | not started | *you*: bootstrap the management account in `us-east-1` |
+| 4c | `1-guardduty`: GuardDuty detectors in both accounts, both regions | coded on the branch | *you*: bootstrap the management account in `us-east-1`, then diff and deploy |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **done**: zone deployed 2026-10-26; switch made and mail tested 2026-10-27 | — |
 | 6a | `1-mail-canary`: a weekly pair of messages showing `contact@` still forwards, in `HarpguruMailCanary` | **merged** and deployed 2026-10-27; first pair arrived 2026-10-28 | — |
@@ -34,8 +34,9 @@ Update this table in the PR that moves a row. **You** means the user.
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
 
 **Next up, as of 2026-11-03:**
-1. #4c and #7, which are unblocked. #4c needs the management account bootstrapped in
-   `us-east-1` first.
+1. #4c: bootstrap the management account in `us-east-1`, then diff and deploy the four
+   GuardDuty stacks; #4c says how.
+2. Then #7, which is unblocked.
 
 ## Accounts
 
@@ -322,6 +323,32 @@ Done 2026-10-30, after the clear-up, which is logged in `docs/outside-cdk.md`. W
   worth questioning.
 - **The management account needs `cdk bootstrap` in `us-east-1` first** (*you*). It has only
   `eu-west-2` so far.
+
+Built as one `GuardDutyStack`, holding a single `AWS::GuardDuty::Detector`, deployed four times,
+each termination protected, since deleting a detector deletes its findings:
+
+| Stack | Account | Region | Deployed with |
+|---|---|---|---|
+| `HarpguruGuardDutyManagement` | management | `eu-west-2` | the SSO login |
+| `HarpguruGuardDutyManagementEdge` | management | `us-east-1` | the SSO login |
+| `HarpguruGuardDutyWorkload` | workload | `eu-west-2` | `--profile harpguru` |
+| `HarpguruGuardDutyWorkloadEdge` | workload | `us-east-1` | `--profile harpguru` |
+
+`managementEnv()` takes a region now, as `workloadEnv()` does. Checked before the branch, on
+2026-11-03: no detector in either account or region, no `AWSServiceRoleForAmazonGuardDuty` in
+the management account, and its London bootstrap untagged, version 32.
+
+The protection plans are left to GuardDuty, so they aren't in the template and **the diff
+can't show them**; which ones came on is checked after the deploy instead, with
+`aws guardduty get-detector`. None has anything to scan yet: there is no EC2, EKS, RDS or
+Lambda, and the S3 buckets see a few writes a day.
+
+Steps (*you*):
+1. Signed in to the management account: `cd /app/infra && npx cdk bootstrap aws://$(aws sts get-caller-identity --query Account --output text)/us-east-1 --tags project=harpguru --tags repository=harpguru-cloud --tags managed-by=cdk`
+2. `npx cdk diff HarpguruGuardDutyManagement HarpguruGuardDutyManagementEdge`, then
+   `npx cdk deploy HarpguruGuardDutyManagement HarpguruGuardDutyManagementEdge --require-approval never`
+3. `npx cdk diff HarpguruGuardDutyWorkload HarpguruGuardDutyWorkloadEdge --profile harpguru`,
+   then the same `deploy` with `--profile harpguru`.
 
 **5 · you: bootstrap.** `cdk bootstrap` for the workload account in **both** `eu-west-2` and
 `us-east-1`. The certificate stack lives in `us-east-1`, which is easy to miss.

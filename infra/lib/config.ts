@@ -52,9 +52,9 @@ export const requireSetting = (
 // in (`aws sso login`). Unlike the workload stacks below, they are not pinned:
 // that would need the management account's ID too, and nothing required it
 // before step 7. So deploying one with `--profile harpguru` is not caught.
-export const managementEnv = (): Environment => ({
+export const managementEnv = (region = PRIMARY_REGION): Environment => ({
   account: process.env.CDK_DEFAULT_ACCOUNT,
-  region: PRIMARY_REGION,
+  region,
 })
 
 // Stacks in the workload account are pinned to its ID, read from
