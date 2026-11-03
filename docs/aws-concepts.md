@@ -837,9 +837,10 @@ network flow data, reading them directly without you turning those logs on, and 
 **findings**. Examples include credentials used from an unusual place, calls to known
 crypto-mining domains, and someone probing permissions.
 
-A **detector** is GuardDuty switched on in one account and one region, and there can be only one per account per region.
-**Protection plans** extend it to S3 data events, EKS, RDS logins, Lambda's network traffic and
-malware scans of EC2 disks; each is charged only for what it scans.
+A **detector** is GuardDuty switched on in one account and one region, and there can be only
+one per account per region. **Protection plans** extend it to S3 data events, EKS, RDS logins,
+Lambda's network traffic and malware scans of EC2 disks; each is charged only for what it
+scans.
 
 **Here:** step 4c's `GuardDutyStack` holds one detector, deployed four times: each account,
 in London and `us-east-1`. The management account is watched too, because it holds the
