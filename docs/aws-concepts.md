@@ -814,7 +814,9 @@ region. Recording is **daily** rather than continuous: Config charges for each c
 item it records, and a daily item is written only if the resource changed that day. Both
 deliver to one bucket in London. IAM's resources are the same in every region, so only London
 records them. Route 53 zones and CloudFront distributions are recorded only in `us-east-1`,
-which is one reason to record there at all. The `harpguru-protect-config` SCP stops anyone but
+which is one reason to record there at all; so, it turned out, is IAM's SAML provider, which
+the flag for global types doesn't cover. Both regions' first history files were seen on
+2026-11-03, and the hosted zone only in `us-east-1`. The `harpguru-protect-config` SCP stops anyone but
 a CDK deploy from turning it off. The first deploy deadlocked: CloudFormation doesn't count a
 recorder as created until it is recording, which needs the channel, so the channel mustn't be
 made to wait for the recorder. *(PR `1-config`)*

@@ -25,7 +25,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | 3a | `1-scp-custom-resource`: SCPs switched on by a custom resource in its own stack; the four decisions settled | **merged** and deployed 2026-10-22 | — |
 | 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | **merged**, imported and deployed 2026-10-22 | — |
 | 4a | `1-org-trail`: the Organization trail and its bucket, in `HarpguruTrail` | **merged** and deployed 2026-10-30 | — |
-| 4b | `1-config`: Config recorders in the workload account, and the SCP that protects them | **merged** and deployed 2026-10-30, after a first deploy rolled back. First history files still to be seen | — |
+| 4b | `1-config`: Config recorders in the workload account, and the SCP that protects them | **merged** and deployed 2026-10-30, after a first deploy rolled back; both regions' history files confirmed 2026-11-03 | — |
 | 4c | `1-guardduty`: GuardDuty detectors in both accounts, both regions | not started | *you*: bootstrap the management account in `us-east-1` |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **done**: zone deployed 2026-10-26; switch made and mail tested 2026-10-27 | — |
@@ -33,12 +33,8 @@ Update this table in the PR that moves a row. **You** means the user.
 | 7 | `1-certificate`: ACM in `us-east-1` | not started | — |
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
 
-**Next up, as of 2026-10-30:**
-1. **Merge `1-learning-audit`**, the `refresh-learning` run for #4a and #4b, then try the live
-   check from the README's raw URL.
-2. On or after 2026-10-31, check Config's first history files from both regions, and that
-   `us-east-1` has found the hosted zone; #4b says how. Record it in #4b and the findings doc.
-3. Then #4c and #7, which are unblocked. #4c needs the management account bootstrapped in
+**Next up, as of 2026-11-03:**
+1. #4c and #7, which are unblocked. #4c needs the management account bootstrapped in
    `us-east-1` first.
 
 ## Accounts
@@ -294,10 +290,21 @@ Done 2026-10-30, after the clear-up, which is logged in `docs/outside-cdk.md`. W
 - `us-east-1`'s channel was accepted with the London bucket, and wrote to it at once: each
   channel writes `AWSLogs/<account id>/Config/ConfigWritabilityCheckFile`, and the copy there was
   last written at 22:00:03 UTC, the second `HarpguruConfigEdge`'s channel was made (checked
-  22:12 UTC). That is strong evidence, not yet a history file. The first files arrive within a day: `aws s3 ls s3://harpguru-config-<account id>/AWSLogs/ --recursive --profile harpguru`
-  should show `Config/eu-west-2/` and `Config/us-east-1/`. Open until then, and recorded here
-  when seen, with whether `us-east-1` has found the hosted zone (see "Config" in
-  `docs/aws-concepts.md`).
+  22:12 UTC). That was strong evidence, not yet a history file.
+- **Both regions deliver history files**, checked 2026-11-03 with
+  `aws s3 ls s3://harpguru-config-<account id>/AWSLogs/ --recursive --profile harpguru`. The
+  bucket held 31 under `Config/eu-west-2/` and 33 under `Config/us-east-1/`, one per resource
+  type, each covering 2026-10-30. The first arrived at 22:24 UTC that day from London and at
+  01:54 UTC on 2026-10-31 from `us-east-1`, and the last on 2026-10-31. None has come since,
+  which fits daily recording of an account where nothing has changed. Both recorders and both
+  channels report `SUCCESS`, with each channel's last success that day.
+- **Only `us-east-1` found the hosted zone**: `list-discovered-resources --resource-type
+  AWS::Route53::HostedZone` lists `harpguru.com.` there and nothing in London. The two regions
+  otherwise recorded the same regional types, but for two differences. London alone has an
+  `AWS::IAM::Role` file, from the global types it records. `us-east-1` alone has
+  `AWS::IAM::SAMLProvider` (Identity Center's), as well as `AWS::S3::StorageLens` and the zone,
+  although it doesn't record global types. So the flag doesn't cover every IAM type: the SAML
+  provider is recorded in `us-east-1`, like the zone.
 - `cdk diff HarpguruGuardrails` showed only the new policy. It also included the stack it
   depends on, `HarpguruPolicyTypes`, with no differences. The deploy used `--exclusively` to
   leave it out, and took 17 seconds.
