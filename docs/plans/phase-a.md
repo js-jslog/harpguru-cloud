@@ -297,14 +297,14 @@ Done 2026-10-30, after the clear-up, which is logged in `docs/outside-cdk.md`. W
   type, each covering 2026-10-30. The first arrived at 22:24 UTC that day from London and at
   01:54 UTC on 2026-10-31 from `us-east-1`, and the last on 2026-10-31. None has come since,
   which fits daily recording of an account where nothing has changed. Both recorders and both
-  channels report `SUCCESS`, with each channel's last success that day.
+  channels report `SUCCESS`, each channel's last success on 2026-11-03 itself.
 - **Only `us-east-1` found the hosted zone**: `list-discovered-resources --resource-type
-  AWS::Route53::HostedZone` lists `harpguru.com.` there and nothing in London. The two regions
-  otherwise recorded the same regional types, but for two differences. London alone has an
-  `AWS::IAM::Role` file, from the global types it records. `us-east-1` alone has
-  `AWS::IAM::SAMLProvider` (Identity Center's), as well as `AWS::S3::StorageLens` and the zone,
-  although it doesn't record global types. So the flag doesn't cover every IAM type: the SAML
-  provider is recorded in `us-east-1`, like the zone.
+  AWS::Route53::HostedZone` lists `harpguru.com.` there and nothing in London. Otherwise the two
+  regions recorded the same types, with three exceptions. London alone has `AWS::IAM::Role`, from
+  the global types it records. `us-east-1` alone has `AWS::S3::StorageLens` and
+  `AWS::IAM::SAMLProvider`, the one Identity Center made, though it doesn't record global types.
+  So that flag doesn't cover every IAM type: the SAML provider is recorded in `us-east-1`, like
+  the zone.
 - `cdk diff HarpguruGuardrails` showed only the new policy. It also included the stack it
   depends on, `HarpguruPolicyTypes`, with no differences. The deploy used `--exclusively` to
   leave it out, and took 17 seconds.

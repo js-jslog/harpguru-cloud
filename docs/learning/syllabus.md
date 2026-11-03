@@ -277,9 +277,9 @@ in the README, and the tiering here is a proposal, to be argued with.
 - **Why must own:** the SCP's exemption is a security design whose limits I should state
   unprompted, and daily recording is a cost decision against the service most likely to creep.
 - **Be able to answer:** what Config records that CloudTrail doesn't; why daily rather than
-  continuous recording, and what that changes about cost; why two regions, why IAM is recorded
-  only in London, and what only `us-east-1` can record; why one bucket, and how the `us-east-1`
-  stack finds it; what the SCP denies, whom it exempts and how, and therefore what it doesn't
+  continuous recording, and what that changes about cost; why two regions, why IAM's roles are
+  recorded only in London, and what only `us-east-1` can record; why one bucket, and how the
+  `us-east-1` stack finds it; what the SCP denies, whom it exempts and how, and therefore what it doesn't
   protect against; why the trail needs no such SCP; how the SCP was shown to work without trying
   to stop a recorder; how the first history files showed both regions delivering, and what
   they showed `us-east-1` records that London doesn't.
