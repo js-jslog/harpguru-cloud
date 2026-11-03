@@ -37,7 +37,8 @@ the account ID, it fetches it with `aws sts get-caller-identity`.
 [EventBridge Scheduler and universal targets](#eventbridge-scheduler-and-universal-targets) ·
 [CloudTrail](#cloudtrail) ·
 [S3 buckets, bucket policies and lifecycle rules](#s3-buckets-bucket-policies-and-lifecycle-rules) ·
-[Config](#config) · [GuardDuty](#guardduty)
+[Config](#config) · [GuardDuty](#guardduty) ·
+[EventBridge rules and SNS topics](#eventbridge-rules-and-sns-topics)
 
 ---
 
@@ -270,9 +271,9 @@ management account.
 CloudFormation resource does it, so `HarpguruPolicyTypes` does it through a custom resource.
 Switching them on also attaches AWS's `FullAWSAccess` policy
 everywhere, because every target needs at least one SCP; the deny policies then cut
-holes in it. `HarpguruGuardrails` attaches four to `Workloads`, each a separate policy so
+holes in it. `HarpguruGuardrails` attaches five to `Workloads`, each a separate policy so
 each is readable on its own (the limit is 10 per target, checked against AWS's quotas page on
-2026-10-14; it was once 5):
+2026-10-14 and again on 2026-11-03; it was once 5):
 - `harpguru-region-lock` denies actions outside `eu-west-2` and `us-east-1`, exempting the five
   global services in the IAM guide's example (CloudFront, IAM, Organizations, Route 53 and
   Support). The Organizations guide's version exempts far more. Most global services are
@@ -287,9 +288,12 @@ each is readable on its own (the limit is 10 per target, checked against AWS's q
   the call. It guards against accidents and credentials used outside CDK, not against the
   owner. The trail needs no such policy: it lives in the management account, where SCPs never
   apply, and member accounts can't change an org trail anyway
+- `harpguru-protect-guardduty` does the same for GuardDuty: it denies deleting or suspending a
+  detector, the filters and trusted IP lists that would silence it, and changing the rule and
+  topic that email its findings, again except to CDK's deploys
 
 How SCPs are switched on is in [Custom resources](#custom-resources).
-*(PRs `1-org-accounts`, `1-scp-custom-resource`, `1-config`)*
+*(PRs `1-org-accounts`, `1-scp-custom-resource`, `1-config`, `1-guardduty`)*
 
 **Say it:** "An action is only allowed if IAM allows it and no SCP denies it. An explicit deny
 anywhere wins."
@@ -297,7 +301,7 @@ anywhere wins."
 **See it:** `aws organizations list-roots --query 'Roots[0].PolicyTypes'` is empty until SCPs
 are switched on, which they have been since 2026-10-22.
 `aws organizations list-policies --filter SERVICE_CONTROL_POLICY --query 'Policies[].Name'`
-lists the five SCPs, `FullAWSAccess` included, and
+lists the six SCPs, `FullAWSAccess` included, and
 `aws organizations describe-policy --policy-id <id> --query Policy.Content --output text | jq`
 shows one policy exactly as written in `lib/guardrails-stack.ts`.
 To watch the region lock refuse a call from inside the workload account:
@@ -744,7 +748,8 @@ Lambda: less code, nothing to patch, and the permission is exactly that one acti
 
 ### Audit and detection
 
-SCPs **prevent**. The three services below **record and detect**.
+SCPs **prevent**. The three services below **record and detect**, and the last entry is how
+GuardDuty's findings reach a person.
 
 #### CloudTrail
 
@@ -847,8 +852,11 @@ in London and `us-east-1`. The management account is watched too, because it hol
 Organization and the login. The detectors are **standalone**: with two accounts, letting one
 account manage GuardDuty for the Organization, a **delegated administrator**, adds more than
 it saves. The protection plans are left to GuardDuty's defaults, and have nothing to scan yet.
-Each detector is free for its first 30 days, then pennies at this volume. GuardDuty creates its
-own service-linked role. *(PR `1-guardduty`)*
+Each detector emails its findings, as in
+[EventBridge rules and SNS topics](#eventbridge-rules-and-sns-topics), and in the workload
+account the `harpguru-protect-guardduty` SCP stops anyone but a CDK deploy from suspending or
+silencing it. Each detector is free for its first 30 days, then pennies at
+this volume. GuardDuty creates its own service-linked role. *(PR `1-guardduty`)*
 
 **Say it:** "Prevention with SCPs, detection with GuardDuty; you want both, because
 prevention is never complete."
@@ -857,3 +865,28 @@ prevention is never complete."
 detector's ID; `aws guardduty get-detector --detector-id <id> --region us-east-1 --profile harpguru`
 shows which protection plans are on, and `aws guardduty list-findings --detector-id <id>` lists
 what it has raised.
+
+#### EventBridge rules and SNS topics
+
+**What:** AWS services announce what happens in an account as **events** on its default
+**event bus**, in each region. An EventBridge **rule** matches events by a pattern, such as
+"every GuardDuty finding", and sends each match to a **target**, optionally reshaped by an
+**input transformer**. An SNS **topic** is a named channel that copies each message to its
+**subscriptions**: email, SMS, a queue or a function. An email subscription only receives once
+its owner clicks the link in a confirmation email.
+
+**Here:** step 4c's `GuardDutyStack` has a rule, `harpguru-guardduty-findings`, that turns each
+finding into a few readable lines and sends them to a topic of the same name, which emails the
+budget's address. GuardDuty only sends to the bus in its own account and region, so there are
+four of each. The topic's policy lets EventBridge publish only for that rule, conditioned on
+`aws:SourceArn`; CDK's default lets EventBridge publish for any rule, in any account. AWS
+services' events on the default bus are free, as are the first thousand emails a month.
+*(PR `1-guardduty`)*
+
+**Say it:** "Detection nobody reads is no detection: route findings to a person, with a rule
+on the event bus, rather than waiting for someone to open the console."
+
+**See it:** `aws events describe-rule --name harpguru-guardduty-findings --profile harpguru`,
+`aws events list-targets-by-rule --rule harpguru-guardduty-findings --profile harpguru`, and
+`aws sns list-subscriptions --profile harpguru --query 'Subscriptions[].[TopicArn,Protocol,SubscriptionArn]'`,
+where a `SubscriptionArn` of `PendingConfirmation` hasn't been clicked yet.

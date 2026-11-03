@@ -26,7 +26,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | **merged**, imported and deployed 2026-10-22 | — |
 | 4a | `1-org-trail`: the Organization trail and its bucket, in `HarpguruTrail` | **merged** and deployed 2026-10-30 | — |
 | 4b | `1-config`: Config recorders in the workload account, and the SCP that protects them | **merged** and deployed 2026-10-30, after a first deploy rolled back; both regions' history files confirmed 2026-11-03 | — |
-| 4c | `1-guardduty`: GuardDuty detectors in both accounts, both regions | coded on the branch | *you*: bootstrap the management account in `us-east-1`, then diff and deploy |
+| 4c | `1-guardduty`: GuardDuty detectors in both accounts, both regions, emailing their findings, and the SCP that protects them | coded on the branch | *you*: bootstrap the management account in `us-east-1`, then diff and deploy |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **done**: zone deployed 2026-10-26; switch made and mail tested 2026-10-27 | — |
 | 6a | `1-mail-canary`: a weekly pair of messages showing `contact@` still forwards, in `HarpguruMailCanary` | **merged** and deployed 2026-10-27; first pair arrived 2026-10-28 | — |
@@ -35,7 +35,7 @@ Update this table in the PR that moves a row. **You** means the user.
 
 **Next up, as of 2026-11-03:**
 1. #4c: bootstrap the management account in `us-east-1`, then diff and deploy the four
-   GuardDuty stacks; #4c says how.
+   GuardDuty stacks and the guardrails; #4c says how.
 2. Then #7, which is unblocked.
 
 ## Accounts
@@ -324,8 +324,8 @@ Done 2026-10-30, after the clear-up, which is logged in `docs/outside-cdk.md`. W
 - **The management account needs `cdk bootstrap` in `us-east-1` first** (*you*). It has only
   `eu-west-2` so far.
 
-Built as one `GuardDutyStack`, holding a single `AWS::GuardDuty::Detector`, deployed four times,
-each termination protected, since deleting a detector deletes its findings:
+Built as one `GuardDutyStack`, deployed four times, each termination protected, since deleting
+a detector deletes its findings:
 
 | Stack | Account | Region | Deployed with |
 |---|---|---|---|
@@ -334,21 +334,51 @@ each termination protected, since deleting a detector deletes its findings:
 | `HarpguruGuardDutyWorkload` | workload | `eu-west-2` | `--profile harpguru` |
 | `HarpguruGuardDutyWorkloadEdge` | workload | `us-east-1` | `--profile harpguru` |
 
+Each holds:
+- **The detector**, `AWS::GuardDuty::Detector`. The protection plans are left to GuardDuty, so
+  they aren't in the template and **the diff can't show them**; which ones came on is checked
+  after the deploy instead, with `aws guardduty get-detector`. None has anything to scan yet:
+  there is no EC2, EKS, RDS or Lambda, and the S3 buckets see a few writes a day.
+- **An email for every finding** (added at the user's request, see Decisions): an EventBridge
+  rule, `harpguru-guardduty-findings`, matching every GuardDuty finding in that account and
+  region, of any severity, and sending a few readable lines to an SNS topic of the same name,
+  subscribed to the budget's `alertEmail`. A finding seen again is sent again, at most every six
+  hours, GuardDuty's default. GuardDuty sends findings to EventBridge only in its own account
+  and region, hence four rules and four topics, and **four subscriptions to confirm** by email.
+  The topic lets EventBridge publish only for that rule, by `aws:SourceArn`; CDK's own statement
+  allows any rule in any account. The subscription is made without CDK's `EmailSubscription`,
+  which builds its logical ID from the address and so would print it in every diff.
+
+And `HarpguruGuardrails` gains **`harpguru-protect-guardduty`**, a fifth SCP on `Workloads`, so
+the workload account's detectors and alerts can only be changed by a CDK deploy, with the same
+exemption as `harpguru-protect-config`. It denies deleting or updating the detector, which is
+how one is suspended; creating or updating filters and trusted IP lists, the two ways to
+silence findings without touching the detector; and deleting, disabling or retargeting the rule,
+deleting or re-policying the topic, and unsubscribing from it. It doesn't cover the
+unsubscribe link in each email, which needs no credentials, nor archiving a finding by hand.
+The management account's two stacks have no such guard: SCPs never apply there. An OU may have
+ten SCPs attached; `Workloads` now has six, `FullAWSAccess` included.
+
 `managementEnv()` takes a region now, as `workloadEnv()` does. Checked before the branch, on
 2026-11-03: no detector in either account or region, no `AWSServiceRoleForAmazonGuardDuty` in
-the management account, and its London bootstrap untagged, version 32.
+the management account, its London bootstrap untagged, version 32, and five SCPs on
+`Workloads`.
 
-The protection plans are left to GuardDuty, so they aren't in the template and **the diff
-can't show them**; which ones came on is checked after the deploy instead, with
-`aws guardduty get-detector`. None has anything to scan yet: there is no EC2, EKS, RDS or
-Lambda, and the S3 buckets see a few writes a day.
-
-Steps (*you*):
-1. Signed in to the management account: `cd /app/infra && npx cdk bootstrap aws://$(aws sts get-caller-identity --query Account --output text)/us-east-1 --tags project=harpguru --tags repository=harpguru-cloud --tags managed-by=cdk`
-2. `npx cdk diff HarpguruGuardDutyManagement HarpguruGuardDutyManagementEdge`, then
-   `npx cdk deploy HarpguruGuardDutyManagement HarpguruGuardDutyManagementEdge --require-approval never`
-3. `npx cdk diff HarpguruGuardDutyWorkload HarpguruGuardDutyWorkloadEdge --profile harpguru`,
-   then the same `deploy` with `--profile harpguru`.
+Doing it, all *you*, from `/app/infra`. GuardDuty first, then the SCP, as with Config, so the
+SCP can't get in the way of the first deploy if its exemption were wrong:
+1. Signed in to the management account: `npx cdk bootstrap aws://$(aws sts get-caller-identity --query Account --output text)/us-east-1 --tags project=harpguru --tags repository=harpguru-cloud --tags managed-by=cdk`
+2. `npx cdk diff HarpguruGuardDutyManagement HarpguruGuardDutyManagementEdge`: each all `[+]`, a
+   detector, a topic, its policy, a subscription and a rule. Then
+   `npx cdk deploy HarpguruGuardDutyManagement HarpguruGuardDutyManagementEdge --require-approval never`.
+3. The same two commands for `HarpguruGuardDutyWorkload HarpguruGuardDutyWorkloadEdge`, with
+   `--profile harpguru`.
+4. Confirm the four subscriptions from the emails, each headed "AWS Notification -
+   Subscription Confirmation".
+5. `npx cdk diff HarpguruGuardrails`, signed in to the management account: one new `[+]`
+   policy, `harpguru-protect-guardduty`, attached to `Workloads`, and nothing else changed.
+   Then `npx cdk deploy HarpguruGuardrails --exclusively --require-approval never`.
+6. The agent checks the detectors, their plans, the subscriptions and the SCP, which
+   `aws iam simulate-principal-policy` can test without attempting the calls.
 
 **5 · you: bootstrap.** `cdk bootstrap` for the workload account in **both** `eu-west-2` and
 `us-east-1`. The certificate stack lives in `us-east-1`, which is easy to miss.
@@ -614,6 +644,10 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
   mail server address is a fixed value in our zone, and a stale one would fail silently. SES
   and EventBridge Scheduler, with no Lambda, and SES left in its sandbox. Not in the roadmap,
   which it doesn't change: it is an operational check, not a product feature.
+- 2026-11-03: **GuardDuty emails every finding, and a fifth SCP protects it**, both proposed by
+  the agent and accepted by the user. Without the email, findings wait in the console for
+  someone to look; without the SCP, the workload account's detectors could be suspended or
+  silenced by anyone signed in. Easy to revisit: both are in their own resources.
 - 2026-10-30: **Config uses its service-linked role and one bucket, in London, for both
   regions**, with files kept for a year like the trail's. Proposed by the agent: the role is
   maintained by AWS, and a second bucket would hold nothing different. Easy to revisit: both

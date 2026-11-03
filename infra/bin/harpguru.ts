@@ -92,17 +92,21 @@ new TrailStack(app, 'HarpguruTrail', {
 })
 
 // GuardDuty in the management account, in both regions, since it holds the
-// Organization and the login. Protected, like the other audit stacks:
-// deleting a detector deletes its findings.
+// Organization and the login, each emailing its findings to the budget's
+// address. Protected, like the other audit stacks: deleting a detector
+// deletes its findings. SCPs never reach this account, so nothing guards
+// these two but the login.
 new GuardDutyStack(app, 'HarpguruGuardDutyManagement', {
   env: managementEnv(),
   description: 'GuardDuty in the management account, in London',
   terminationProtection: true,
+  alertEmail: requireSetting(config, 'alertEmail'),
 })
 new GuardDutyStack(app, 'HarpguruGuardDutyManagementEdge', {
   env: managementEnv(EDGE_REGION),
   description: 'GuardDuty in the management account, in us-east-1',
   terminationProtection: true,
+  alertEmail: requireSetting(config, 'alertEmail'),
 })
 
 // From here on, stacks live in the workload account, pinned to its ID: deploy
@@ -140,15 +144,17 @@ const configEdge = new ConfigStack(app, 'HarpguruConfigEdge', {
 })
 configEdge.addStackDependency(configLondon)
 
-// GuardDuty in the workload account, in both regions. Protected, like the
-// management account's.
+// GuardDuty in the workload account, in both regions, as above. Here the
+// harpguru-protect-guardduty SCP also guards the detector and its alert.
 new GuardDutyStack(app, 'HarpguruGuardDutyWorkload', {
   env: workloadEnv(config),
   description: 'GuardDuty in the workload account, in London',
   terminationProtection: true,
+  alertEmail: requireSetting(config, 'alertEmail'),
 })
 new GuardDutyStack(app, 'HarpguruGuardDutyWorkloadEdge', {
   env: workloadEnv(config, EDGE_REGION),
   description: 'GuardDuty in the workload account, in us-east-1',
   terminationProtection: true,
+  alertEmail: requireSetting(config, 'alertEmail'),
 })

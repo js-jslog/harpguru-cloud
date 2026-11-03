@@ -5,6 +5,7 @@ import {
   GuardrailsStack,
   SCPS,
 } from '../lib/guardrails-stack'
+import { FINDINGS_ALERT_NAME } from '../lib/guardduty-stack'
 import { applyProjectTags, PROJECT_TAGS } from '../lib/tags'
 import { appWithFlags } from './app'
 
@@ -24,9 +25,10 @@ test('the Workloads OU sits directly under the root', () => {
   })
 })
 
-test('there are exactly four SCPs, all attached to the OU', () => {
+// Five, with FullAWSAccess, of the ten an OU may have.
+test('there are exactly five SCPs, all attached to the OU', () => {
   const template = synth()
-  template.resourceCountIs('AWS::Organizations::Policy', 4)
+  template.resourceCountIs('AWS::Organizations::Policy', 5)
   for (const name of Object.keys(SCPS)) {
     template.hasResourceProperties('AWS::Organizations::Policy', {
       Name: name,
@@ -71,6 +73,37 @@ test("Config can't be stopped, narrowed or redirected, except by CDK's deploys",
   expect(CDK_EXEC_ROLE_PATTERN).toBe(
     'arn:aws:iam::*:role/cdk-hnb659fds-cfn-exec-role-*'
   )
+})
+
+test("GuardDuty can't be deleted, suspended or silenced, except by CDK's deploys", () => {
+  const [detector, alert] = SCPS['harpguru-protect-guardduty'].content.Statement
+  expect(detector.Action).toEqual(
+    expect.arrayContaining([
+      'guardduty:DeleteDetector',
+      'guardduty:UpdateDetector',
+      'guardduty:CreateFilter',
+      'guardduty:CreateIPSet',
+    ])
+  )
+  expect(alert.Action).toEqual(
+    expect.arrayContaining([
+      'events:DeleteRule',
+      'events:DisableRule',
+      'events:RemoveTargets',
+      'sns:DeleteTopic',
+      'sns:Unsubscribe',
+    ])
+  )
+  expect(alert.Resource).toEqual([
+    `arn:aws:events:*:*:rule/${FINDINGS_ALERT_NAME}`,
+    `arn:aws:sns:*:*:${FINDINGS_ALERT_NAME}`,
+    `arn:aws:sns:*:*:${FINDINGS_ALERT_NAME}:*`,
+  ])
+  for (const statement of [detector, alert]) {
+    expect(statement.Condition).toEqual({
+      ArnNotLike: { 'aws:PrincipalArn': CDK_EXEC_ROLE_PATTERN },
+    })
+  }
 })
 
 test('every SCP only denies; none grants anything', () => {
