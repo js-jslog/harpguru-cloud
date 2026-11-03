@@ -812,12 +812,15 @@ London and `us-east-1`, each with a **configuration recorder** (what to record) 
 **delivery channel** (where to send it), both named `default`; there can be one of each per
 region. Recording is **daily** rather than continuous: Config charges for each configuration
 item it records, and a daily item is written only if the resource changed that day. Both
-deliver to one bucket in London. IAM's resources are the same in every region, so only London
-records them. Route 53 zones and CloudFront distributions are recorded only in `us-east-1`,
-which is one reason to record there at all. The `harpguru-protect-config` SCP stops anyone but
-a CDK deploy from turning it off. The first deploy deadlocked: CloudFormation doesn't count a
-recorder as created until it is recording, which needs the channel, so the channel mustn't be
-made to wait for the recorder. *(PR `1-config`)*
+deliver to one bucket in London. IAM's users, groups, roles and policies are the same in every
+region, so only London records them. Route 53 zones and CloudFront distributions are recorded
+only in `us-east-1`, which is one reason to record there at all. So, it turned out, is the SAML
+provider that Identity Center made in IAM, which the switch for global types doesn't cover. The
+first history files, seen on 2026-11-03, showed both regions delivering and the hosted zone in
+`us-east-1` only. The `harpguru-protect-config` SCP stops anyone but a CDK deploy from turning
+it off. The first deploy deadlocked: CloudFormation doesn't count a recorder as created until
+it is recording, which needs the channel, so the channel mustn't be made to wait for the
+recorder. *(PR `1-config`)*
 
 **Say it:** "CloudTrail tells you who did it; Config tells you what the resource looked like
 before and after."

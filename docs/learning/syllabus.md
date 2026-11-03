@@ -1,6 +1,6 @@
 # Syllabus
 
-**As of 2026-10-30.** Covers Phase A steps 0–6a, except step 4c: the SSO login, the CDK app
+**As of 2026-11-03.** Covers Phase A steps 0–6a, except step 4c: the SSO login, the CDK app
 skeleton, the $10 budget, and the workload account with its OU and guardrails, including step
 3a, which switches SCPs on through a custom resource, and step 3b, which imported the
 console-made permission set into a stack and listed everything CDK doesn't manage. Step 1 is the
@@ -17,8 +17,8 @@ pair of messages arrived on 2026-10-28.
 Steps 4a and 4b are **merged and deployed**, both on 2026-10-30: the Organization trail,
 `HarpguruTrail`, in the management account; and Config in the workload account, in two regions,
 with a fourth SCP that protects it. Config's first deploy rolled back and was retried the same
-day. One thing about it is still open: its first history files hadn't arrived when this was
-written, though the `us-east-1` channel had already written a check file to the London bucket.
+day. Its first history files, from both regions, were confirmed on 2026-11-03, with the hosted
+zone found in `us-east-1` only.
 So the Organization really does hold the `Workloads` OU with four SCPs, the `harpguru` workload
 account, a trail over both accounts, and Config recording daily. The status table in
 `docs/plans/phase-a.md` says the same. Step 4c, GuardDuty, and steps 7 and 8 are not started;
@@ -277,17 +277,18 @@ in the README, and the tiering here is a proposal, to be argued with.
 - **Why must own:** the SCP's exemption is a security design whose limits I should state
   unprompted, and daily recording is a cost decision against the service most likely to creep.
 - **Be able to answer:** what Config records that CloudTrail doesn't; why daily rather than
-  continuous recording, and what that changes about cost; why two regions, why IAM is recorded
-  only in London, and what only `us-east-1` can record; why one bucket, and how the `us-east-1`
-  stack finds it; what the SCP denies, whom it exempts and how, and therefore what it doesn't
+  continuous recording, and what that changes about cost; why two regions, why IAM's roles are
+  recorded only in London, and what only `us-east-1` can record; why one bucket, and how the
+  `us-east-1` stack finds it; what the SCP denies, whom it exempts and how, and therefore what it doesn't
   protect against; why the trail needs no such SCP; how the SCP was shown to work without trying
-  to stop a recorder; what was still open after the deploy, and what evidence there already is.
+  to stop a recorder; how the first history files showed both regions delivering, and what
+  they showed `us-east-1` records that London doesn't.
 - **Sources:** `docs/aws-concepts.md` "Config" and "Service Control Policy (SCP)";
   `docs/plans/phase-a.md` "Steps" (item 4b) and "Decisions" (the 2026-10-14 entry about the
   CloudTrail/Config SCP, and the 2026-10-30 entry); `infra/lib/config-stack.ts`;
   `infra/lib/guardrails-stack.ts`; `infra/test/guardrails-stack.test.ts`;
   `roadmap-planning/aws-pathway-findings.md` "Step 4b deployed: Config in the workload account,
-  2026-10-30".
+  2026-10-30" and "Config's first history files, checked 2026-11-03".
 
 ---
 
