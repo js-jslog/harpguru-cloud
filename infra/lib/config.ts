@@ -2,8 +2,9 @@ import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import type { Environment } from 'aws-cdk-lib'
 
-// Everything lives in London, except what CloudFront insists on: its
-// certificates must be issued in us-east-1.
+// Everything lives in London, except what only us-east-1 can do: CloudFront's
+// certificates are issued there, Config records Route 53 and CloudFront there,
+// and GuardDuty, which watches one region at a time, needs a detector there.
 export const PRIMARY_REGION = 'eu-west-2'
 export const EDGE_REGION = 'us-east-1'
 

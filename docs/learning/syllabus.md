@@ -21,7 +21,8 @@ day. Its first history files, from both regions, were confirmed on 2026-11-03, w
 zone found in `us-east-1` only. Step 4c is **merged and deployed**, on 2026-11-05: a GuardDuty
 detector in each account and both regions, each emailing its findings, and a fifth SCP that
 protects the workload account's. A sample finding's email was seen to arrive the same day.
-So the Organization really does hold the `Workloads` OU with five SCPs, the `harpguru` workload
+So the Organization really does hold the `Workloads` OU with five SCPs of ours, six with
+`FullAWSAccess`, the `harpguru` workload
 account, a trail over both accounts, Config recording daily, and GuardDuty watching both
 accounts. The status table in `docs/plans/phase-a.md` says the same. Steps 7 and 8 are not
 started; see the last section.
