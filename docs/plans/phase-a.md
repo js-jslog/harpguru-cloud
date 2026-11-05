@@ -404,8 +404,14 @@ Done 2026-11-05. What it showed:
   the rule, and `sns:DeleteTopic` and `SetTopicAttributes` on the topic are all `explicitDeny`,
   not allowed by Organizations; `guardduty:GetDetector` and `ArchiveFindings` are allowed, as is
   `events:DisableRule` on any other rule. For CDK's execution role, all are allowed.
-- Not done: a sample finding, to see an email arrive. `aws guardduty create-sample-findings`
-  would make one; it is the owner's call.
+- **A finding reaches the inbox, or rather spam.** The owner made one sample finding in the
+  workload account's London detector at 21:51 UTC, with
+  `aws guardduty create-sample-findings --detector-id <id> --finding-types Recon:EC2/PortProbeUnprotectedPort --profile harpguru`.
+  Its email arrived, in the format the rule writes, and in spam again, though earlier messages
+  from that sender had been marked not spam in the owner's mail app. To be fixed in Yahoo's own
+  web client; until then, findings must be looked for in spam. A sample's title has no
+  "[SAMPLE]" in it: GuardDuty marks samples in `Service.AdditionalInfo`, which the email leaves
+  out. It stays in the detector's findings, at severity 2, until archived.
 
 **5 · you: bootstrap.** `cdk bootstrap` for the workload account in **both** `eu-west-2` and
 `us-east-1`. The certificate stack lives in `us-east-1`, which is easy to miss.
