@@ -78,7 +78,7 @@ test("the address isn't in any logical ID, so it stays out of diffs", () => {
   expect(ids).not.toMatch(/alerts|example/)
 })
 
-// The stack holds the detector alone; its service-linked role is GuardDuty's.
+// GuardDuty's service-linked roles are its own, and nothing else needs one.
 test('the stack makes no IAM role of its own', () => {
   template.resourceCountIs('AWS::IAM::Role', 0)
   template.resourceCountIs('AWS::IAM::ServiceLinkedRole', 0)

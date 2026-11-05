@@ -20,15 +20,16 @@ export type GuardDutyStackProps = StackProps & {
 
 // GuardDuty in one account and one region: a detector, which reads that
 // region's CloudTrail management events, DNS queries and VPC flow logs
-// straight from AWS's side, without either being switched on here, and
+// straight from AWS's side, without any of them being switched on here, and
 // raises findings about what looks like an attack. Four of these, one per
 // account per region, decided 2026-10-27: standalone, because a delegated
 // administrator only earns its keep with more accounts than two.
 //
 // The optional protection plans are left to GuardDuty's defaults, so they
 // aren't in the template or the diff; the plan's step 4c records which were
-// on after the deploy. GuardDuty creates its own service-linked role,
-// AWSServiceRoleForAmazonGuardDuty, with the first detector in an account.
+// on after the deploy. GuardDuty creates its own service-linked roles,
+// AWSServiceRoleForAmazonGuardDuty and one for malware protection, with the
+// first detector in an account.
 export class GuardDutyStack extends Stack {
   constructor(scope: Construct, id: string, props: GuardDutyStackProps) {
     super(scope, id, props)

@@ -25,7 +25,7 @@ test('the Workloads OU sits directly under the root', () => {
   })
 })
 
-// Five, with FullAWSAccess, of the ten an OU may have.
+// Five of ours, six with FullAWSAccess, of the ten an OU may have.
 test('there are exactly five SCPs, all attached to the OU', () => {
   const template = synth()
   template.resourceCountIs('AWS::Organizations::Policy', 5)

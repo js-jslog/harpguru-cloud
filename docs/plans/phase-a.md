@@ -26,7 +26,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | **merged**, imported and deployed 2026-10-22 | — |
 | 4a | `1-org-trail`: the Organization trail and its bucket, in `HarpguruTrail` | **merged** and deployed 2026-10-30 | — |
 | 4b | `1-config`: Config recorders in the workload account, and the SCP that protects them | **merged** and deployed 2026-10-30, after a first deploy rolled back; both regions' history files confirmed 2026-11-03 | — |
-| 4c | `1-guardduty`: GuardDuty detectors in both accounts, both regions, emailing their findings, and the SCP that protects them | **deployed** 2026-11-05, from the branch; all four subscriptions confirmed | — |
+| 4c | `1-guardduty`: GuardDuty detectors in both accounts, both regions, emailing their findings, and the SCP that protects them | **merged** and deployed 2026-11-05; all four subscriptions confirmed | — |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **done**: zone deployed 2026-10-26; switch made and mail tested 2026-10-27 | — |
 | 6a | `1-mail-canary`: a weekly pair of messages showing `contact@` still forwards, in `HarpguruMailCanary` | **merged** and deployed 2026-10-27; first pair arrived 2026-10-28 | — |
@@ -34,7 +34,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
 
 **Next up, as of 2026-11-05:**
-1. Merge `1-guardduty`, then refresh the learning companion for #4c.
+1. Refresh the learning companion for #4c, which `1-guardduty` didn't.
 2. Then #7, which is unblocked.
 
 ## Accounts
@@ -318,10 +318,10 @@ Done 2026-10-30, after the clear-up, which is logged in `docs/outside-cdk.md`. W
   holds the Organization and the login, so it is watched too. Free for 30 days, then pennies.
 - Standalone detectors, not GuardDuty managed through Organizations with a delegated
   administrator, which earns its keep with more than two accounts.
-- Optional protection plans are left at their defaults unless the diff shows one with a cost
-  worth questioning.
-- **The management account needs `cdk bootstrap` in `us-east-1` first** (*you*). It has only
-  `eu-west-2` so far.
+- Optional protection plans are left at their defaults unless one, seen after the deploy, has a
+  cost worth questioning.
+- **The management account needs `cdk bootstrap` in `us-east-1` first** (*you*). It had only
+  `eu-west-2`. Done 2026-11-05.
 
 Built as one `GuardDutyStack`, deployed four times, each termination protected, since deleting
 a detector deletes its findings:
@@ -338,7 +338,7 @@ Each holds:
   they aren't in the template and **the diff can't show them**; which ones came on is checked
   after the deploy instead, with `aws guardduty get-detector`. None has anything to scan yet:
   there is no EC2, EKS, RDS or Lambda, and the S3 buckets see a few writes a day.
-- **An email for every finding** (added at the user's request, see Decisions): an EventBridge
+- **An email for every finding** (added 2026-11-03, see Decisions): an EventBridge
   rule, `harpguru-guardduty-findings`, matching every GuardDuty finding in that account and
   region, of any severity, and sending a few readable lines to an SNS topic of the same name,
   subscribed to the budget's `alertEmail`. A finding seen again is sent again, at most every six
@@ -365,7 +365,7 @@ the management account, its London bootstrap untagged, version 32, and five SCPs
 
 Doing it, all *you*, from `/app/infra`. GuardDuty first, then the SCP, as with Config, so the
 SCP can't get in the way of the first deploy if its exemption were wrong:
-1. Signed in to the management account: `npx cdk bootstrap aws://$(aws sts get-caller-identity --query Account --output text)/us-east-1 --tags project=harpguru --tags repository=harpguru-cloud --tags managed-by=cdk`
+1. Signed in to the management account: `A=$(aws sts get-caller-identity --query Account --output text) && npx cdk bootstrap aws://$A/us-east-1 -t project=harpguru -t repository=harpguru-cloud -t managed-by=cdk`
 2. `npx cdk diff HarpguruGuardDutyManagement HarpguruGuardDutyManagementEdge`: each all `[+]`, a
    detector, a topic, its policy, a subscription and a rule. Then
    `npx cdk deploy HarpguruGuardDutyManagement HarpguruGuardDutyManagementEdge --require-approval never`.
@@ -380,9 +380,10 @@ SCP can't get in the way of the first deploy if its exemption were wrong:
    `aws iam simulate-principal-policy` can test without attempting the calls.
 
 Done 2026-11-05. What it showed:
-- The bootstrap needed one retry: the first command was cut off after a trailing `--tags`, so
-  CDK printed its help and made nothing. `CDKToolkit` in `us-east-1` is version 32, like London's,
-  and carries the project's three tags, which London's lacks.
+- The bootstrap needed one retry: the first command, with `--tags` spelt out, was cut off after
+  one, so CDK printed its help and made nothing. Step 1 is the shorter form that worked.
+  `CDKToolkit` in `us-east-1` is version 32, like London's, and carries the project's three tags,
+  which London's lacks.
 - Every diff was as above: five `[+]` resources a stack, the one `sns:Publish` statement with its
   `aws:SourceArn` condition, and for `HarpguruGuardrails` one `[+]` policy, with
   `HarpguruPolicyTypes` included and unchanged. Each pair of GuardDuty stacks took about 170
@@ -390,8 +391,9 @@ Done 2026-11-05. What it showed:
 - **All four detectors are `ENABLED`, with the same defaults**: CloudTrail, DNS and flow logs,
   S3 data events, EKS audit logs, EBS malware protection, RDS login events and Lambda network
   logs on; Runtime Monitoring, EKS Runtime Monitoring, AI Protection and AI Analyst off.
-  A new finding goes to EventBridge within minutes; a repeat of one, every six hours. None of the plans that came on has anything here to
-  scan but S3, so none is worth questioning. No findings yet.
+  A new finding goes to EventBridge within minutes; a repeat of one, every six hours. None of
+  the plans that came on has anything here to scan but S3, so none is worth questioning. No
+  findings yet.
 - GuardDuty made **two** service-linked roles in each account, `AWSServiceRoleForAmazonGuardDuty`
   and `AWSServiceRoleForAmazonGuardDutyMalwareProtection`, the second for EBS malware protection.
   Logged in `docs/outside-cdk.md`.
