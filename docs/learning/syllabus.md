@@ -1,6 +1,6 @@
 # Syllabus
 
-**As of 2026-11-03.** Covers Phase A steps 0–6a, except step 4c: the SSO login, the CDK app
+**As of 2026-11-05.** Covers Phase A steps 0–6a: the SSO login, the CDK app
 skeleton, the $10 budget, and the workload account with its OU and guardrails, including step
 3a, which switches SCPs on through a custom resource, and step 3b, which imported the
 console-made permission set into a stack and listed everything CDK doesn't manage. Step 1 is the
@@ -18,14 +18,16 @@ Steps 4a and 4b are **merged and deployed**, both on 2026-10-30: the Organizatio
 `HarpguruTrail`, in the management account; and Config in the workload account, in two regions,
 with a fourth SCP that protects it. Config's first deploy rolled back and was retried the same
 day. Its first history files, from both regions, were confirmed on 2026-11-03, with the hosted
-zone found in `us-east-1` only.
-So the Organization really does hold the `Workloads` OU with four SCPs, the `harpguru` workload
-account, a trail over both accounts, and Config recording daily. The status table in
-`docs/plans/phase-a.md` says the same. Step 4c, GuardDuty, and steps 7 and 8 are not started;
-see the last section.
+zone found in `us-east-1` only. Step 4c is **merged and deployed**, on 2026-11-05: a GuardDuty
+detector in each account and both regions, each emailing its findings, and a fifth SCP that
+protects the workload account's. A sample finding's email was seen to arrive the same day.
+So the Organization really does hold the `Workloads` OU with five SCPs, the `harpguru` workload
+account, a trail over both accounts, Config recording daily, and GuardDuty watching both
+accounts. The status table in `docs/plans/phase-a.md` says the same. Steps 7 and 8 are not
+started; see the last section.
 
-**Priority now: topics 11 and 12**, the trail and Config, which watch the accounts. Then
-topics 9 and 10 if they are still shaky.
+**Priority now: topic 13**, GuardDuty, the newest. Then topics 11 and 12, the trail and Config,
+if they are still shaky.
 
 Each topic gives its tier and why, what I should be able to answer, and its sources. The
 sources hold the facts; this file deliberately does not restate them. Sources are named by
@@ -88,8 +90,9 @@ in the README, and the tiering here is a proposal, to be argued with.
 ### 4. The account structure and its guardrails
 
 - **Covers:** what step 3 built and deployed: the Organization, a member account for the
-  workload, the OU it sits in, and the SCPs on that OU: three from step 3, and a fourth from
-  step 4b, which is topic 12's. Also what SCP, OU and ARN stand for.
+  workload, the OU it sits in, and the SCPs on that OU: three from step 3, a fourth from step
+  4b, which is topic 12's, and a fifth from step 4c, which is topic 13's. Also what SCP, OU and
+  ARN stand for.
 - **Why must own:** keeping workloads out of the management account is a security property, and
   the SCPs are the guardrails I will rely on without seeing them work day to day.
 - **Be able to answer:** what SCP and OU stand for, and what each is; why the workload goes in a
@@ -290,11 +293,39 @@ in the README, and the tiering here is a proposal, to be argued with.
   `roadmap-planning/aws-pathway-findings.md` "Step 4b deployed: Config in the workload account,
   2026-10-30" and "Config's first history files, checked 2026-11-03".
 
+### 13. GuardDuty: detection that reaches a person
+
+- **Covers:** step 4c: a standalone GuardDuty detector in each account, in London and
+  `us-east-1`; an email for every finding, through an EventBridge rule and an SNS topic; and
+  `harpguru-protect-guardduty`, the SCP that stops anyone but a CDK deploy from switching the
+  workload account's off or silencing it.
+- **Why must own:** it is the detection half of the account's security, beside the SCPs'
+  prevention, and it is built from choices I should defend unprompted: which accounts are
+  watched, how findings reach me, and what the SCP leaves open.
+- **Be able to answer:** what GuardDuty reads, and why none of those logs had to be switched on;
+  what a detector and a finding are; why both accounts, the management account included, and
+  both regions; why standalone detectors rather than a delegated administrator; why the
+  protection plans were left to GuardDuty, why the diff couldn't show them, which came on, and
+  which of them has anything to scan here; why every finding is emailed, at every severity, and
+  why that takes four rules, four topics and four confirmations; how often a repeat of a finding
+  is sent; what the SCP denies, including the two ways to silence GuardDuty without touching the
+  detector, and what it doesn't cover; why it is a policy of its own, and how many an OU may
+  have; why GuardDuty was deployed before the SCP; how the SCP and the email were each shown to
+  work, why each sample finding needed a new type, and what the spam folder taught; what it
+  costs.
+- **Sources:** `docs/aws-concepts.md` "GuardDuty", "EventBridge rules and SNS topics" and
+  "Service Control Policy (SCP)"; `docs/plans/phase-a.md` "Steps" (item 4c) and "Decisions" (the
+  2026-10-27 entry about GuardDuty in both accounts, and the 2026-11-03 entry);
+  `infra/lib/guardduty-stack.ts`; `infra/lib/guardrails-stack.ts`;
+  `infra/test/guardrails-stack.test.ts`; `docs/outside-cdk.md`;
+  `roadmap-planning/aws-pathway-findings.md` "Step 4c deployed: GuardDuty in both accounts,
+  2026-11-05".
+
 ---
 
 ## Should understand
 
-### 13. Regions, environments and bootstrap
+### 14. Regions, environments and bootstrap
 
 - **Covers:** where things run, how a stack is pinned to an account and region without the
   account ID being in the code, and what bootstrap prepares.
@@ -303,20 +334,22 @@ in the README, and the tiering here is a proposal, to be argued with.
   what the two defaults kept at bootstrap mean, in particular who is in effect an admin of the
   account. Also why the workload account's stacks are pinned to an account ID kept in
   `deploy.local.json`, while the management account's follow the login; what happens when I
-  forget `--profile harpguru` for a workload stack, and which mistake is still not caught; and
-  how `HarpguruConfigEdge` is pinned to the same account in `us-east-1`.
+  forget `--profile harpguru` for a workload stack, and which mistake is still not caught; how
+  `HarpguruConfigEdge` is pinned to the same account in `us-east-1`; and why the management
+  account needed a bootstrap in `us-east-1` too, for step 4c, and how its two GuardDuty stacks
+  are placed in each region.
 - **Sources:** `docs/aws-concepts.md` "Regions", "Environments" and "CDK bootstrap";
-  `infra/lib/config.ts`; `infra/bin/harpguru.ts`; `docs/plans/phase-a.md` "Steps" (item 5)
-  and "Decisions" (the 2026-10-26 entry).
+  `infra/lib/config.ts`; `infra/bin/harpguru.ts`; `docs/plans/phase-a.md` "Steps" (items 4c
+  and 5) and "Decisions" (the 2026-10-26 entry); `docs/outside-cdk.md`.
 
-### 14. Tags and cost allocation
+### 15. Tags and cost allocation
 
 - **Covers:** tagging once at the app root, the budget's exception to it, and why a cost
   allocation tag needs activating.
 - **Sources:** `docs/aws-concepts.md` "Tags and cost allocation tags" and
   "L1 and L2 constructs"; `infra/lib/tags.ts`; `infra/lib/budget-stack.ts`.
 
-### 15. Testing infrastructure code
+### 16. Testing infrastructure code
 
 - **Covers:** what assertions against a synthesised template can and cannot prove, including a
   test that exists to stop an expensive mistake rather than to check behaviour, and tests that
@@ -325,20 +358,21 @@ in the README, and the tiering here is a proposal, to be argued with.
   cross-stack test passed while asserting an export the deployed app never used. And two tests
   added after something went wrong or nearly did: one that fails if an escape hatch lands on
   the wrong policy statement, and one forbidding the dependency that deadlocked Config's first
-  deploy.
+  deploy. And two from step 4c that check what a diff would show: that the alert's topic only
+  admits its own rule, and that the email address is in no logical ID.
 - **Sources:** `infra/README.md`; `infra/test/app.ts`; `infra/test/budget-stack.test.ts`;
   `infra/test/accounts-stack.test.ts`; `infra/test/guardrails-stack.test.ts`;
   `infra/test/policy-types-stack.test.ts`; `infra/test/trail-stack.test.ts`;
-  `infra/test/config-stack.test.ts`.
+  `infra/test/config-stack.test.ts`; `infra/test/guardduty-stack.test.ts`.
 
-### 16. Account IDs, ARNs and keeping them out of a public repo
+### 17. Account IDs, ARNs and keeping them out of a public repo
 
 - **Covers:** what an ARN is made of, why an account ID is not a secret but is still kept out,
   and how the repo avoids ever committing one.
 - **Sources:** `docs/aws-concepts.md` "Account ID and ARNs";
   `infra/README.md` "Deploy-time values"; `infra/lib/config.ts`.
 
-### 17. Three stacks, cross-stack references and deploy order
+### 18. Three stacks, cross-stack references and deploy order
 
 - **Covers:** why step 3 is three stacks; how the OU's ID gets from the guardrails to the
   accounts stack, and how that forces the guardrails to deploy first; and how the guardrails
@@ -350,7 +384,7 @@ in the README, and the tiering here is a proposal, to be argued with.
   "Apps, stacks and constructs"; `docs/plans/phase-a.md` "Decisions" and "Steps" (items 3 and
   4b); `infra/bin/harpguru.ts`; `infra/lib/config-stack.ts`.
 
-### 18. How I get into the new account
+### 19. How I get into the new account
 
 - **Covers:** the Identity Center assignment that gives my existing login access to the new
   account, the second CLI profile that uses it, and `OrganizationAccountAccessRole` as the way
@@ -359,7 +393,7 @@ in the README, and the tiering here is a proposal, to be argued with.
   "OrganizationAccountAccessRole"; `infra/lib/accounts-stack.ts`; `docs/plans/phase-a.md`
   "Steps" (item 3).
 
-### 19. SES and Scheduler, the mechanics
+### 20. SES and Scheduler, the mechanics
 
 - **Covers:** how the canary is wired: the domain and the forwarding address as SES identities,
   Easy DKIM's three records written into the zone, the universal target that calls SES's
@@ -376,21 +410,23 @@ in the README, and the tiering here is a proposal, to be argued with.
   `infra/bin/harpguru.ts`; `docs/plans/phase-a.md` "Steps" (item 6a); `docs/outside-cdk.md`
   "Workload account `harpguru`".
 
-### 20. Service principals, service-linked roles and the confused deputy
+### 21. Service principals, service-linked roles and the confused deputy
 
 - **Covers:** how an AWS service is let into my resources: a service-linked role it acts as
   inside the account, or a bucket policy granting its service principal; and the conditions
   that keep a grant to a service from being used on someone else's behalf.
-- **Why not must own:** the security decisions are topics 11 and 12's; this is the mechanism
-  under both. Know what a service-linked role is and who can change it; which ones arrived on
-  their own and which one a stack created; why Config's role can't deliver to S3, and how Config
-  delivers instead; what `aws:SourceArn` and `AWS:SourceAccount` each narrow a grant to, and
-  which bucket uses which.
-- **Sources:** `docs/aws-concepts.md` "Service-linked roles" and
-  "S3 buckets, bucket policies and lifecycle rules"; `infra/lib/config-stack.ts`;
-  `infra/lib/trail-stack.ts`; `docs/outside-cdk.md`.
+- **Why not must own:** the security decisions are topics 11, 12 and 13's; this is the
+  mechanism under them. Know what a service-linked role is and who can change it; which ones
+  arrived on their own, GuardDuty's two included, and which one a stack created; why Config's
+  role can't deliver to S3, and how Config delivers instead; what `aws:SourceArn` and
+  `AWS:SourceAccount` each narrow a grant to, and which bucket uses which; and why the
+  findings topic's grant to EventBridge needed an `aws:SourceArn` CDK didn't give it.
+- **Sources:** `docs/aws-concepts.md` "Service-linked roles",
+  "S3 buckets, bucket policies and lifecycle rules" and "EventBridge rules and SNS topics";
+  `infra/lib/config-stack.ts`; `infra/lib/trail-stack.ts`; `infra/lib/guardduty-stack.ts`;
+  `docs/outside-cdk.md`.
 
-### 21. When a deploy rolls back: Config's deadlock
+### 22. When a deploy rolls back: Config's deadlock
 
 - **Covers:** Config's first deploy on 2026-10-30, which waited nine minutes, failed and rolled
   back; how the cause was found; the fix; and the clear-up the rollback left.
@@ -405,6 +441,23 @@ in the README, and the tiering here is a proposal, to be argued with.
   `infra/test/config-stack.test.ts`; `docs/outside-cdk.md` "Changes made outside CDK";
   `roadmap-planning/aws-pathway-findings.md` "Step 4b deployed: Config in the workload account,
   2026-10-30".
+
+### 23. The findings email, the mechanics
+
+- **Covers:** how step 4c's email is wired: the EventBridge rule's pattern, the input
+  transformer that writes the message, the SNS topic and its policy, and the subscription CDK
+  makes but only I could confirm.
+- **Why not must own:** the decisions are topic 13's; this is how they are carried out. Know
+  what an event, a rule, a target and an input transformer are; why the rule matches on source
+  and detail type only; what a topic and a subscription are, and why an email subscription
+  does nothing until clicked; how the topic policy's condition was added, since CDK's own
+  statement lacks it; why the subscription is a plain `Subscription` rather than CDK's
+  `EmailSubscription`, and which test guards that; and where the four confirmations are
+  recorded.
+- **Sources:** `docs/aws-concepts.md` "EventBridge rules and SNS topics" and
+  "Change sets, stack events and logical IDs"; `infra/lib/guardduty-stack.ts`;
+  `infra/test/guardduty-stack.test.ts`; `docs/plans/phase-a.md` "Steps" (item 4c);
+  `docs/outside-cdk.md` "Changes made outside CDK".
 
 ---
 
@@ -423,7 +476,7 @@ These are worth your time if they interest you. Skipping them leaves no gap.
 
 ## Not yet built, so not for study
 
-- GuardDuty (step 4c); ACM, S3 for the site and CloudFront (steps 7 and 8); the CloudWatch alarm
+- ACM, S3 for the site and CloudFront (steps 7 and 8); the CloudWatch alarm
   that would catch the canary failing on the AWS side; and everything in phases B–F. Some of
   these already have concept entries, written ahead of the work; read them as reading ahead,
   and do not test me on them.
