@@ -53,10 +53,11 @@ the account ID, it fetches it with `aws sts get-caller-identity`.
 Organizations, CloudFront and Route 53.
 
 **Here:** almost everything runs in `eu-west-2`. **`us-east-1` is the exception**, and the
-reason the workload account was bootstrapped there too in step 5. CloudFront only accepts
-certificates issued there, so step 7's certificate stack will live there. Since step 4b,
-`HarpguruConfigEdge` does, because Config records Route 53 zones and CloudFront distributions
-only in `us-east-1`. Some billing APIs also answer only there. The org trail lives in
+reason the workload account was bootstrapped there too in step 5, and the management account
+in step 4c. CloudFront only accepts certificates issued there, so step 7's certificate stack
+will live there. Since step 4b, `HarpguruConfigEdge` does, because Config records Route 53 zones
+and CloudFront distributions only in `us-east-1`; and since step 4c, a GuardDuty stack in each
+account, because a detector only watches its own region. Some billing APIs also answer only there. The org trail lives in
 London but records every region, refused calls included.
 
 **Say it:** "Most of the stack is in London, but the CloudFront certificate has to be in
@@ -235,10 +236,12 @@ The service defines what it may do, and only the service can change it. You can 
 delete one, but not edit it. SCPs don't apply to them.
 
 **Here:** most arrived on their own: Organizations', Identity Center's and CloudTrail's, the
-last in both accounts, made by the org trail. `HarpguruConfig` creates Config's,
+last in both accounts, made by the org trail; and in both accounts GuardDuty's two,
+`AWSServiceRoleForAmazonGuardDuty` and `AWSServiceRoleForAmazonGuardDutyMalwareProtection`, made
+with the first detector on 2026-11-05. `HarpguruConfig` creates Config's,
 `AWSServiceRoleForConfig`, and both regions' recorders use it. It can read resources but not
 write to S3, so Config delivers as the `config.amazonaws.com` service principal, which the
-bucket policy lets in. *(PR `1-config`)*
+bucket policy lets in. *(PRs `1-config`, `1-guardduty`)*
 
 **Say it:** "A service-linked role is the service's own identity in your account, with
 permissions AWS maintains, so nobody has to write or update that policy."
@@ -619,14 +622,17 @@ instead of deploying somewhere else."
 `CDKToolkit` stack, which holds an S3 bucket and an ECR repository for uploaded files and
 container images, plus the IAM roles CDK assumes to deploy.
 
-**Here:** the management account was bootstrapped in `eu-west-2` on 2026-08-28. The workload
+**Here:** the management account was bootstrapped in `eu-west-2` on 2026-08-28, and in
+`us-east-1` on 2026-11-05, for step 4c's GuardDuty stack there. The workload
 account was bootstrapped in **both** `eu-west-2` and `us-east-1` on 2026-10-22, in step 5,
 because the certificate stack will live in `us-east-1`. Two defaults were kept. CloudFormation's
 execution role, which actually creates resources, has `AdministratorAccess` in the account, so
 anyone allowed to deploy is in effect an admin there, still inside the SCPs. And no other
 account is trusted to deploy, because deploys run as me through the `harpguru` profile; a CI
 pipeline would need `--trust`. Bootstrap doesn't take tags from the app, so the workload
-account's bootstrap was given the project's three with `--tags`.
+account's bootstraps, and the management account's in `us-east-1`, were given the project's
+three as tags (`--tags`, or `-t` for short, the form that worked in step 4c); the management
+account's first is untagged.
 
 **Say it:** "Bootstrap is per account and per region, so a stack in a second region needs a
 second bootstrap."
@@ -839,8 +845,11 @@ finds the hosted zone, which London's recorder never will.
 
 **What:** threat detection you switch on and read. It analyses CloudTrail, DNS queries and
 network flow data, reading them directly without you turning those logs on, and raises
-**findings**. Examples include credentials used from an unusual place, calls to known
-crypto-mining domains, and someone probing permissions.
+**findings**. A finding is one suspected threat: its type, a severity from low to critical, the
+resource involved and the evidence. Examples include credentials used from an unusual place,
+calls to known crypto-mining domains, and someone probing permissions. A detector only watches
+its own region, so every region where something could happen needs one; here the region lock
+leaves two.
 
 A **detector** is GuardDuty switched on in one account and one region, and there can be only
 one per account per region. **Protection plans** extend it to S3 data events, EKS, RDS logins,
@@ -863,10 +872,10 @@ volume. GuardDuty creates two service-linked roles of its own in each account.
 **Say it:** "Prevention with SCPs, detection with GuardDuty; you want both, because
 prevention is never complete."
 
-**See it:** `aws guardduty list-detectors --region us-east-1 --profile harpguru` gives the
-detector's ID; `aws guardduty get-detector --detector-id <id> --region us-east-1 --profile harpguru`
-shows which protection plans are on, and `aws guardduty list-findings --detector-id <id>` lists
-what it has raised.
+**See it:** `aws guardduty list-detectors --profile harpguru` gives the London detector's ID;
+`aws guardduty get-detector --detector-id <id> --profile harpguru` shows which protection plans
+are on, and `aws guardduty list-findings --detector-id <id> --profile harpguru` lists what it
+has raised, among them the three sample findings of 2026-11-05.
 
 #### EventBridge rules and SNS topics
 
@@ -875,7 +884,8 @@ what it has raised.
 "every GuardDuty finding", and sends each match to a **target**, optionally reshaped by an
 **input transformer**. An SNS **topic** is a named channel that copies each message to its
 **subscriptions**: email, SMS, a queue or a function. An email subscription only receives once
-its owner clicks the link in a confirmation email.
+its owner clicks the link in a confirmation email, so nobody can sign an address up for mail it
+didn't ask for.
 
 **Here:** step 4c's `GuardDutyStack` has a rule, `harpguru-guardduty-findings`, that turns each
 finding into a few readable lines and sends them to a topic of the same name, which emails the

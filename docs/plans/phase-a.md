@@ -34,8 +34,9 @@ Update this table in the PR that moves a row. **You** means the user.
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
 
 **Next up, as of 2026-11-05:**
-1. Refresh the learning companion for #4c, which `1-guardduty` didn't.
-2. Then #7, which is unblocked.
+1. #7, which is unblocked. The learning companion covers everything up to #4c.
+2. Optional, the user's call: deny `sns:SetSubscriptionAttributes` in
+   `harpguru-protect-guardduty`, the one gap in it found after the deploy; #4c says why.
 
 ## Accounts
 
@@ -354,14 +355,16 @@ exemption as `harpguru-protect-config`. It denies deleting or updating the detec
 how one is suspended; creating or updating filters and trusted IP lists, the two ways to
 silence findings without touching the detector; and deleting, disabling or retargeting the rule,
 deleting or re-policying the topic, and unsubscribing from it. It doesn't cover the
-unsubscribe link in each email, which needs no credentials, nor archiving a finding by hand.
+unsubscribe link in each email, which needs no credentials, nor archiving a finding by hand,
+nor `sns:SetSubscriptionAttributes`, with which a filter policy on the subscription could drop
+every message (found by the 2026-11-05 learning dry run; not denied yet).
 The management account's two stacks have no such guard: SCPs never apply there. An OU may have
-ten SCPs attached; `Workloads` now has six, `FullAWSAccess` included.
+ten SCPs attached; `Workloads` now has five of ours, six with `FullAWSAccess`.
 
 `managementEnv()` takes a region now, as `workloadEnv()` does. Checked before the branch, on
 2026-11-03: no detector in either account or region, no `AWSServiceRoleForAmazonGuardDuty` in
-the management account, its London bootstrap untagged, version 32, and five SCPs on
-`Workloads`.
+the management account, its London bootstrap untagged, version 32, and four of our SCPs on
+`Workloads`, five with `FullAWSAccess`.
 
 Doing it, all *you*, from `/app/infra`. GuardDuty first, then the SCP, as with Config, so the
 SCP can't get in the way of the first deploy if its exemption were wrong:
@@ -398,8 +401,9 @@ Done 2026-11-05. What it showed:
   and `AWSServiceRoleForAmazonGuardDutyMalwareProtection`, the second for EBS malware protection.
   Logged in `docs/outside-cdk.md`.
 - **The confirmation emails went to spam**, from `no-reply@sns.amazonaws.com`. All four were
-  found there and confirmed. Marking that sender as not spam keeps real findings out of it.
-- **The SCP works.** `Workloads` has six SCPs. For the SSO role, `guardduty:DeleteDetector`,
+  found there and confirmed. Marking that sender as not spam should keep real findings out of
+  it, but only when done in Yahoo's own web client, as the sample findings below showed.
+- **The SCP works.** `Workloads` has six SCPs, `FullAWSAccess` included. For the SSO role, `guardduty:DeleteDetector`,
   `UpdateDetector`, `CreateFilter` and `CreateIPSet`, `events:DisableRule` and `RemoveTargets` on
   the rule, and `sns:DeleteTopic` and `SetTopicAttributes` on the topic are all `explicitDeny`,
   not allowed by Organizations; `guardduty:GetDetector` and `ArchiveFindings` are allowed, as is
@@ -680,11 +684,11 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
   mail server address is a fixed value in our zone, and a stale one would fail silently. SES
   and EventBridge Scheduler, with no Lambda, and SES left in its sandbox. Not in the roadmap,
   which it doesn't change: it is an operational check, not a product feature.
-- 2026-11-03: **GuardDuty emails every finding, and a fifth SCP protects it**, both proposed by
-  the agent and accepted by the user. Without the email, findings wait in the console for
-  someone to look; without the SCP, the workload account's detectors could be suspended or
-  silenced by anyone signed in. Easy to revisit: both are in their own resources.
 - 2026-10-30: **Config uses its service-linked role and one bucket, in London, for both
   regions**, with files kept for a year like the trail's. Proposed by the agent: the role is
   maintained by AWS, and a second bucket would hold nothing different. Easy to revisit: both
   are in `ConfigStack`, and the bucket is retained.
+- 2026-11-03: **GuardDuty emails every finding, and a fifth SCP protects it**, both proposed by
+  the agent and accepted by the user. Without the email, findings wait in the console for
+  someone to look; without the SCP, the workload account's detectors could be suspended or
+  silenced by anyone signed in. Easy to revisit: both are in their own resources.
