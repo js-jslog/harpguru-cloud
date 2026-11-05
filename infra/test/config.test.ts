@@ -1,7 +1,12 @@
 import { mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { readDeployConfig, requireSetting, workloadEnv } from '../lib/config'
+import {
+  managementEnv,
+  readDeployConfig,
+  requireSetting,
+  workloadEnv,
+} from '../lib/config'
 
 const writeConfig = (contents: object): string => {
   const path = join(mkdtempSync(join(tmpdir(), 'deploy-config-')), 'c.json')
@@ -42,4 +47,12 @@ test('a workload stack can be pinned to another region, in the same account', ()
 
 test('without the workload account ID, workload stacks fail at synth', () => {
   expect(() => workloadEnv({})).toThrow(/Missing "workloadAccountId"/)
+})
+
+test('a management stack can be pinned to another region, in the signed-in account', () => {
+  expect(managementEnv('us-east-1')).toEqual({
+    account: process.env.CDK_DEFAULT_ACCOUNT,
+    region: 'us-east-1',
+  })
+  expect(managementEnv().region).toBe('eu-west-2')
 })

@@ -2,6 +2,7 @@ import { Stack, type StackProps } from 'aws-cdk-lib'
 import { CfnOrganizationalUnit, CfnPolicy } from 'aws-cdk-lib/aws-organizations'
 import type { Construct } from 'constructs'
 import { EDGE_REGION, PRIMARY_REGION } from './config'
+import { FINDINGS_ALERT_NAME } from './guardduty-stack'
 
 export const ALLOWED_REGIONS = [PRIMARY_REGION, EDGE_REGION]
 
@@ -93,6 +94,61 @@ export const SCPS = {
           // CloudFormation acts as the role CDK's bootstrap made, so a deploy
           // can still change Config. That bounds what this protects: it stops
           // accidents and credentials used outside CDK, not the owner.
+          Condition: {
+            ArnNotLike: { 'aws:PrincipalArn': CDK_EXEC_ROLE_PATTERN },
+          },
+        },
+      ],
+    },
+  },
+  'harpguru-protect-guardduty': {
+    description:
+      'Deny changing GuardDuty or its findings alert, except through a CDK deploy',
+    content: {
+      Version: '2012-10-17',
+      Statement: [
+        {
+          Sid: 'DenyGuardDutyChangesOutsideCdk',
+          Effect: 'Deny',
+          // Deleting or suspending the detector, or changing its plans; and
+          // the two ways to silence it without that: a filter that archives
+          // findings as they arrive, and a trusted IP list, whose addresses
+          // raise none. Archiving a finding by hand is still allowed.
+          Action: [
+            'guardduty:DeleteDetector',
+            'guardduty:UpdateDetector',
+            'guardduty:CreateFilter',
+            'guardduty:UpdateFilter',
+            'guardduty:CreateIPSet',
+            'guardduty:UpdateIPSet',
+          ],
+          Resource: '*',
+          // Exempting CDK's deploys, as harpguru-protect-config does.
+          Condition: {
+            ArnNotLike: { 'aws:PrincipalArn': CDK_EXEC_ROLE_PATTERN },
+          },
+        },
+        {
+          Sid: 'DenyFindingsAlertChangesOutsideCdk',
+          Effect: 'Deny',
+          // The rule and topic that email each finding. Not the unsubscribe
+          // link in each email, which needs no credentials at all.
+          Action: [
+            'events:DeleteRule',
+            'events:DisableRule',
+            'events:PutRule',
+            'events:PutTargets',
+            'events:RemoveTargets',
+            'sns:DeleteTopic',
+            'sns:SetTopicAttributes',
+            'sns:RemovePermission',
+            'sns:Unsubscribe',
+          ],
+          Resource: [
+            `arn:aws:events:*:*:rule/${FINDINGS_ALERT_NAME}`,
+            `arn:aws:sns:*:*:${FINDINGS_ALERT_NAME}`,
+            `arn:aws:sns:*:*:${FINDINGS_ALERT_NAME}:*`,
+          ],
           Condition: {
             ArnNotLike: { 'aws:PrincipalArn': CDK_EXEC_ROLE_PATTERN },
           },

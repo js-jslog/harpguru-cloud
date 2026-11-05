@@ -58,5 +58,6 @@ signed in, through `CDK_DEFAULT_ACCOUNT`, which the CLI fills in from the SSO lo
 | `lib/dns-stack.ts`          | `HarpguruDns`: the harpguru.com hosted zone and its mail records, in the workload account              |
 | `lib/mail-canary-stack.ts`  | `HarpguruMailCanary`: the weekly messages that show `contact@` still forwards, in the workload account |
 | `lib/config-stack.ts`       | `HarpguruConfig` and `HarpguruConfigEdge`: Config in the workload account, in London and `us-east-1`   |
+| `lib/guardduty-stack.ts`    | `HarpguruGuardDuty*`: a GuardDuty detector and the email of its findings, in each account and region   |
 | `scripts/`                  | read-only helpers, such as printing values for `deploy.local.json`                                     |
 | `test/`                     | one test file per module or stack, and `app.ts`, which gives tests `cdk.json`'s flags                  |
