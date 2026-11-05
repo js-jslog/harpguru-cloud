@@ -631,7 +631,8 @@ anyone allowed to deploy is in effect an admin there, still inside the SCPs. And
 account is trusted to deploy, because deploys run as me through the `harpguru` profile; a CI
 pipeline would need `--trust`. Bootstrap doesn't take tags from the app, so the workload
 account's bootstraps, and the management account's in `us-east-1`, were given the project's
-three with `--tags`; the management account's first is untagged.
+three as tags (`--tags`, or `-t` for short, the form that worked in step 4c); the management
+account's first is untagged.
 
 **Say it:** "Bootstrap is per account and per region, so a stack in a second region needs a
 second bootstrap."
@@ -844,7 +845,7 @@ finds the hosted zone, which London's recorder never will.
 
 **What:** threat detection you switch on and read. It analyses CloudTrail, DNS queries and
 network flow data, reading them directly without you turning those logs on, and raises
-**findings**. A finding is one suspected threat: its type, a severity from 1 to 8.9, the
+**findings**. A finding is one suspected threat: its type, a severity from low to critical, the
 resource involved and the evidence. Examples include credentials used from an unusual place,
 calls to known crypto-mining domains, and someone probing permissions. A detector only watches
 its own region, so every region where something could happen needs one; here the region lock

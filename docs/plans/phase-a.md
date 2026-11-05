@@ -35,6 +35,8 @@ Update this table in the PR that moves a row. **You** means the user.
 
 **Next up, as of 2026-11-05:**
 1. #7, which is unblocked. The learning companion covers everything up to #4c.
+2. Optional, the user's call: deny `sns:SetSubscriptionAttributes` in
+   `harpguru-protect-guardduty`, the one gap in it found after the deploy; #4c says why.
 
 ## Accounts
 
