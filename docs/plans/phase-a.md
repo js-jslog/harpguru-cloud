@@ -408,10 +408,13 @@ Done 2026-11-05. What it showed:
   workload account's London detector at 21:51 UTC, with
   `aws guardduty create-sample-findings --detector-id <id> --finding-types Recon:EC2/PortProbeUnprotectedPort --profile harpguru`.
   Its email arrived, in the format the rule writes, and in spam again, though earlier messages
-  from that sender had been marked not spam in the owner's mail app. To be fixed in Yahoo's own
-  web client; until then, findings must be looked for in spam. A sample's title has no
+  from that sender had been marked not spam in the owner's mail app. A second sample, of another
+  type, at 22:05, went to spam too. Then one of them was marked not spam in Yahoo's own web
+  client, and a third, `Recon:EC2/Portscan` at 22:08, **arrived in the inbox**. Each sample used
+  a new type, since a repeat of a finding is only sent every six hours. A sample's title has no
   "[SAMPLE]" in it: GuardDuty marks samples in `Service.AdditionalInfo`, which the email leaves
-  out. It stays in the detector's findings, at severity 2, until archived.
+  out. All three stay in the workload account's London detector, at severities 2, 2 and 5,
+  until archived.
 
 **5 · you: bootstrap.** `cdk bootstrap` for the workload account in **both** `eu-west-2` and
 `us-east-1`. The certificate stack lives in `us-east-1`, which is easy to miss.
