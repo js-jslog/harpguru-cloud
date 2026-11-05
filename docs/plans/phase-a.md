@@ -26,16 +26,15 @@ Update this table in the PR that moves a row. **You** means the user.
 | 3b | `1-identity-import`: the console-made permission set and its management account assignment imported into `HarpguruIdentity`; the inventory of what CDK doesn't manage | **merged**, imported and deployed 2026-10-22 | — |
 | 4a | `1-org-trail`: the Organization trail and its bucket, in `HarpguruTrail` | **merged** and deployed 2026-10-30 | — |
 | 4b | `1-config`: Config recorders in the workload account, and the SCP that protects them | **merged** and deployed 2026-10-30, after a first deploy rolled back; both regions' history files confirmed 2026-11-03 | — |
-| 4c | `1-guardduty`: GuardDuty detectors in both accounts, both regions, emailing their findings, and the SCP that protects them | coded on the branch | *you*: bootstrap the management account in `us-east-1`, then diff and deploy |
+| 4c | `1-guardduty`: GuardDuty detectors in both accounts, both regions, emailing their findings, and the SCP that protects them | **deployed** 2026-11-05, from the branch; all four subscriptions confirmed | — |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **done**: zone deployed 2026-10-26; switch made and mail tested 2026-10-27 | — |
 | 6a | `1-mail-canary`: a weekly pair of messages showing `contact@` still forwards, in `HarpguruMailCanary` | **merged** and deployed 2026-10-27; first pair arrived 2026-10-28 | — |
 | 7 | `1-certificate`: ACM in `us-east-1` | not started | — |
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
 
-**Next up, as of 2026-11-03:**
-1. #4c: bootstrap the management account in `us-east-1`, then diff and deploy the four
-   GuardDuty stacks and the guardrails; #4c says how.
+**Next up, as of 2026-11-05:**
+1. Merge `1-guardduty`, then refresh the learning companion for #4c.
 2. Then #7, which is unblocked.
 
 ## Accounts
@@ -379,6 +378,32 @@ SCP can't get in the way of the first deploy if its exemption were wrong:
    Then `npx cdk deploy HarpguruGuardrails --exclusively --require-approval never`.
 6. The agent checks the detectors, their plans, the subscriptions and the SCP, which
    `aws iam simulate-principal-policy` can test without attempting the calls.
+
+Done 2026-11-05. What it showed:
+- The bootstrap needed one retry: the first command was cut off after a trailing `--tags`, so
+  CDK printed its help and made nothing. `CDKToolkit` in `us-east-1` is version 32, like London's,
+  and carries the project's three tags, which London's lacks.
+- Every diff was as above: five `[+]` resources a stack, the one `sns:Publish` statement with its
+  `aws:SourceArn` condition, and for `HarpguruGuardrails` one `[+]` policy, with
+  `HarpguruPolicyTypes` included and unchanged. Each pair of GuardDuty stacks took about 170
+  seconds, the guardrails 18.
+- **All four detectors are `ENABLED`, with the same defaults**: CloudTrail, DNS and flow logs,
+  S3 data events, EKS audit logs, EBS malware protection, RDS login events and Lambda network
+  logs on; Runtime Monitoring, EKS Runtime Monitoring, AI Protection and AI Analyst off.
+  A new finding goes to EventBridge within minutes; a repeat of one, every six hours. None of the plans that came on has anything here to
+  scan but S3, so none is worth questioning. No findings yet.
+- GuardDuty made **two** service-linked roles in each account, `AWSServiceRoleForAmazonGuardDuty`
+  and `AWSServiceRoleForAmazonGuardDutyMalwareProtection`, the second for EBS malware protection.
+  Logged in `docs/outside-cdk.md`.
+- **The confirmation emails went to spam**, from `no-reply@sns.amazonaws.com`. All four were
+  found there and confirmed. Marking that sender as not spam keeps real findings out of it.
+- **The SCP works.** `Workloads` has six SCPs. For the SSO role, `guardduty:DeleteDetector`,
+  `UpdateDetector`, `CreateFilter` and `CreateIPSet`, `events:DisableRule` and `RemoveTargets` on
+  the rule, and `sns:DeleteTopic` and `SetTopicAttributes` on the topic are all `explicitDeny`,
+  not allowed by Organizations; `guardduty:GetDetector` and `ArchiveFindings` are allowed, as is
+  `events:DisableRule` on any other rule. For CDK's execution role, all are allowed.
+- Not done: a sample finding, to see an email arrive. `aws guardduty create-sample-findings`
+  would make one; it is the owner's call.
 
 **5 · you: bootstrap.** `cdk bootstrap` for the workload account in **both** `eu-west-2` and
 `us-east-1`. The certificate stack lives in `us-east-1`, which is easy to miss.

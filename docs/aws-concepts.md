@@ -851,7 +851,9 @@ scans.
 in London and `us-east-1`. The management account is watched too, because it holds the
 Organization and the login. The detectors are **standalone**: with two accounts, letting one
 account manage GuardDuty for the Organization, a **delegated administrator**, adds more than
-it saves. The protection plans are left to GuardDuty's defaults, and have nothing to scan yet.
+it saves. The protection plans are left to GuardDuty's defaults, which on 2026-11-05 turned on
+S3, EKS audit logs, EBS malware scans, RDS logins and Lambda's network traffic, and left
+runtime monitoring off; only S3 has anything to scan here.
 Each detector emails its findings, as in
 [EventBridge rules and SNS topics](#eventbridge-rules-and-sns-topics), and in the workload
 account the `harpguru-protect-guardduty` SCP stops anyone but a CDK deploy from suspending or
