@@ -589,7 +589,8 @@ deploy on 2026-10-22 this entry described exports, which no stack here uses.
 
 The first reference between regions is step 7's: `HarpguruCertificate`, in `us-east-1`, reads
 the hosted zone's ID from `HarpguruDns`'s output in London, with `Fn::GetStackOutput` naming
-the region. Step 8 will add a second, the certificate going the other way to the site.
+the region. It is the output `HarpguruMailCanary` already reads in the same region, so
+`HarpguruDns` didn't change. Step 8 will add a second, the certificate going the other way to the site.
 *(PR `1-certificate`)*
 
 **Say it:** "A strong reference locks the producer while it's consumed; a weak one just reads

@@ -562,11 +562,12 @@ names both; that question stays open and harmless.
 validated through DNS in the zone. It reaches the site stack as a cross-region reference.
 
 The zone reaches the certificate the same way, the other way round: `HarpguruCertificate`
-is passed `dns.zone`, and since references are weak, `HarpguruDns` gains one plain output,
-the zone's ID, which the certificate reads with `Fn::GetStackOutput` naming London. No
-custom resource and no export, and nothing else in `HarpguruDns` changes. `cdk deploy
-HarpguruCertificate --profile harpguru` deploys `HarpguruDns` first to add that output, and
-then waits while ACM validates: CloudFormation writes one `CNAME` per name into the zone and
+is passed `dns.zone`, and since references are weak, it reads the zone's ID from a plain
+output of `HarpguruDns`, with `Fn::GetStackOutput` naming London. No custom resource and no
+export. The output already exists: #6a's mail canary reads the same one for its DKIM
+records, so `HarpguruDns` doesn't change, which `cdk diff` confirmed on 2026-11-06. `cdk
+deploy HarpguruCertificate --profile harpguru` includes `HarpguruDns` as a dependency, finds
+nothing to do there, and then waits while ACM validates: CloudFormation writes one `CNAME` per name into the zone and
 the stack completes only once the certificate is issued. Those records are written by
 CloudFormation, not declared as resources, so they appear in the zone but in no template;
 `docs/outside-cdk.md` lists them. The stack is not termination protected: nothing in it is
