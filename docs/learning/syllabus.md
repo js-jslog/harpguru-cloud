@@ -1,6 +1,6 @@
 # Syllabus
 
-**As of 2026-11-05.** Covers Phase A steps 0–6a: the SSO login, the CDK app
+**As of 2026-11-06.** Covers Phase A steps 0–7: the SSO login, the CDK app
 skeleton, the $10 budget, and the workload account with its OU and guardrails, including step
 3a, which switches SCPs on through a custom resource, and step 3b, which imported the
 console-made permission set into a stack and listed everything CDK doesn't manage. Step 1 is the
@@ -24,11 +24,13 @@ protects the workload account's. A sample finding's email was seen to arrive the
 So the Organization really does hold the `Workloads` OU with five SCPs of ours, six with
 `FullAWSAccess`, the `harpguru` workload
 account, a trail over both accounts, Config recording daily, and GuardDuty watching both
-accounts. The status table in `docs/plans/phase-a.md` says the same. Steps 7 and 8 are not
-started; see the last section.
+accounts. Step 7 is **merged and deployed**, on 2026-11-06: `HarpguruCertificate`, an ACM
+certificate for harpguru.com and `www`, in the workload account in `us-east-1`, issued the same
+day but not yet used by anything. The status table in `docs/plans/phase-a.md` says the same.
+Step 8, the site itself, is not started; see the last section.
 
-**Priority now: topic 13**, GuardDuty, the newest. Then topics 11 and 12, the trail and Config,
-if they are still shaky.
+**Priority now: topic 13**, GuardDuty, if it is still shaky; it is the newest must-own topic.
+Then topic 24, the certificate, the newest of all.
 
 Each topic gives its tier and why, what I should be able to answer, and its sources. The
 sources hold the facts; this file deliberately does not restate them. Sources are named by
@@ -184,7 +186,8 @@ in the README, and the tiering here is a proposal, to be argued with.
 - **Be able to answer:** the test for what goes into a stack, and why AWS-made defaults are left
   alone; three things that can't be in CloudFormation, and why each can't; which items could be
   and were left out deliberately, and the reason for each; why the default VPCs were neither
-  imported nor deleted, and why 15 of the workload account's can't even be touched; where a
+  imported nor deleted, and why 15 of the workload account's can't even be touched; which DNS
+records are in the zone but in no template, and who wrote them; where a
   change made by hand is recorded; how an import differs from a create, why a diff can't confirm
   one, and what a plain deploy would have done; what an import does and doesn't change; why the
   project tags were left off for the import; what drift is, and how it was checked; why
@@ -381,9 +384,13 @@ in the README, and the tiering here is a proposal, to be argued with.
   difference between a strong and a weak reference, which one this repo uses, and what
   therefore protects the guardrails stack instead. Also how `HarpguruConfigEdge`, in another
   region, reaches the London bucket with no reference at all, and is made to deploy second.
+  And the first reference between regions, step 7's: how the certificate in `us-east-1` reads
+  the zone's ID from London with no custom resource, and why `HarpguruDns` showed no change
+  when it did.
 - **Sources:** `docs/aws-concepts.md` "Cross-stack references" and
-  "Apps, stacks and constructs"; `docs/plans/phase-a.md` "Decisions" and "Steps" (items 3 and
-  4b); `infra/bin/harpguru.ts`; `infra/lib/config-stack.ts`.
+  "Apps, stacks and constructs"; `docs/plans/phase-a.md` "Decisions" and "Steps" (items 3, 4b
+  and 7); `infra/bin/harpguru.ts`; `infra/lib/config-stack.ts`;
+  `infra/lib/certificate-stack.ts`; `infra/test/certificate-stack.test.ts`.
 
 ### 19. How I get into the new account
 
@@ -460,6 +467,25 @@ in the README, and the tiering here is a proposal, to be argued with.
   `infra/test/guardduty-stack.test.ts`; `docs/plans/phase-a.md` "Steps" (item 4c);
   `docs/outside-cdk.md` "Changes made outside CDK".
 
+### 24. The certificate: ACM and DNS validation
+
+- **Covers:** step 7: `HarpguruCertificate`, one ACM certificate for harpguru.com and `www`,
+  in the workload account in `us-east-1`, validated through DNS in the London zone, ready for
+  step 8's CloudFront.
+- **Why not must own:** it is one resource, and its one real constraint, the region, is topic
+  14's. Know what ACM does and what it charges; why the certificate is in `us-east-1`; why
+  `www` is on it, though `www` will only redirect; what DNS validation proves, who wrote the
+  validation records and why they must stay; why the deploy waited until the certificate was
+  issued, and how long it took; how long the certificate is valid for, and why ACM says it
+  can't be renewed yet; why the stack isn't termination protected; why the zone reaches it as a
+  reference rather than a zone ID in the code or a lookup; and what a `CAA` record would have
+  changed.
+- **Sources:** `docs/aws-concepts.md` "ACM certificates and DNS validation" and
+  "Cross-stack references"; `docs/plans/phase-a.md` "Steps" (item 7) and "Decisions" (the
+  2026-11-06 entry); `infra/lib/certificate-stack.ts`; `infra/test/certificate-stack.test.ts`;
+  `docs/outside-cdk.md`; `roadmap-planning/aws-pathway-findings.md` "Step 7 deployed: the
+  certificate, 2026-11-06".
+
 ---
 
 ## Curiosity
@@ -477,7 +503,7 @@ These are worth your time if they interest you. Skipping them leaves no gap.
 
 ## Not yet built, so not for study
 
-- ACM, S3 for the site and CloudFront (steps 7 and 8); the CloudWatch alarm
+- S3 for the site and CloudFront (step 8); the CloudWatch alarm
   that would catch the canary failing on the AWS side; and everything in phases B–F. Some of
   these already have concept entries, written ahead of the work; read them as reading ahead,
   and do not test me on them.

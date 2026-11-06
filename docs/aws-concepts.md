@@ -736,10 +736,11 @@ only takes certificates from there (see [Regions](#regions)). One certificate co
 `harpguru.com` and `www.harpguru.com`. `www` will only redirect to the apex, but the redirect
 comes after the TLS handshake, so `www` needs a valid certificate too. Given the zone's ID,
 CloudFormation writes the validation records into `HarpguruDns`'s zone itself, outside any
-template, and the stack only finishes once the certificate is issued. No `CAA` record exists, so any CA may issue,
-ACM included. Deployed 2026-11-06: issued about two and a half minutes after it was requested,
-valid for 198 days, and shown as `INELIGIBLE` for renewal until step 8's CloudFront uses it.
-*(PR `1-certificate`)*
+template, and the stack only finishes once the certificate is issued. No `CAA` record exists,
+so any CA may issue, ACM included; if one is ever added, it must allow `amazon.com`, or
+renewals will fail. Deployed 2026-11-06: issued about two and a half minutes after it was
+requested, valid for 198 days, and shown as `INELIGIBLE` for renewal until step 8's CloudFront
+uses it. *(PR `1-certificate`)*
 
 **Say it:** "DNS validation is what makes ACM hands-off: the record that proved control
 once keeps proving it at every renewal, so nobody has to remember an expiry date."
