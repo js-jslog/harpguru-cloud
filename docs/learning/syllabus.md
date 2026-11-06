@@ -475,11 +475,11 @@ records are in the zone but in no template, and who wrote them; where a
 - **Why not must own:** it is one resource, and its one real constraint, the region, is topic
   14's. Know what ACM does and what it charges; why the certificate is in `us-east-1`; why
   `www` is on it, though `www` will only redirect; what DNS validation proves, who wrote the
-  validation records and why they must stay; why the deploy waited until the certificate was
-  issued, and how long it took; how long the certificate is valid for, and why ACM says it
+  validation records and why they must stay; what the deploy waited for before it
+  finished, and how long it took; how long the certificate is valid for, and why ACM says it
   can't be renewed yet; why the stack isn't termination protected; why the zone reaches it as a
-  reference rather than a zone ID in the code or a lookup; and what a `CAA` record would have
-  changed.
+  reference rather than a zone ID in the code or a lookup; and what a `CAA` record, if one
+  were ever added, would have to allow.
 - **Sources:** `docs/aws-concepts.md` "ACM certificates and DNS validation" and
   "Cross-stack references"; `docs/plans/phase-a.md` "Steps" (item 7) and "Decisions" (the
   2026-11-06 entry); `infra/lib/certificate-stack.ts`; `infra/test/certificate-stack.test.ts`;

@@ -30,12 +30,11 @@ Update this table in the PR that moves a row. **You** means the user.
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **done**: zone deployed 2026-10-26; switch made and mail tested 2026-10-27 | — |
 | 6a | `1-mail-canary`: a weekly pair of messages showing `contact@` still forwards, in `HarpguruMailCanary` | **merged** and deployed 2026-10-27; first pair arrived 2026-10-28 | — |
-| 7 | `1-certificate`: ACM in `us-east-1`, in `HarpguruCertificate` | **in review**; deployed 2026-11-06, from the branch; certificate issued | *you*: the merge |
+| 7 | `1-certificate`: ACM in `us-east-1`, in `HarpguruCertificate` | **merged** and deployed 2026-11-06; certificate issued | — |
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
 
 **Next up, as of 2026-11-06:**
-1. #7's merge. Then #8, which needs the inputs below. The learning companion covers
-   everything up to #4c.
+1. #8, once the inputs below are in. The learning companion covers everything up to #7.
 2. Optional, the user's call: deny `sns:SetSubscriptionAttributes` in
    `harpguru-protect-guardduty`, the one gap in it found after the deploy; #4c says why.
 
@@ -715,6 +714,8 @@ zone, which now holds nine record sets. The template, as deployed, reads the zon
   silenced by anyone signed in. Easy to revisit: both are in their own resources.
 - 2026-11-06: **the certificate takes the zone as a weak cross-region reference**, rather than
   a hosted zone ID written into the code or `deploy.local.json`, or a `fromLookup`, whose
-  cached context would put the account ID in the repo. Proposed by the agent. The zone is
+  cached context would put the account ID in the repo. A zone ID kept by hand would be a
+  second copy of a value `HarpguruDns` already owns, with nothing to say when the two
+  differ. Proposed by the agent. The zone is
   retained and its ID never changes, so the reference locking nothing costs nothing. Easy to
   revisit: one prop in `infra/bin/harpguru.ts`.

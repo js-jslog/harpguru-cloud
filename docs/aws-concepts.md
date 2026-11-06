@@ -295,7 +295,9 @@ each is readable on its own (the limit is 10 per target, checked against AWS's q
   apply, and member accounts can't change an org trail anyway
 - `harpguru-protect-guardduty` does the same for GuardDuty: it denies deleting or suspending a
   detector, the filters and trusted IP lists that would silence it, and changing the rule and
-  topic that email its findings, again except to CDK's deploys
+  topic that email its findings, again except to CDK's deploys. It leaves three gaps, which
+  step 4c of the plan lists: the unsubscribe link in each email, archiving a finding by hand,
+  and `sns:SetSubscriptionAttributes`
 
 How SCPs are switched on is in [Custom resources](#custom-resources).
 *(PRs `1-org-accounts`, `1-scp-custom-resource`, `1-config`, `1-guardduty`)*
@@ -905,7 +907,8 @@ S3, EKS audit logs, EBS malware scans, RDS logins and Lambda's network traffic, 
 runtime monitoring off; only S3 has anything to scan here. Each detector emails its findings,
 as in [EventBridge rules and SNS topics](#eventbridge-rules-and-sns-topics), and in the
 workload account the `harpguru-protect-guardduty` SCP stops anyone but a CDK deploy from
-suspending or silencing it. Each detector is free for its first 30 days, then pennies at this
+suspending it or silencing it in the ways it lists; step 4c of the plan names the three it
+leaves open. Each detector is free for its first 30 days, then pennies at this
 volume. GuardDuty creates two service-linked roles of its own in each account.
 *(PR `1-guardduty`)*
 
