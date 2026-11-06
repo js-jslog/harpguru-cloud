@@ -597,7 +597,7 @@ the region. It is the output `HarpguruMailCanary` already reads in the same regi
 its output at deploy time, so stability has to come from somewhere else, like termination
 protection."
 
-**See it** (the cross-region one, once step 7 is deployed):
+**See it:** the cross-region one:
 `aws cloudformation get-template --stack-name HarpguruCertificate --region us-east-1 --profile harpguru --query 'TemplateBody.Resources.Certificate4E7ABB08.Properties.DomainValidationOptions[0].HostedZoneId'`.
 The same-region one:
 `aws cloudformation get-template --stack-name HarpguruAccounts --query 'TemplateBody.Resources.Harpguru.Properties.ParentIds'`.
@@ -737,13 +737,15 @@ only takes certificates from there (see [Regions](#regions)). One certificate co
 comes after the TLS handshake, so `www` needs a valid certificate too. Given the zone's ID,
 CloudFormation writes the validation records into `HarpguruDns`'s zone itself, outside any
 template, and the stack only finishes once the certificate is issued. No `CAA` record exists, so any CA may issue,
-ACM included. *(PR `1-certificate`)*
+ACM included. Deployed 2026-11-06: issued about two and a half minutes after it was requested,
+valid for 198 days, and shown as `INELIGIBLE` for renewal until step 8's CloudFront uses it.
+*(PR `1-certificate`)*
 
 **Say it:** "DNS validation is what makes ACM hands-off: the record that proved control
 once keeps proving it at every renewal, so nobody has to remember an expiry date."
 
 **See it:** the certificate, its status and its expiry:
-`aws acm list-certificates --region us-east-1 --profile harpguru --query 'CertificateSummaryList[].[DomainName,Status,NotAfter]'`.
+`aws acm list-certificates --region us-east-1 --profile harpguru --query 'CertificateSummaryList[].[DomainName,Status,NotAfter,InUse,RenewalEligibility]'`.
 The validation records ACM asked for:
 `aws acm describe-certificate --region us-east-1 --profile harpguru --certificate-arn $(aws acm list-certificates --region us-east-1 --profile harpguru --query 'CertificateSummaryList[0].CertificateArn' --output text) --query 'Certificate.DomainValidationOptions[].[DomainName,ValidationStatus,ResourceRecord.Name]'`.
 
