@@ -1,0 +1,76 @@
+/* The app's own colours: its splash background, and the icon's orange. */
+:root {
+  --background: #efcded;
+  --text: #1c1c1c;
+  --accent: #e8962a;
+  --accent-text: #1c1c1c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #2a1f2a;
+    --text: #f3e6f2;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+  background: var(--background);
+  color: var(--text);
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif;
+  line-height: 1.5;
+  text-align: center;
+}
+
+main {
+  max-width: 32rem;
+}
+
+h1 {
+  margin: 0.5rem 0;
+  font-size: 2.5rem;
+}
+
+a {
+  color: inherit;
+}
+
+.stores {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.stores a {
+  display: inline-block;
+  min-width: 10rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.75rem;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.stores a:focus-visible,
+.stores a:hover {
+  outline: 3px solid var(--text);
+  outline-offset: 2px;
+}

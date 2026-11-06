@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.jslog.harpguru",
+      "sha256_cert_fingerprints": [
+        "3A:52:4C:DF:DD:2C:88:76:C7:8C:06:FB:2F:0D:CB:77:B4:5E:EF:A1:7D:1E:FB:2F:A3:C2:B2:08:E0:FC:11:92"
+      ]
+    }
+  }
+]

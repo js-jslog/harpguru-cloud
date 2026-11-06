@@ -34,6 +34,11 @@ the account ID, it fetches it with `aws sts get-caller-identity`.
 [Tags and cost allocation tags](#tags-and-cost-allocation-tags) ·
 [Route 53 hosted zones and delegation](#route-53-hosted-zones-and-delegation) ·
 [ACM certificates and DNS validation](#acm-certificates-and-dns-validation) ·
+[CloudFront distributions, behaviours and caching](#cloudfront-distributions-behaviours-and-caching) ·
+[Origin Access Control (OAC)](#origin-access-control-oac) ·
+[Response headers policies](#response-headers-policies) ·
+[CloudFront Functions](#cloudfront-functions) ·
+[Route 53 alias records](#route-53-alias-records) ·
 [SES identities, the sandbox and DKIM](#ses-identities-the-sandbox-and-dkim) ·
 [EventBridge Scheduler and universal targets](#eventbridge-scheduler-and-universal-targets) ·
 [CloudTrail](#cloudtrail) ·
@@ -495,6 +500,12 @@ The diff had not been expected to show the log group. This CDK version creates i
 it carries the project's tags and keeps logs for two years, at no real cost for a function
 that ran once. *(PRs `1-org-accounts`, `1-scp-custom-resource`)*
 
+Step 8 meets a second kind: CDK's `BucketDeployment`, which uploads the site's files. CDK
+first puts them in its own asset bucket, and on each deploy where they changed, a Lambda it
+provides copies them into the site's bucket, deletes any that are gone, and invalidates
+CloudFront's cache. `HarpguruSite` uses two, because the AASA file needs its content type set
+by hand: one for that file alone, one for everything else. *(PR `1-site`)*
+
 **Say it:** "When CloudFormation has no resource for something, a custom resource runs code
 for it. If the reverse of that action is dangerous, I give it no delete handler and retain it."
 
@@ -753,6 +764,131 @@ once keeps proving it at every renewal, so nobody has to remember an expiry date
 The validation records ACM asked for:
 `aws acm describe-certificate --region us-east-1 --profile harpguru --certificate-arn $(aws acm list-certificates --region us-east-1 --profile harpguru --query 'CertificateSummaryList[0].CertificateArn' --output text) --query 'Certificate.DomainValidationOptions[].[DomainName,ValidationStatus,ResourceRecord.Name]'`.
 
+### Serving the site
+
+#### CloudFront distributions, behaviours and caching
+
+**What:** CloudFront is AWS's CDN (content delivery network): hundreds of edge locations that
+answer a visitor from nearby, keeping copies of what an **origin**, such as an S3 bucket,
+returns. A **distribution** is one CloudFront configuration, reached at its own
+`d….cloudfront.net` name and at any **alternate domain names** it holds a certificate for.
+Its **cache behaviours** match request paths, such as `/t/*`, to an origin and a set of
+rules; the **default behaviour**, `*`, takes whatever no other one matches. A cached copy
+lives until its TTL runs out, or until an **invalidation** tells every edge to drop it. The
+first 1,000 invalidation paths each month are free, and `/*` counts as one. A **price class**
+limits which edges serve: `PriceClass_100` uses North America and Europe's only, the cheapest.
+CloudFront is a global service, and its free tier, 1 TB and 10 million requests a month,
+doesn't expire.
+
+**Here:** `HarpguruSite`, step 8, holds one distribution for `harpguru.com` and
+`www.harpguru.com`, with the certificate from `HarpguruCertificate`. That is why the
+certificate lives in `us-east-1`: CloudFront takes no other region's. The stack itself is
+in London, beside the zone, and reads the certificate's ARN across regions as a weak
+reference. There is one behaviour, the default, in front of the private bucket; Phase B adds
+`/t/*`, `/e/*` and `/s/*` to the same distribution rather than making more. HTTP is redirected
+to HTTPS, `/` serves `index.html`, and a missing file gets `/404.html` with a 404. A deploy
+that changes the files invalidates `/*` once, after they are all in.
+
+**Say it:** "One distribution, several behaviours: each path pattern picks its own origin and
+caching, and the default behaviour catches the rest, so a whole site stays behind one
+certificate and one domain."
+
+**See it:** the distribution:
+`aws cloudfront list-distributions --profile harpguru --query 'DistributionList.Items[].[Id,DomainName,Aliases.Items,PriceClass,Status]'`.
+A response's trip through the cache, where `x-cache` says `Hit` or `Miss` and `x-amz-cf-pop`
+names the edge that answered:
+`curl -sI https://harpguru.com/ | grep -iE '^(x-cache|age|x-amz-cf-pop):'`. Run it twice.
+
+#### Origin Access Control (OAC)
+
+**What:** the way CloudFront reads a **private** S3 bucket. CloudFront signs each request
+to the bucket, and the bucket policy allows `s3:GetObject` to the service principal
+`cloudfront.amazonaws.com`, with an `AWS:SourceArn` condition naming one distribution. The
+bucket stays fully blocked from public access, so the only way to its files is through
+that distribution, its headers and its HTTPS. It replaced **OAI** (Origin Access Identity),
+the older mechanism, which can't sign for buckets encrypted with KMS keys.
+
+**Here:** the site's bucket in step 8. CDK's `S3BucketOrigin.withOriginAccessControl` makes
+the OAC and writes the policy statement. It is the confused-deputy guard from
+[S3 buckets](#s3-buckets-bucket-policies-and-lifecycle-rules) again: a grant to CloudFront
+alone would let any distribution, in any account, read the bucket. CloudFront isn't granted
+`s3:ListBucket`, so S3 answers a missing file with 403, not 404, and the distribution turns
+both into its own 404 page.
+
+**Say it:** "The bucket is private, and its policy lets in CloudFront only on behalf of my
+distribution, so the CDN is the one way in."
+
+**See it:** `aws cloudfront list-origin-access-controls --profile harpguru --query 'OriginAccessControlList.Items[].[Name,SigningBehavior,OriginAccessControlOriginType]'`,
+the bucket's policy with
+`aws s3api get-bucket-policy --profile harpguru --bucket $(aws cloudformation describe-stacks --stack-name HarpguruSite --profile harpguru --query "Stacks[0].Outputs[?OutputKey=='BucketName'].OutputValue" --output text) --query Policy --output text | jq`,
+and the bucket refusing a direct request:
+`curl -sI https://$(aws cloudformation describe-stacks --stack-name HarpguruSite --profile harpguru --query "Stacks[0].Outputs[?OutputKey=='BucketName'].OutputValue" --output text).s3.eu-west-2.amazonaws.com/index.html | head -1`.
+
+#### Response headers policies
+
+**What:** a CloudFront setting that adds headers to responses on their way to the viewer,
+such as the security headers browsers act on, with no code. **HSTS** (`Strict-Transport-Security`)
+tells a browser to use only HTTPS for the site for a period; **CSP** (`Content-Security-Policy`)
+lists where a page may load scripts, styles and images from; `X-Frame-Options` and
+`frame-ancestors` stop other sites framing it; `X-Content-Type-Options: nosniff` stops a
+browser guessing a file's type. Managed policies exist, and a custom one can say exactly what
+this site needs. There is no charge.
+
+**Here:** `harpguru-security-headers`, on the site's default behaviour in step 8. HSTS for a
+year, without subdomains, which it can't speak for, and without the preload list, which is
+slow to leave. The CSP allows only the site's own images and styles, since the page has no
+scripts. A response headers policy rather than a CloudFront Function, a decision recorded on
+2026-09-26: fixed headers are configuration, so there's nothing to test and nothing to pay per
+request. Phase B's embeds, under `/e/*`, will need a policy of their own that allows framing.
+
+**Say it:** "Security headers that never vary are configuration, so they go in a response
+headers policy; code at the edge is for logic that depends on the request."
+
+**See it:** `curl -sI https://harpguru.com/ | grep -iE '^(strict-transport-security|content-security-policy|x-frame-options|x-content-type-options|referrer-policy):'`
+and `aws cloudfront list-response-headers-policies --type custom --profile harpguru --query 'ResponseHeadersPolicyList.Items[].ResponseHeadersPolicy.ResponseHeadersPolicyConfig.Name'`.
+
+#### CloudFront Functions
+
+**What:** small JavaScript functions that CloudFront runs at the edge, on a viewer's request
+before the cache is checked, or on the response on its way back. They can rewrite a URL, read
+headers, or answer at once, as with a redirect. They're limited: under a millisecond of
+compute, no network, no file system, 10 KB of code. **Lambda@Edge** is the heavier alternative, which can
+call other services and see the origin's side, at many times the price and latency. Two
+million Function invocations a month are free.
+
+**Here:** `harpguru-www-redirect`, on every viewer request in step 8. It answers
+`www.harpguru.com` with a 301 to the same path and query string on the apex, and passes every
+other request through, so the apex's `.well-known` files are never redirected. Its code is
+`infra/lib/functions/www-redirect.js`, which the unit tests also run. Phase D's geo-aware links
+are the other planned use. Deployed 2026-11-06: CloudFront passes it query string values still
+encoded, so they reach the apex unchanged.
+
+**Say it:** "CloudFront Functions are for cheap, per-request logic at the edge, like redirects
+and URL rewrites; anything needing the network or more time is Lambda@Edge."
+
+**See it:** `aws cloudfront describe-function --name harpguru-www-redirect --stage LIVE --profile harpguru --query 'FunctionSummary.[Name,FunctionMetadata.Stage,FunctionConfig.Runtime]'`.
+Without `--stage LIVE` it shows `DEVELOPMENT`, the stage a change is tested in before it is
+published; CloudFront serves `LIVE`. The function running, without a browser:
+`curl -sI 'https://www.harpguru.com/s/x?a=1' | grep -iE '^(HTTP|location)'`.
+
+#### Route 53 alias records
+
+**What:** a Route 53 record that points at an AWS resource, such as a CloudFront
+distribution, instead of holding addresses. Route 53 looks up the resource's current addresses
+and answers with them, as an ordinary `A` or `AAAA` record. Unlike a `CNAME`, an alias works at
+the zone apex, where DNS allows no `CNAME`, and queries for one pointing at an AWS resource
+cost nothing.
+
+**Here:** step 8 adds four: an `A` (IPv4) and an `AAAA` (IPv6) for each of `harpguru.com`
+and `www.harpguru.com`, all aliases of the distribution. Before them, the apex had no address
+at all after the nameserver switch.
+
+**Say it:** "An alias record is how the bare domain points at CloudFront, because a CNAME is
+illegal at the apex, and Route 53 doesn't charge for the lookups."
+
+**See it:** `aws route53 list-resource-record-sets --profile harpguru --hosted-zone-id $(aws route53 list-hosted-zones-by-name --dns-name harpguru.com --profile harpguru --query 'HostedZones[0].Id' --output text) --query 'ResourceRecordSets[?AliasTarget].[Name,Type,AliasTarget.DNSName]'`,
+and what the internet gets back: `curl -s 'https://dns.google/resolve?name=harpguru.com&type=A' | jq '.Answer'`.
+
 ### Mail
 
 #### SES identities, the sandbox and DKIM
@@ -846,7 +982,8 @@ AWS recommends. CDK adds it to the Organization's statement but not to the manag
 account's own, so the stack adds it there. Config's bucket, in step 4b, uses
 `AWS:SourceAccount` instead, as the Config guide recommends: it narrows each grant to Config
 acting for this account, rather than for one named resource. A lifecycle rule deletes logs after 365 days. Step 8's site bucket meets the same ideas again,
-with CloudFront as the reader. *(PR `1-org-trail`)*
+with CloudFront as the reader; see [Origin Access Control](#origin-access-control-oac).
+*(PRs `1-org-trail`, `1-site`)*
 
 **Say it:** "An identity policy says what a principal may do; a bucket policy says who may
 touch this bucket. A service like CloudTrail has no identity in your account, so a resource
