@@ -92,6 +92,7 @@ test("GuardDuty can't be deleted, suspended or silenced, except by CDK's deploys
       'events:RemoveTargets',
       'sns:DeleteTopic',
       'sns:Unsubscribe',
+      'sns:SetSubscriptionAttributes',
     ])
   )
   expect(alert.Resource).toEqual([

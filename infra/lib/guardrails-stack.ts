@@ -131,8 +131,9 @@ export const SCPS = {
         {
           Sid: 'DenyFindingsAlertChangesOutsideCdk',
           Effect: 'Deny',
-          // The rule and topic that email each finding. Not the unsubscribe
-          // link in each email, which needs no credentials at all.
+          // The rule and topic that email each finding, and the subscription:
+          // a filter policy set on it could drop every message. Not the
+          // unsubscribe link in each email, which needs no credentials at all.
           Action: [
             'events:DeleteRule',
             'events:DisableRule',
@@ -143,6 +144,7 @@ export const SCPS = {
             'sns:SetTopicAttributes',
             'sns:RemovePermission',
             'sns:Unsubscribe',
+            'sns:SetSubscriptionAttributes',
           ],
           Resource: [
             `arn:aws:events:*:*:rule/${FINDINGS_ALERT_NAME}`,
