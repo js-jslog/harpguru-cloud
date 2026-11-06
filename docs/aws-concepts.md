@@ -860,13 +860,15 @@ million Function invocations a month are free.
 `www.harpguru.com` with a 301 to the same path and query string on the apex, and passes every
 other request through, so the apex's `.well-known` files are never redirected. Its code is
 `infra/lib/functions/www-redirect.js`, which the unit tests also run. Phase D's geo-aware links
-are the other planned use.
+are the other planned use. Deployed 2026-11-06: CloudFront passes it query string values still
+encoded, so they reach the apex unchanged.
 
 **Say it:** "CloudFront Functions are for cheap, per-request logic at the edge, like redirects
 and URL rewrites; anything needing the network or more time is Lambda@Edge."
 
-**See it:** `aws cloudfront describe-function --name harpguru-www-redirect --profile harpguru --query 'FunctionSummary.[Name,FunctionMetadata.Stage,FunctionConfig.Runtime]'`,
-and the function running, without a browser:
+**See it:** `aws cloudfront describe-function --name harpguru-www-redirect --stage LIVE --profile harpguru --query 'FunctionSummary.[Name,FunctionMetadata.Stage,FunctionConfig.Runtime]'`.
+Without `--stage LIVE` it shows `DEVELOPMENT`, the stage a change is tested in before it is
+published; CloudFront serves `LIVE`. The function running, without a browser:
 `curl -sI 'https://www.harpguru.com/s/x?a=1' | grep -iE '^(HTTP|location)'`.
 
 #### Route 53 alias records

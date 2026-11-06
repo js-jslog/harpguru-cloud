@@ -32,11 +32,11 @@ Update this table in the PR that moves a row. **You** means the user.
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **done**: zone deployed 2026-10-26; switch made and mail tested 2026-10-27 | — |
 | 6a | `1-mail-canary`: a weekly pair of messages showing `contact@` still forwards, in `HarpguruMailCanary` | **merged** and deployed 2026-10-27; first pair arrived 2026-10-28 | — |
 | 7 | `1-certificate`: ACM in `us-east-1`, in `HarpguruCertificate` | **merged** and deployed 2026-11-06; certificate issued | — |
-| 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | **branch pushed** 2026-11-06; diffed, as predicted; not deployed | *you*: deploy from the branch, then merge |
+| 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | **deployed** 2026-11-06, from the branch; smoke test passed | *you*: merge |
 
 **Next up, as of 2026-11-06:**
-1. #8: deploy `HarpguruSite` from the branch; the agent runs the smoke test and the checks
-   in #8; then merge. That ships Phase A.
+1. #8: merge. It is deployed and checked, and merging it ships Phase A. The learning
+   companion then needs a refresh to cover #8.
 2. Then Phase B is planned, in its own file here, after re-reading the roadmap.
 
 ## Accounts
@@ -690,6 +690,28 @@ Doing it, *you*, from `/app/infra`:
    holding an encoded `&`, such as `?a=b%26c`. CloudFront's guide doesn't say whether the
    function sees values encoded or decoded, and the redirect rebuilds the query string from
    them; if decoded, it must re-encode them.
+
+**Deployed 2026-11-06, from the branch.** What it showed:
+- The deploy took 240 seconds for `HarpguruSite`, after `HarpguruDns` with no changes and
+  `HarpguruCertificate` gaining its output in 8. It first failed with `no credentials have been
+  configured`: the SSO access token had expired, which the AWS CLI renews silently from its
+  refresh token and CDK doesn't. `-v` shows the real error; `aws sso login --sso-session jslog`
+  fixed it.
+- **The smoke test passed in full**, against the `cloudfront.net` name and against
+  `harpguru.com`, whose records were answering at once: nothing had cached the empty answer.
+- The certificate is now `InUse` and renewal `ELIGIBLE`. The distribution is `Deployed`,
+  `PriceClass_100`, HTTP/2 and 3. A direct request to the bucket gets 403. Every header in
+  the policy arrives, the `www` redirect's 301 included, so a response headers policy applies
+  to a function's own responses too.
+- **The redirect keeps encoded values intact.** CloudFront passes query string values to the
+  function still encoded: `?a=b%26c`, `?q=hello%20world` and `?x=%2F%3F` come out unchanged,
+  both from `test-function` and through real requests. The function used 7% of its compute
+  allowance.
+- **Apple's CDN and Google both have the files already.**
+  `https://app-site-association.cdn-apple.com/a/v1/harpguru.com` returned our AASA file, and
+  Google's Digital Asset Links API returned the package and the fingerprint, within minutes.
+- `describe-function` shows the `DEVELOPMENT` stage unless given `--stage LIVE`; CloudFront
+  serves `LIVE`. CDK publishes each change to both.
 
 ## Inputs needed from the user
 
