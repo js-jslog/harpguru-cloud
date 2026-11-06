@@ -295,7 +295,9 @@ each is readable on its own (the limit is 10 per target, checked against AWS's q
   apply, and member accounts can't change an org trail anyway
 - `harpguru-protect-guardduty` does the same for GuardDuty: it denies deleting or suspending a
   detector, the filters and trusted IP lists that would silence it, and changing the rule and
-  topic that email its findings, again except to CDK's deploys
+  topic that email its findings, again except to CDK's deploys. It leaves three gaps, which
+  step 4c of the plan lists: the unsubscribe link in each email, archiving a finding by hand,
+  and `sns:SetSubscriptionAttributes`
 
 How SCPs are switched on is in [Custom resources](#custom-resources).
 *(PRs `1-org-accounts`, `1-scp-custom-resource`, `1-config`, `1-guardduty`)*
@@ -736,10 +738,11 @@ only takes certificates from there (see [Regions](#regions)). One certificate co
 `harpguru.com` and `www.harpguru.com`. `www` will only redirect to the apex, but the redirect
 comes after the TLS handshake, so `www` needs a valid certificate too. Given the zone's ID,
 CloudFormation writes the validation records into `HarpguruDns`'s zone itself, outside any
-template, and the stack only finishes once the certificate is issued. No `CAA` record exists, so any CA may issue,
-ACM included. Deployed 2026-11-06: issued about two and a half minutes after it was requested,
-valid for 198 days, and shown as `INELIGIBLE` for renewal until step 8's CloudFront uses it.
-*(PR `1-certificate`)*
+template, and the stack only finishes once the certificate is issued. No `CAA` record exists,
+so any CA may issue, ACM included; if one is ever added, it must allow `amazon.com`, or
+renewals will fail. Deployed 2026-11-06: issued about two and a half minutes after it was
+requested, valid for 198 days, and shown as `INELIGIBLE` for renewal until step 8's CloudFront
+uses it. *(PR `1-certificate`)*
 
 **Say it:** "DNS validation is what makes ACM hands-off: the record that proved control
 once keeps proving it at every renewal, so nobody has to remember an expiry date."
@@ -904,7 +907,8 @@ S3, EKS audit logs, EBS malware scans, RDS logins and Lambda's network traffic, 
 runtime monitoring off; only S3 has anything to scan here. Each detector emails its findings,
 as in [EventBridge rules and SNS topics](#eventbridge-rules-and-sns-topics), and in the
 workload account the `harpguru-protect-guardduty` SCP stops anyone but a CDK deploy from
-suspending or silencing it. Each detector is free for its first 30 days, then pennies at this
+suspending it or silencing it in the ways it lists; step 4c of the plan names the three it
+leaves open. Each detector is free for its first 30 days, then pennies at this
 volume. GuardDuty creates two service-linked roles of its own in each account.
 *(PR `1-guardduty`)*
 
