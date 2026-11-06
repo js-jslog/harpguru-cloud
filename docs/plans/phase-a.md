@@ -27,17 +27,17 @@ Update this table in the PR that moves a row. **You** means the user.
 | 4a | `1-org-trail`: the Organization trail and its bucket, in `HarpguruTrail` | **merged** and deployed 2026-10-30 | — |
 | 4b | `1-config`: Config recorders in the workload account, and the SCP that protects them | **merged** and deployed 2026-10-30, after a first deploy rolled back; both regions' history files confirmed 2026-11-03 | — |
 | 4c | `1-guardduty`: GuardDuty detectors in both accounts, both regions, emailing their findings, and the SCP that protects them | **merged** and deployed 2026-11-05; all four subscriptions confirmed | — |
-| 4d | `1-guardduty-sns-gap`: `harpguru-protect-guardduty` also denies `sns:SetSubscriptionAttributes` | deployed and tested 2026-11-06; in review | *you*: merge |
+| 4d | `1-guardduty-sns-gap`: `harpguru-protect-guardduty` also denies `sns:SetSubscriptionAttributes` | **merged**, deployed and tested 2026-11-06 | — |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **done**: zone deployed 2026-10-26; switch made and mail tested 2026-10-27 | — |
 | 6a | `1-mail-canary`: a weekly pair of messages showing `contact@` still forwards, in `HarpguruMailCanary` | **merged** and deployed 2026-10-27; first pair arrived 2026-10-28 | — |
 | 7 | `1-certificate`: ACM in `us-east-1`, in `HarpguruCertificate` | **merged** and deployed 2026-11-06; certificate issued | — |
-| 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | *you*: the Play app signing fingerprint, below |
+| 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | **branch pushed** 2026-11-06, not deployed | *you*: diff and deploy from the branch, then merge |
 
 **Next up, as of 2026-11-06:**
-1. #4d: merge. It is deployed and tested.
-2. #8, once the fingerprint below is in. The store and YouTube URLs are in. The learning
-   companion covers everything up to #7.
+1. #8: diff and deploy `HarpguruSite` from the branch; the agent runs the smoke test and the
+   checks in #8; then merge. That ships Phase A.
+2. Then Phase B is planned, in its own file here, after re-reading the roadmap.
 
 ## Accounts
 
@@ -454,6 +454,12 @@ Done 2026-11-06. What it showed:
   so `Subscriptions[0]` came back as the ARN followed by `None` from an empty second page, and
   SNS rejected that as an invalid GUID. `list-subscriptions-by-topic --no-paginate` gives the
   ARN alone.
+- **Not yet proven: that a CDK deploy can still change the subscription.** The new action
+  relies on the same `ArnNotLike` exemption for CDK's execution role as the rest of the policy,
+  which #4b's Config deploy proved, but the simulator can't test it for SNS subscription
+  actions, and no deploy since has changed the subscription. The next deploy that does is the
+  test. If the exemption were wrong, that deploy would fail and roll back, naming the SCP:
+  loud, unlike the silent failure #4d closes.
 
 **5 · you: bootstrap.** `cdk bootstrap` for the workload account in **both** `eu-west-2` and
 `us-east-1`. The certificate stack lives in `us-east-1`, which is easy to miss.
@@ -615,30 +621,81 @@ use and `INELIGIBLE` for renewal until #8 attaches it. The two validation record
 zone, which now holds nine record sets. The template, as deployed, reads the zone's ID with
 `Fn::GetStackOutput` naming `eu-west-2`, so the weak reference worked across regions.
 
-**8 · `1-site`.**
-- A private S3 bucket behind CloudFront with OAC, and a response headers policy for
-  the security headers.
-- Route 53 alias records for the apex and `www`, plus a CloudFront Function that redirects
-  `www` to the apex.
-- The landing page: store links and the YouTube channel.
-- `/.well-known/apple-app-site-association` and `/.well-known/assetlinks.json`:
-  - Served from the apex only, never through the redirect.
-  - Served as `application/json`. The AASA file has no extension, so its `Content-Type` is
-    set explicitly on upload.
-  - Claim `/s/*` from the start. Apple caches the AASA file on its own CDN.
-- A smoke-test script that checks each `.well-known` URL returns 200, `application/json` and
-  no redirect.
-- Identifiers from the app repo: iOS Team ID `6XJN2H9VQM`, bundle `com.jslog.harpguru`, and
-  Android package `com.jslog.harpguru`.
+**8 · `1-site`.** `HarpguruSite`, in the workload account in London, beside the zone.
+- **A private S3 bucket behind CloudFront with OAC.** Public access blocked, TLS only, and
+  its policy lets CloudFront read on behalf of this distribution alone. Retained, CDK's
+  default, so a deleted stack leaves its files.
+- **One distribution** for the apex and `www`, with #7's certificate, read across regions as
+  a weak reference: `HarpguruCertificate` gains one output for it, its ARN. HTTP redirects to
+  HTTPS, TLS 1.2 at least, HTTP/2 and HTTP/3, `PriceClass_100`, `/` serves `index.html`.
+  CloudFront can't list the bucket, so S3 answers a missing file with 403; both 403 and 404
+  become `/404.html` with a 404. One behaviour, the default. Phase B adds its paths to this
+  distribution.
+- **A response headers policy**, `harpguru-security-headers`: HSTS for a year, without
+  subdomains or preload; `nosniff`; `X-Frame-Options: DENY`; a strict referrer policy; and a
+  CSP allowing only the site's own images and styles, since the page has no scripts.
+- **A CloudFront Function**, `harpguru-www-redirect`, on every viewer request: `www` gets a
+  301 to the same path and query string on the apex, and everything else passes through, so the
+  apex's `.well-known` files are never redirected. `infra/lib/functions/www-redirect.js`; the
+  unit tests run it.
+- **Four alias records**, `A` and `AAAA` for the apex and `www`. The apex has had no address since
+  the nameserver switch, so nothing is replaced.
+- **The files**, in `infra/site/`, uploaded by two `BucketDeployment` custom resources: the AASA
+  file alone, as `application/json`, since it has no extension to guess from; and everything
+  else, deleting what's gone but never the AASA file. The second runs last and invalidates `/*`
+  once. CDK grants their Lambda `cloudfront:CreateInvalidation` on any distribution, not just
+  this one; only that Lambda can use the role, and there is one distribution.
+  - **The landing page**: the app icon from the app repo, one line on what the app does,
+    taken from the roadmap's description, and links to the App Store, Google Play and the
+    YouTube channel. Safari on iOS also offers the app through a smart app banner.
+  - **`apple-app-site-association`**: app ID `6XJN2H9VQM.com.jslog.harpguru`, claiming `/s/*`.
+    The current `components` format only, which iOS 13 and later read.
+  - **`assetlinks.json`**: package `com.jslog.harpguru` and the Play **app signing** key's
+    SHA-256 fingerprint, received 2026-11-06. Not the upload key: Play re-signs every
+    release, so phones only see the app signing key.
+  - Neither file does anything until the app declares the domain, its associated domains and
+    intent filters, in Phase B. Apple fetches the AASA file through its own CDN, so a change
+    can take a day to reach devices.
+- **`infra/scripts/smoke-site.sh`**: checks from outside that both `.well-known` files return
+  200, `application/json`, valid JSON and no redirect; that `/` and a missing page return 200
+  and 404; that HSTS and CSP are present; that `www` redirects to the apex with its path and
+  query; and that HTTP redirects to HTTPS. Given a `cloudfront.net` name, it checks the files
+  before DNS answers.
+
+Not termination protected: everything in it is rebuilt from this repo. Nothing is added to
+`deploy.local.json`. Expected cost: pennies, within CloudFront's always-free tier.
+
+Doing it, *you*, from `/app/infra`:
+1. `cdk diff HarpguruSite --profile harpguru`. It includes `HarpguruDns`, with no
+   differences, and `HarpguruCertificate`, whose only change is a `[+]` output. `HarpguruSite`
+   is all `[+]`: the bucket and its policy, the OAC, the response headers policy, the function,
+   the distribution, four record sets, two `Custom::CDKBucketDeployment`, and the upload's
+   Lambda, role, policy, two layers and log group. Its IAM section lists the bucket policy's
+   CloudFront grant and the Lambda's role.
+2. `cdk deploy HarpguruSite --profile harpguru --require-approval never`. CloudFront takes a
+   few minutes to create the distribution, and the upload waits for its invalidation.
+3. `scripts/smoke-site.sh`. A resolver that asked for `harpguru.com` before the records
+   existed may remember the empty answer for up to 15 minutes, the zone's negative caching
+   time; until then,
+   `scripts/smoke-site.sh $(aws cloudformation describe-stacks --stack-name HarpguruSite --profile harpguru --query "Stacks[0].Outputs[?OutputKey=='DistributionDomainName'].OutputValue" --output text)`
+   checks the distribution directly.
+4. The agent runs the new concepts entries' "See it" commands; checks that ACM shows the
+   certificate in use and eligible for renewal; and reads Apple's CDN copy,
+   `https://app-site-association.cdn-apple.com/a/v1/harpguru.com`, and Google's,
+   `https://digitalassetlinks.googleapis.com/v1/statements:list?source.web.site=https://harpguru.com&relation=delegate_permission/common.handle_all_urls`.
 
 ## Inputs needed from the user
 
-- For #8: the SHA-256 fingerprint of the Play **app signing** key (Play Console → Test and
-  release → App integrity → Play app signing → Settings). Outstanding.
-- Received 2026-11-06, for the landing page:
+- None outstanding.
+- Received 2026-11-06, for #8: the SHA-256 fingerprint of the Play **app signing** key, in
+  `infra/site/.well-known/assetlinks.json`; and for the landing page:
   - App Store: `https://apps.apple.com/us/app/harp-guru/id1552752923`
   - Play Store: `https://play.google.com/store/apps/details/Harp_Guru?id=com.jslog.harpguru`
   - YouTube: `https://www.youtube.com/@harpguru7909`
+
+  The page links the two stores by their shortest canonical forms,
+  `https://apps.apple.com/app/id1552752923`, which opens the visitor's own country's store,
+  and `https://play.google.com/store/apps/details?id=com.jslog.harpguru`.
 
 ## Decisions
 
@@ -760,3 +817,15 @@ zone, which now holds nine record sets. The template, as deployed, reads the zon
 - 2026-11-06: **`harpguru-protect-guardduty` also denies `sns:SetSubscriptionAttributes`**, #4d.
   The user's choice, from the option the plan offered after the 2026-11-05 dry run. Easy to
   revisit: one line in `infra/lib/guardrails-stack.ts`.
+- 2026-11-06: **#8's choices, proposed by the agent**, each easy to revisit in
+  `infra/lib/site-stack.ts`:
+  - The files are uploaded by `BucketDeployment`, so `cdk deploy` is the only command, rather
+    than a script of `aws s3` commands run after it. The cost is a Lambda and a custom resource.
+  - HSTS for a year, without `includeSubDomains` or preload. Preload is hard to undo, and the
+    policy can't vouch for every subdomain.
+  - `PriceClass_100`: the cheapest edges, North America and Europe. Visitors elsewhere are
+    served from the nearest of those.
+  - No CloudFront access logs yet: nothing reads them before Phase D, which decides how
+    traffic is measured.
+  - No contact address on the page, since addresses are kept out of the repo, and no privacy
+    policy: the app repo holds it, and moving it is not part of this step.

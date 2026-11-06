@@ -17,6 +17,7 @@ import { GuardDutyStack } from '../lib/guardduty-stack'
 import { GuardrailsStack } from '../lib/guardrails-stack'
 import { IdentityStack } from '../lib/identity-stack'
 import { PolicyTypesStack } from '../lib/policy-types-stack'
+import { SiteStack } from '../lib/site-stack'
 import { applyProjectTags } from '../lib/tags'
 import { TrailStack } from '../lib/trail-stack'
 
@@ -163,8 +164,19 @@ new GuardDutyStack(app, 'HarpguruGuardDutyWorkloadEdge', {
 // The certificate CloudFront will use from step 8, which only takes them from
 // us-east-1. Its validation records go into the London zone, which reaches it
 // as a weak reference: an output of HarpguruDns, read across regions.
-new CertificateStack(app, 'HarpguruCertificate', {
+const certificate = new CertificateStack(app, 'HarpguruCertificate', {
   env: workloadEnv(config, EDGE_REGION),
   description: 'The ACM certificate for harpguru.com and www, in us-east-1',
   zone: dns.zone,
+})
+
+// harpguru.com itself: the bucket, the CloudFront distribution, the landing
+// page, the .well-known files, and the apex and www records. In London, with
+// the zone; the certificate reaches it the other way across regions, as an
+// output of HarpguruCertificate read from us-east-1.
+new SiteStack(app, 'HarpguruSite', {
+  env: workloadEnv(config),
+  description: 'harpguru.com: its bucket, CloudFront, landing page and records',
+  zone: dns.zone,
+  certificate: certificate.certificate,
 })
