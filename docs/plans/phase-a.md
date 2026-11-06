@@ -27,7 +27,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | 4a | `1-org-trail`: the Organization trail and its bucket, in `HarpguruTrail` | **merged** and deployed 2026-10-30 | — |
 | 4b | `1-config`: Config recorders in the workload account, and the SCP that protects them | **merged** and deployed 2026-10-30, after a first deploy rolled back; both regions' history files confirmed 2026-11-03 | — |
 | 4c | `1-guardduty`: GuardDuty detectors in both accounts, both regions, emailing their findings, and the SCP that protects them | **merged** and deployed 2026-11-05; all four subscriptions confirmed | — |
-| 4d | `1-guardduty-sns-gap`: `harpguru-protect-guardduty` also denies `sns:SetSubscriptionAttributes` | in review | *you*: deploy `HarpguruGuardrails` from the branch, then merge |
+| 4d | `1-guardduty-sns-gap`: `harpguru-protect-guardduty` also denies `sns:SetSubscriptionAttributes` | deployed and tested 2026-11-06; in review | *you*: merge |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **done**: zone deployed 2026-10-26; switch made and mail tested 2026-10-27 | — |
 | 6a | `1-mail-canary`: a weekly pair of messages showing `contact@` still forwards, in `HarpguruMailCanary` | **merged** and deployed 2026-10-27; first pair arrived 2026-10-28 | — |
@@ -35,7 +35,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | *you*: the Play app signing fingerprint, below |
 
 **Next up, as of 2026-11-06:**
-1. #4d: deploy `HarpguruGuardrails` from the branch, the agent checks the new deny, then merge.
+1. #4d: merge. It is deployed and tested.
 2. #8, once the fingerprint below is in. The store and YouTube URLs are in. The learning
    companion covers everything up to #7.
 
@@ -434,8 +434,26 @@ Doing it, *you*, from `/app/infra`, signed in to the management account:
 1. `npx cdk diff HarpguruGuardrails`: one `[~]` on `harpguru-protect-guardduty`, its `Content`
    gaining `sns:SetSubscriptionAttributes`, and nothing else.
 2. `npx cdk deploy HarpguruGuardrails --exclusively --require-approval never`.
-3. The agent checks with `aws iam simulate-principal-policy` that the SSO role is now
-   `explicitDeny` for `sns:SetSubscriptionAttributes` on a findings subscription.
+3. A real call the SCP should refuse, since the simulator can't test it (below):
+   `A=$(aws sts get-caller-identity --profile harpguru --query Account --output text) && S=$(aws sns list-subscriptions-by-topic --profile harpguru --region eu-west-2 --no-paginate --topic-arn arn:aws:sns:eu-west-2:$A:harpguru-guardduty-findings --query 'Subscriptions[0].SubscriptionArn' --output text) && aws sns set-subscription-attributes --profile harpguru --region eu-west-2 --subscription-arn "$S" --attribute-name FilterPolicyScope --attribute-value MessageAttributes`.
+   Harmless if it were allowed: `MessageAttributes` is the default scope, and no filter policy
+   is set.
+
+Done 2026-11-06. What it showed:
+- The diff was as above, with `HarpguruPolicyTypes` included and unchanged. The deploy took
+  12 seconds.
+- **The real call was refused** with `AuthorizationError … with an explicit deny in a service
+  control policy`. SNS named the **topic** ARN as the resource, not the subscription ARN it
+  was given, so the statement's topic ARN is what matched, not its `:*` pattern.
+- **`aws iam simulate-principal-policy` can't test this.** For `SetSubscriptionAttributes`,
+  `Unsubscribe` and even `GetSubscriptionAttributes`, it returns `implicitDeny` against a
+  subscription ARN or a topic ARN, ours or another, though the real `Get` call succeeds. So
+  #4c's check, which tested only topic and rule actions, never covered `sns:Unsubscribe`
+  either; it is denied by the same statement and resource as the call above.
+- `aws sns list-subscriptions` with `--query … --output text` applies the query to each page,
+  so `Subscriptions[0]` came back as the ARN followed by `None` from an empty second page, and
+  SNS rejected that as an invalid GUID. `list-subscriptions-by-topic --no-paginate` gives the
+  ARN alone.
 
 **5 · you: bootstrap.** `cdk bootstrap` for the workload account in **both** `eu-west-2` and
 `us-east-1`. The certificate stack lives in `us-east-1`, which is easy to miss.
