@@ -56,10 +56,11 @@ Organizations, CloudFront and Route 53.
 **Here:** almost everything runs in `eu-west-2`. **`us-east-1` is the exception**, and the
 reason the workload account was bootstrapped there too in step 5, and the management account
 in step 4c. CloudFront only accepts certificates issued there, so step 7's certificate stack,
-`HarpguruCertificate`, lives there. Since step 4b, `HarpguruConfigEdge` does, because Config records Route 53 zones
-and CloudFront distributions only in `us-east-1`; and since step 4c, a GuardDuty stack in each
-account, because a detector only watches its own region. Some billing APIs also answer only there. The org trail lives in
-London but records every region, refused calls included.
+`HarpguruCertificate`, lives there. Since step 4b, `HarpguruConfigEdge` does, because Config
+records Route 53 zones and CloudFront distributions only in `us-east-1`; and since step 4c, a
+GuardDuty stack in each account, because a detector only watches its own region. Some billing
+APIs also answer only there. The org trail lives in London but records every region, refused
+calls included.
 
 **Say it:** "Most of the stack is in London, but the CloudFront certificate has to be in
 `us-east-1`, because CloudFront is a global service anchored there."
@@ -578,15 +579,18 @@ stacks share a region:
 A strong reference locks the producer: CloudFormation refuses to change or delete an export
 while another stack imports it. A weak one locks nothing; the consumer reads the output when
 it deploys and keeps that value until its next deploy. Weak is what `cdk init` writes for new
-projects. The first reference between regions is step 7's: the certificate, in `us-east-1`,
-reads the hosted zone's ID from `HarpguruDns` in London. Step 8 adds the second, the
-certificate's ARN going the other way to the site.
+projects.
 
 **Here:** `HarpguruAccounts` reads the `Workloads` OU's ID from `HarpguruGuardrails`'s output.
 The reference also makes CDK deploy the guardrails first, which is the order we want. Being
 weak, it doesn't guard the guardrails stack; termination protection does that. Until the
 deploy on 2026-10-22 this entry described exports, which no stack here uses.
 *(PR `1-org-accounts`; corrected in `1-deploy-org-accounts`)*
+
+The first reference between regions is step 7's: `HarpguruCertificate`, in `us-east-1`, reads
+the hosted zone's ID from `HarpguruDns`'s output in London, with `Fn::GetStackOutput` naming
+the region. Step 8 will add a second, the certificate going the other way to the site.
+*(PR `1-certificate`)*
 
 **Say it:** "A strong reference locks the producer while it's consumed; a weak one just reads
 its output at deploy time, so stability has to come from somewhere else, like termination
@@ -629,7 +633,7 @@ container images, plus the IAM roles CDK assumes to deploy.
 **Here:** the management account was bootstrapped in `eu-west-2` on 2026-08-28, and in
 `us-east-1` on 2026-11-05, for step 4c's GuardDuty stack there. The workload
 account was bootstrapped in **both** `eu-west-2` and `us-east-1` on 2026-10-22, in step 5,
-because the certificate stack will live in `us-east-1`. Two defaults were kept. CloudFormation's
+because the certificate stack, `HarpguruCertificate`, lives in `us-east-1`. Two defaults were kept. CloudFormation's
 execution role, which actually creates resources, has `AdministratorAccess` in the account, so
 anyone allowed to deploy is in effect an admin there, still inside the SCPs. And no other
 account is trusted to deploy, because deploys run as me through the `harpguru` profile; a CI
@@ -730,8 +734,8 @@ certificate is in use by a service.
 only takes certificates from there (see [Regions](#regions)). One certificate covers
 `harpguru.com` and `www.harpguru.com`. `www` will only redirect to the apex, but the redirect
 comes after the TLS handshake, so `www` needs a valid certificate too. Given the zone's ID,
-CloudFormation writes the validation records into `HarpguruDns`'s zone itself, and the stack
-only finishes once the certificate is issued. No `CAA` record exists, so any CA may issue,
+CloudFormation writes the validation records into `HarpguruDns`'s zone itself, outside any
+template, and the stack only finishes once the certificate is issued. No `CAA` record exists, so any CA may issue,
 ACM included. *(PR `1-certificate`)*
 
 **Say it:** "DNS validation is what makes ACM hands-off: the record that proved control
