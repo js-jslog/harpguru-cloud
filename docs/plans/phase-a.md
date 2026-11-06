@@ -35,6 +35,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | **merged** and deployed 2026-11-06; smoke test passed | — |
 
 **Next up, as of 2026-11-06:**
+
 Phase A has shipped: every step is merged, and the learning companion covers all of it.
 1. Plan Phase B, in its own file here, after re-reading the roadmap.
 
@@ -500,8 +501,8 @@ Heart until the nameservers move, so the steps can be split across sessions at t
 
 The apex and `www` are left out of the zone on purpose. Before the switch they pointed at
 Heart's parked page, which has no HTTPS, and #8 points them at CloudFront. Since the switch they
-didn't resolve until #8 added their alias records, on 2026-11-06. Nor does `ftp.harpguru.com` (`79.170.44.11`), which nothing
-uses. Heart also served a wildcard,
+didn't resolve until #8 added their alias records, on 2026-11-06. `ftp.harpguru.com`
+(`79.170.44.11`) still doesn't, and nothing uses it. Heart also served a wildcard,
 `*.harpguru.com` to the parked address, so every made-up name resolved there, `webmail` and
 `imap` included; and a `_domainconnect` TXT record, Heart's hook for letting third parties set
 up DNS. Both are left behind too. Mail is forwarded, not kept in a mailbox, so nothing reads
@@ -612,6 +613,7 @@ CloudFormation, not declared as resources, so they appear in the zone but in no 
 `docs/outside-cdk.md` lists them. The stack is not termination protected: nothing in it is
 hard to recreate, and once CloudFront uses the certificate, ACM refuses to delete it. Until
 #8 nothing uses it, so ACM won't renew it, which is harmless with its expiry months away.
+Since #8's deploy it is `InUse` and `ELIGIBLE`; see #8.
 
 **Deployed 2026-11-06, from the branch.** `HarpguruDns` had no changes; the certificate was
 issued about two and a half minutes after CloudFormation requested it, both names validated,
