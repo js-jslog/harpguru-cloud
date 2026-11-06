@@ -33,6 +33,7 @@ the account ID, it fetches it with `aws sts get-caller-identity`.
 [Environments](#environments) · [CDK bootstrap](#cdk-bootstrap) ·
 [Tags and cost allocation tags](#tags-and-cost-allocation-tags) ·
 [Route 53 hosted zones and delegation](#route-53-hosted-zones-and-delegation) ·
+[ACM certificates and DNS validation](#acm-certificates-and-dns-validation) ·
 [SES identities, the sandbox and DKIM](#ses-identities-the-sandbox-and-dkim) ·
 [EventBridge Scheduler and universal targets](#eventbridge-scheduler-and-universal-targets) ·
 [CloudTrail](#cloudtrail) ·
@@ -54,11 +55,12 @@ Organizations, CloudFront and Route 53.
 
 **Here:** almost everything runs in `eu-west-2`. **`us-east-1` is the exception**, and the
 reason the workload account was bootstrapped there too in step 5, and the management account
-in step 4c. CloudFront only accepts certificates issued there, so step 7's certificate stack
-will live there. Since step 4b, `HarpguruConfigEdge` does, because Config records Route 53 zones
-and CloudFront distributions only in `us-east-1`; and since step 4c, a GuardDuty stack in each
-account, because a detector only watches its own region. Some billing APIs also answer only there. The org trail lives in
-London but records every region, refused calls included.
+in step 4c. CloudFront only accepts certificates issued there, so step 7's certificate stack,
+`HarpguruCertificate`, lives there. Since step 4b, `HarpguruConfigEdge` does, because Config
+records Route 53 zones and CloudFront distributions only in `us-east-1`; and since step 4c, a
+GuardDuty stack in each account, because a detector only watches its own region. Some billing
+APIs also answer only there. The org trail lives in London but records every region, refused
+calls included.
 
 **Say it:** "Most of the stack is in London, but the CloudFront certificate has to be in
 `us-east-1`, because CloudFront is a global service anchored there."
@@ -577,8 +579,7 @@ stacks share a region:
 A strong reference locks the producer: CloudFormation refuses to change or delete an export
 while another stack imports it. A weak one locks nothing; the consumer reads the output when
 it deploys and keeps that value until its next deploy. Weak is what `cdk init` writes for new
-projects. Step 7's certificate, made in `us-east-1` and used by the site in `eu-west-2`, will be
-the first reference between regions.
+projects.
 
 **Here:** `HarpguruAccounts` reads the `Workloads` OU's ID from `HarpguruGuardrails`'s output.
 The reference also makes CDK deploy the guardrails first, which is the order we want. Being
@@ -586,11 +587,19 @@ weak, it doesn't guard the guardrails stack; termination protection does that. U
 deploy on 2026-10-22 this entry described exports, which no stack here uses.
 *(PR `1-org-accounts`; corrected in `1-deploy-org-accounts`)*
 
+The first reference between regions is step 7's: `HarpguruCertificate`, in `us-east-1`, reads
+the hosted zone's ID from `HarpguruDns`'s output in London, with `Fn::GetStackOutput` naming
+the region. It is the output `HarpguruMailCanary` already reads in the same region, so
+`HarpguruDns` didn't change. Step 8 will add a second, the certificate going the other way to the site.
+*(PR `1-certificate`)*
+
 **Say it:** "A strong reference locks the producer while it's consumed; a weak one just reads
 its output at deploy time, so stability has to come from somewhere else, like termination
 protection."
 
-**See it:** the reference as deployed:
+**See it:** the cross-region one:
+`aws cloudformation get-template --stack-name HarpguruCertificate --region us-east-1 --profile harpguru --query 'TemplateBody.Resources.Certificate4E7ABB08.Properties.DomainValidationOptions[0].HostedZoneId'`.
+The same-region one:
 `aws cloudformation get-template --stack-name HarpguruAccounts --query 'TemplateBody.Resources.Harpguru.Properties.ParentIds'`.
 The output it reads, with no export name:
 `aws cloudformation describe-stacks --stack-name HarpguruGuardrails --query 'Stacks[0].Outputs'`.
@@ -625,7 +634,7 @@ container images, plus the IAM roles CDK assumes to deploy.
 **Here:** the management account was bootstrapped in `eu-west-2` on 2026-08-28, and in
 `us-east-1` on 2026-11-05, for step 4c's GuardDuty stack there. The workload
 account was bootstrapped in **both** `eu-west-2` and `us-east-1` on 2026-10-22, in step 5,
-because the certificate stack will live in `us-east-1`. Two defaults were kept. CloudFormation's
+because the certificate stack, `HarpguruCertificate`, lives in `us-east-1`. Two defaults were kept. CloudFormation's
 execution role, which actually creates resources, has `AdministratorAccess` in the account, so
 anyone allowed to deploy is in effect an admin there, still inside the SCPs. And no other
 account is trusted to deploy, because deploys run as me through the `harpguru` profile; a CI
@@ -709,6 +718,36 @@ What the zone would answer, before anything points at it:
 Without `--profile harpguru` these ask the management account, and `test-dns-answer` fails
 with `AccessDenied` rather than saying the zone is elsewhere.
 Who the internet asks today: `curl -s 'https://dns.google/resolve?name=harpguru.com&type=NS'`.
+
+### Certificates
+
+#### ACM certificates and DNS validation
+
+**What:** ACM (AWS Certificate Manager) issues the TLS certificates that let a site serve
+HTTPS. A public certificate used through an AWS service such as CloudFront is free, and its
+private key never leaves ACM. Before issuing, ACM must see proof that you control each
+name on the certificate. With **DNS validation**, it gives one `CNAME` record per name, and
+issues once the public DNS answers with it. The records then have to stay: ACM renews the
+certificate by itself, well ahead of expiry, by checking them again, as long as the
+certificate is in use by a service.
+
+**Here:** `HarpguruCertificate`, in the workload account in `us-east-1`, because CloudFront
+only takes certificates from there (see [Regions](#regions)). One certificate covers
+`harpguru.com` and `www.harpguru.com`. `www` will only redirect to the apex, but the redirect
+comes after the TLS handshake, so `www` needs a valid certificate too. Given the zone's ID,
+CloudFormation writes the validation records into `HarpguruDns`'s zone itself, outside any
+template, and the stack only finishes once the certificate is issued. No `CAA` record exists, so any CA may issue,
+ACM included. Deployed 2026-11-06: issued about two and a half minutes after it was requested,
+valid for 198 days, and shown as `INELIGIBLE` for renewal until step 8's CloudFront uses it.
+*(PR `1-certificate`)*
+
+**Say it:** "DNS validation is what makes ACM hands-off: the record that proved control
+once keeps proving it at every renewal, so nobody has to remember an expiry date."
+
+**See it:** the certificate, its status and its expiry:
+`aws acm list-certificates --region us-east-1 --profile harpguru --query 'CertificateSummaryList[].[DomainName,Status,NotAfter,InUse,RenewalEligibility]'`.
+The validation records ACM asked for:
+`aws acm describe-certificate --region us-east-1 --profile harpguru --certificate-arn $(aws acm list-certificates --region us-east-1 --profile harpguru --query 'CertificateSummaryList[0].CertificateArn' --output text) --query 'Certificate.DomainValidationOptions[].[DomainName,ValidationStatus,ResourceRecord.Name]'`.
 
 ### Mail
 

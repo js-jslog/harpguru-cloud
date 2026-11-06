@@ -30,11 +30,12 @@ Update this table in the PR that moves a row. **You** means the user.
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **done**: zone deployed 2026-10-26; switch made and mail tested 2026-10-27 | — |
 | 6a | `1-mail-canary`: a weekly pair of messages showing `contact@` still forwards, in `HarpguruMailCanary` | **merged** and deployed 2026-10-27; first pair arrived 2026-10-28 | — |
-| 7 | `1-certificate`: ACM in `us-east-1` | not started | — |
+| 7 | `1-certificate`: ACM in `us-east-1`, in `HarpguruCertificate` | **in review**; deployed 2026-11-06, from the branch; certificate issued | *you*: the merge |
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
 
-**Next up, as of 2026-11-05:**
-1. #7, which is unblocked. The learning companion covers everything up to #4c.
+**Next up, as of 2026-11-06:**
+1. #7's merge. Then #8, which needs the inputs below. The learning companion covers
+   everything up to #4c.
 2. Optional, the user's call: deny `sns:SetSubscriptionAttributes` in
    `harpguru-protect-guardduty`, the one gap in it found after the deploy; #4c says why.
 
@@ -560,6 +561,26 @@ names both; that question stays open and harmless.
 **7 · `1-certificate`.** An ACM certificate in `us-east-1` covering the apex and `www`,
 validated through DNS in the zone. It reaches the site stack as a cross-region reference.
 
+The zone reaches the certificate the same way, the other way round: `HarpguruCertificate`
+is passed `dns.zone`, and since references are weak, it reads the zone's ID from a plain
+output of `HarpguruDns`, with `Fn::GetStackOutput` naming London. No custom resource and no
+export. The output already exists: #6a's mail canary reads the same one for its DKIM
+records, so `HarpguruDns` doesn't change, which `cdk diff` confirmed on 2026-11-06. `cdk
+deploy HarpguruCertificate --profile harpguru` includes `HarpguruDns` as a dependency, finds
+nothing to do there, and then waits while ACM validates: CloudFormation writes one `CNAME` per name into the zone and
+the stack completes only once the certificate is issued. Those records are written by
+CloudFormation, not declared as resources, so they appear in the zone but in no template;
+`docs/outside-cdk.md` lists them. The stack is not termination protected: nothing in it is
+hard to recreate, and once CloudFront uses the certificate, ACM refuses to delete it. Until
+#8 nothing uses it, so ACM won't renew it, which is harmless with its expiry months away.
+
+**Deployed 2026-11-06, from the branch.** `HarpguruDns` had no changes; the certificate was
+issued about two and a half minutes after CloudFormation requested it, both names validated,
+and the deploy took 161s. It is valid until 2027-05-23, 198 days, and ACM shows it as not in
+use and `INELIGIBLE` for renewal until #8 attaches it. The two validation records are in the
+zone, which now holds nine record sets. The template, as deployed, reads the zone's ID with
+`Fn::GetStackOutput` naming `eu-west-2`, so the weak reference worked across regions.
+
 **8 · `1-site`.**
 - A private S3 bucket behind CloudFront with OAC, and a response headers policy for
   the security headers.
@@ -692,3 +713,8 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
   the agent and accepted by the user. Without the email, findings wait in the console for
   someone to look; without the SCP, the workload account's detectors could be suspended or
   silenced by anyone signed in. Easy to revisit: both are in their own resources.
+- 2026-11-06: **the certificate takes the zone as a weak cross-region reference**, rather than
+  a hosted zone ID written into the code or `deploy.local.json`, or a `fromLookup`, whose
+  cached context would put the account ID in the repo. Proposed by the agent. The zone is
+  retained and its ID never changes, so the reference locking nothing costs nothing. Easy to
+  revisit: one prop in `infra/bin/harpguru.ts`.
