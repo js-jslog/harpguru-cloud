@@ -27,17 +27,17 @@ Update this table in the PR that moves a row. **You** means the user.
 | 4a | `1-org-trail`: the Organization trail and its bucket, in `HarpguruTrail` | **merged** and deployed 2026-10-30 | — |
 | 4b | `1-config`: Config recorders in the workload account, and the SCP that protects them | **merged** and deployed 2026-10-30, after a first deploy rolled back; both regions' history files confirmed 2026-11-03 | — |
 | 4c | `1-guardduty`: GuardDuty detectors in both accounts, both regions, emailing their findings, and the SCP that protects them | **merged** and deployed 2026-11-05; all four subscriptions confirmed | — |
+| 4d | `1-guardduty-sns-gap`: `harpguru-protect-guardduty` also denies `sns:SetSubscriptionAttributes` | in review | *you*: deploy `HarpguruGuardrails` from the branch, then merge |
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **done**: zone deployed 2026-10-26; switch made and mail tested 2026-10-27 | — |
 | 6a | `1-mail-canary`: a weekly pair of messages showing `contact@` still forwards, in `HarpguruMailCanary` | **merged** and deployed 2026-10-27; first pair arrived 2026-10-28 | — |
 | 7 | `1-certificate`: ACM in `us-east-1`, in `HarpguruCertificate` | **merged** and deployed 2026-11-06; certificate issued | — |
-| 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
+| 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | *you*: the Play app signing fingerprint, below |
 
 **Next up, as of 2026-11-06:**
-1. #8, once the inputs below are in. The learning companion covers everything up to #7.
-2. Optional, the user's call: deny `sns:SetSubscriptionAttributes` in
-   `harpguru-protect-guardduty`. It is the one of its three gaps worth closing, found after
-   the deploy; #4c says why.
+1. #4d: deploy `HarpguruGuardrails` from the branch, the agent checks the new deny, then merge.
+2. #8, once the fingerprint below is in. The store and YouTube URLs are in. The learning
+   companion covers everything up to #7.
 
 ## Accounts
 
@@ -357,8 +357,8 @@ how one is suspended; creating or updating filters and trusted IP lists, the two
 silence findings without touching the detector; and deleting, disabling or retargeting the rule,
 deleting or re-policying the topic, and unsubscribing from it. It doesn't cover the
 unsubscribe link in each email, which needs no credentials, nor archiving a finding by hand,
-nor `sns:SetSubscriptionAttributes`, with which a filter policy on the subscription could drop
-every message (found by the 2026-11-05 learning dry run; not denied yet).
+nor, until #4d, `sns:SetSubscriptionAttributes`, with which a filter policy on the subscription
+could drop every message (found by the 2026-11-05 learning dry run).
 The management account's two stacks have no such guard: SCPs never apply there. An OU may have
 ten SCPs attached; `Workloads` now has five of ours, six with `FullAWSAccess`.
 
@@ -420,6 +420,22 @@ Done 2026-11-05. What it showed:
   "[SAMPLE]" in it: GuardDuty marks samples in `Service.AdditionalInfo`, which the email leaves
   out. All three stay in the workload account's London detector, at severities 2, 2 and 5,
   until archived.
+
+**4d · `1-guardduty-sns-gap`.** Closes the gap #4c left in `harpguru-protect-guardduty`: its
+second statement also denies `sns:SetSubscriptionAttributes`. A filter policy is a
+subscription attribute, and one matching nothing would drop every finding's email without
+deleting or unsubscribing anything. The statement's existing resource
+`arn:aws:sns:*:*:harpguru-guardduty-findings:*` already matches the subscriptions' ARNs, checked
+on 2026-11-06 in both regions, so only the action is new. The other two gaps stay: the
+unsubscribe link needs no credentials for an SCP to deny, and archiving by hand is how a
+finding is dealt with.
+
+Doing it, *you*, from `/app/infra`, signed in to the management account:
+1. `npx cdk diff HarpguruGuardrails`: one `[~]` on `harpguru-protect-guardduty`, its `Content`
+   gaining `sns:SetSubscriptionAttributes`, and nothing else.
+2. `npx cdk deploy HarpguruGuardrails --exclusively --require-approval never`.
+3. The agent checks with `aws iam simulate-principal-policy` that the SSO role is now
+   `explicitDeny` for `sns:SetSubscriptionAttributes` on a findings subscription.
 
 **5 · you: bootstrap.** `cdk bootstrap` for the workload account in **both** `eu-west-2` and
 `us-east-1`. The certificate stack lives in `us-east-1`, which is easy to miss.
@@ -599,9 +615,12 @@ zone, which now holds nine record sets. The template, as deployed, reads the zon
 
 ## Inputs needed from the user
 
-- For #8: the SHA-256 fingerprint of the Play **app signing** key (Play Console → App
-  integrity), plus the App Store, Play Store and YouTube URLs. None of them is needed before
-  #8.
+- For #8: the SHA-256 fingerprint of the Play **app signing** key (Play Console → Test and
+  release → App integrity → Play app signing → Settings). Outstanding.
+- Received 2026-11-06, for the landing page:
+  - App Store: `https://apps.apple.com/us/app/harp-guru/id1552752923`
+  - Play Store: `https://play.google.com/store/apps/details/Harp_Guru?id=com.jslog.harpguru`
+  - YouTube: `https://www.youtube.com/@harpguru7909`
 
 ## Decisions
 
@@ -720,3 +739,6 @@ zone, which now holds nine record sets. The template, as deployed, reads the zon
   differ. Proposed by the agent. The zone is
   retained and its ID never changes, so the reference locking nothing costs nothing. Easy to
   revisit: one prop in `infra/bin/harpguru.ts`.
+- 2026-11-06: **`harpguru-protect-guardduty` also denies `sns:SetSubscriptionAttributes`**, #4d.
+  The user's choice, from the option the plan offered after the 2026-11-05 dry run. Easy to
+  revisit: one line in `infra/lib/guardrails-stack.ts`.

@@ -295,12 +295,13 @@ each is readable on its own (the limit is 10 per target, checked against AWS's q
   apply, and member accounts can't change an org trail anyway
 - `harpguru-protect-guardduty` does the same for GuardDuty: it denies deleting or suspending a
   detector, the filters and trusted IP lists that would silence it, and changing the rule and
-  topic that email its findings, again except to CDK's deploys. It leaves three gaps, which
-  step 4c of the plan lists: the unsubscribe link in each email, archiving a finding by hand,
-  and `sns:SetSubscriptionAttributes`
+  topic that email its findings, and setting a filter policy on the subscription
+  (`sns:SetSubscriptionAttributes`, since step 4d), again except to CDK's deploys. It leaves
+  two gaps, which step 4c of the plan lists: the unsubscribe link in each email, which needs
+  no credentials, and archiving a finding by hand
 
 How SCPs are switched on is in [Custom resources](#custom-resources).
-*(PRs `1-org-accounts`, `1-scp-custom-resource`, `1-config`, `1-guardduty`)*
+*(PRs `1-org-accounts`, `1-scp-custom-resource`, `1-config`, `1-guardduty`, `1-guardduty-sns-gap`)*
 
 **Say it:** "An action is only allowed if IAM allows it and no SCP denies it. An explicit deny
 anywhere wins."
