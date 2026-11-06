@@ -604,8 +604,9 @@ deploy on 2026-10-22 this entry described exports, which no stack here uses.
 The first reference between regions is step 7's: `HarpguruCertificate`, in `us-east-1`, reads
 the hosted zone's ID from `HarpguruDns`'s output in London, with `Fn::GetStackOutput` naming
 the region. It is the output `HarpguruMailCanary` already reads in the same region, so
-`HarpguruDns` didn't change. Step 8 will add a second, the certificate going the other way to the site.
-*(PR `1-certificate`)*
+`HarpguruDns` didn't change. Step 8 added a second, the other way: `HarpguruSite`, in London,
+reads the certificate's ARN from `us-east-1`, and `HarpguruCertificate` gained one output for it.
+*(PRs `1-certificate`, `1-site`)*
 
 **Say it:** "A strong reference locks the producer while it's consumed; a weak one just reads
 its output at deploy time, so stability has to come from somewhere else, like termination
@@ -1045,8 +1046,8 @@ S3, EKS audit logs, EBS malware scans, RDS logins and Lambda's network traffic, 
 runtime monitoring off; only S3 has anything to scan here. Each detector emails its findings,
 as in [EventBridge rules and SNS topics](#eventbridge-rules-and-sns-topics), and in the
 workload account the `harpguru-protect-guardduty` SCP stops anyone but a CDK deploy from
-suspending it or silencing it in the ways it lists; step 4c of the plan names the three it
-leaves open. Each detector is free for its first 30 days, then pennies at this
+suspending it or silencing it in the ways it lists; step 4d of the plan names the two it
+leaves open, the unsubscribe link and archiving a finding by hand. Each detector is free for its first 30 days, then pennies at this
 volume. GuardDuty creates two service-linked roles of its own in each account.
 *(PR `1-guardduty`)*
 

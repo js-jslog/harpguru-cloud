@@ -32,12 +32,11 @@ Update this table in the PR that moves a row. **You** means the user.
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **done**: zone deployed 2026-10-26; switch made and mail tested 2026-10-27 | — |
 | 6a | `1-mail-canary`: a weekly pair of messages showing `contact@` still forwards, in `HarpguruMailCanary` | **merged** and deployed 2026-10-27; first pair arrived 2026-10-28 | — |
 | 7 | `1-certificate`: ACM in `us-east-1`, in `HarpguruCertificate` | **merged** and deployed 2026-11-06; certificate issued | — |
-| 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | **deployed** 2026-11-06, from the branch; smoke test passed | *you*: merge |
+| 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | **merged** and deployed 2026-11-06; smoke test passed | — |
 
 **Next up, as of 2026-11-06:**
-1. #8: merge. It is deployed and checked, and merging it ships Phase A. The learning
-   companion then needs a refresh to cover #8.
-2. Then Phase B is planned, in its own file here, after re-reading the roadmap.
+Phase A has shipped: every step is merged, and the learning companion covers all of it.
+1. Plan Phase B, in its own file here, after re-reading the roadmap.
 
 ## Accounts
 
@@ -501,7 +500,7 @@ Heart until the nameservers move, so the steps can be split across sessions at t
 
 The apex and `www` are left out of the zone on purpose. Before the switch they pointed at
 Heart's parked page, which has no HTTPS, and #8 points them at CloudFront. Since the switch they
-don't resolve, and won't until #8. Nor does `ftp.harpguru.com` (`79.170.44.11`), which nothing
+didn't resolve until #8 added their alias records, on 2026-11-06. Nor does `ftp.harpguru.com` (`79.170.44.11`), which nothing
 uses. Heart also served a wildcard,
 `*.harpguru.com` to the parked address, so every made-up name resolved there, `webmail` and
 `imap` included; and a `_domainconnect` TXT record, Heart's hook for letting third parties set
@@ -859,7 +858,8 @@ Doing it, *you*, from `/app/infra`:
   - HSTS for a year, without `includeSubDomains` or preload. Preload is hard to undo, and the
     policy can't vouch for every subdomain.
   - `PriceClass_100`: the cheapest edges, North America and Europe. Visitors elsewhere are
-    served from the nearest of those.
+    served from the nearest of those, a little more slowly. Within the free tier it saves
+    nothing today; it keeps the price per gigabyte at its lowest if traffic grows.
   - No CloudFront access logs yet: nothing reads them before Phase D, which decides how
     traffic is measured.
   - No contact address on the page, since addresses are kept out of the repo, and no privacy

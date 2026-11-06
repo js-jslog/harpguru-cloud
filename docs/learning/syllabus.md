@@ -313,8 +313,8 @@ records are in the zone but in no template, and who wrote them; where a
   watched, how findings reach me, and what the SCP leaves open.
 - **Be able to answer:** what GuardDuty reads, and why none of those logs had to be switched on;
   what a detector and a finding are; why both accounts, the management account included, and
-  both regions; why standalone detectors rather than a delegated administrator; why the
-  protection plans were left to GuardDuty, why the diff couldn't show them, which came on, and
+  both regions; why standalone detectors rather than a delegated administrator; what was
+  decided about the protection plans, why the diff couldn't show them, which came on, and
   which of them has anything to scan here; why every finding is emailed, at every severity, and
   why that takes four rules, four topics and four confirmations; how often a repeat of a finding
   is sent; what the SCP denies, including the two ways to silence GuardDuty without touching the
@@ -323,7 +323,7 @@ records are in the zone but in no template, and who wrote them; where a
   exemption; why it is a policy of its own, and how many an OU may have; why GuardDuty was deployed before the SCP; how the SCP and the email were each shown to
   work, why each sample finding needed a new type, and what the spam folder taught; why step
   4d's deny was tested with a real call rather than the policy simulator, and which ARN SNS
-  checked; what it costs.
+  checked; roughly what it costs.
 - **Sources:** `docs/aws-concepts.md` "GuardDuty", "EventBridge rules and SNS topics" and
   "Service Control Policy (SCP)"; `docs/plans/phase-a.md` "Steps" (items 4c and 4d) and
   "Decisions" (the 2026-10-27 entry about GuardDuty in both accounts, the 2026-11-03 entry,
@@ -348,8 +348,8 @@ records are in the zone but in no template, and who wrote them; where a
   another distribution reading it; what a direct request to the bucket gets; why S3 answers a
   missing file with 403, and what the site answers instead; why one distribution, and what
   Phase B will add to it; why the stack is in London but its certificate in `us-east-1`;
-  what the two `.well-known` files are for, and the four things each must be when served
-  (200, `application/json`, no redirect, from the apex); why the AASA file needs its type set
+  what the two `.well-known` files are for, and how each must be served (over HTTPS, 200,
+  `application/json`, no redirect); why the AASA file needs its type set
   by hand, and how that is done; how the `www` redirect is kept away from them; why the
   fingerprint is the Play app signing key's, not the upload key's, and why publishing it is
   safe; why neither file does anything yet; why the security headers are a response headers
