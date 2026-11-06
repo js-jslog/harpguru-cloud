@@ -36,7 +36,8 @@ Update this table in the PR that moves a row. **You** means the user.
 **Next up, as of 2026-11-06:**
 1. #8, once the inputs below are in. The learning companion covers everything up to #7.
 2. Optional, the user's call: deny `sns:SetSubscriptionAttributes` in
-   `harpguru-protect-guardduty`, the one gap in it found after the deploy; #4c says why.
+   `harpguru-protect-guardduty`. It is the one of its three gaps worth closing, found after
+   the deploy; #4c says why.
 
 ## Accounts
 
