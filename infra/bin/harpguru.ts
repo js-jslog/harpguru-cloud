@@ -2,6 +2,7 @@
 import { App } from 'aws-cdk-lib'
 import { AccountsStack } from '../lib/accounts-stack'
 import { BudgetStack } from '../lib/budget-stack'
+import { CertificateStack } from '../lib/certificate-stack'
 import { ConfigStack } from '../lib/config-stack'
 import { DnsStack } from '../lib/dns-stack'
 import { MailCanaryStack } from '../lib/mail-canary-stack'
@@ -157,4 +158,13 @@ new GuardDutyStack(app, 'HarpguruGuardDutyWorkloadEdge', {
   description: 'GuardDuty in the workload account, in us-east-1',
   terminationProtection: true,
   alertEmail: requireSetting(config, 'alertEmail'),
+})
+
+// The certificate CloudFront will use from step 8, which only takes them from
+// us-east-1. Its validation records go into the London zone, which reaches it
+// as a weak reference: an output of HarpguruDns, read across regions.
+new CertificateStack(app, 'HarpguruCertificate', {
+  env: workloadEnv(config, EDGE_REGION),
+  description: 'The ACM certificate for harpguru.com and www, in us-east-1',
+  zone: dns.zone,
 })

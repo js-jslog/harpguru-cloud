@@ -30,11 +30,11 @@ Update this table in the PR that moves a row. **You** means the user.
 | 5 | *you*: bootstrap the workload account | **done** 2026-10-22, both regions | — |
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **done**: zone deployed 2026-10-26; switch made and mail tested 2026-10-27 | — |
 | 6a | `1-mail-canary`: a weekly pair of messages showing `contact@` still forwards, in `HarpguruMailCanary` | **merged** and deployed 2026-10-27; first pair arrived 2026-10-28 | — |
-| 7 | `1-certificate`: ACM in `us-east-1` | not started | — |
+| 7 | `1-certificate`: ACM in `us-east-1`, in `HarpguruCertificate` | **branch pushed** 2026-11-06 | *you*: merge, then `cdk deploy HarpguruCertificate --profile harpguru` |
 | 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | not started | #7, and the inputs below |
 
-**Next up, as of 2026-11-05:**
-1. #7, which is unblocked. The learning companion covers everything up to #4c.
+**Next up, as of 2026-11-06:**
+1. #7's merge and deploy. The learning companion covers everything up to #4c.
 2. Optional, the user's call: deny `sns:SetSubscriptionAttributes` in
    `harpguru-protect-guardduty`, the one gap in it found after the deploy; #4c says why.
 
@@ -560,6 +560,16 @@ names both; that question stays open and harmless.
 **7 · `1-certificate`.** An ACM certificate in `us-east-1` covering the apex and `www`,
 validated through DNS in the zone. It reaches the site stack as a cross-region reference.
 
+The zone reaches the certificate the same way, the other way round: `HarpguruCertificate`
+is passed `dns.zone`, and since references are weak, `HarpguruDns` gains one plain output,
+the zone's ID, which the certificate reads with `Fn::GetStackOutput` naming London. No
+custom resource and no export, and nothing else in `HarpguruDns` changes. `cdk deploy
+HarpguruCertificate --profile harpguru` deploys `HarpguruDns` first to add that output, and
+then waits while ACM validates: CloudFormation writes one `CNAME` per name into the zone and
+the stack completes only once the certificate is issued. The stack is not termination
+protected: nothing in it is hard to recreate, and once CloudFront uses the certificate, ACM
+refuses to delete it.
+
 **8 · `1-site`.**
 - A private S3 bucket behind CloudFront with OAC, and a response headers policy for
   the security headers.
@@ -688,6 +698,11 @@ validated through DNS in the zone. It reaches the site stack as a cross-region r
   regions**, with files kept for a year like the trail's. Proposed by the agent: the role is
   maintained by AWS, and a second bucket would hold nothing different. Easy to revisit: both
   are in `ConfigStack`, and the bucket is retained.
+- 2026-11-06: **the certificate takes the zone as a weak cross-region reference**, rather than
+  a hosted zone ID written into the code or `deploy.local.json`, or a `fromLookup`, whose
+  cached context would put the account ID in the repo. Proposed by the agent. The zone is
+  retained and its ID never changes, so the reference locking nothing costs nothing. Easy to
+  revisit: one prop in `infra/bin/harpguru.ts`.
 - 2026-11-03: **GuardDuty emails every finding, and a fifth SCP protects it**, both proposed by
   the agent and accepted by the user. Without the email, findings wait in the console for
   someone to look; without the SCP, the workload account's detectors could be suspended or
