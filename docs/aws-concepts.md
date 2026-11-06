@@ -786,8 +786,8 @@ certificate lives in `us-east-1`: CloudFront takes no other region's. The stack 
 in London, beside the zone, and reads the certificate's ARN across regions as a weak
 reference. There is one behaviour, the default, in front of the private bucket; Phase B adds
 `/t/*`, `/e/*` and `/s/*` to the same distribution rather than making more. HTTP is redirected
-to HTTPS, `/` serves `index.html`, and a missing file gets `/404.html` with a 404. Each
-deploy invalidates `/*` once, after the files are in.
+to HTTPS, `/` serves `index.html`, and a missing file gets `/404.html` with a 404. A deploy
+that changes the files invalidates `/*` once, after they are all in.
 
 **Say it:** "One distribution, several behaviours: each path pattern picks its own origin and
 caching, and the default behaviour catches the rest, so a whole site stays behind one

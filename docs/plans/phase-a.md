@@ -32,11 +32,11 @@ Update this table in the PR that moves a row. **You** means the user.
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **done**: zone deployed 2026-10-26; switch made and mail tested 2026-10-27 | — |
 | 6a | `1-mail-canary`: a weekly pair of messages showing `contact@` still forwards, in `HarpguruMailCanary` | **merged** and deployed 2026-10-27; first pair arrived 2026-10-28 | — |
 | 7 | `1-certificate`: ACM in `us-east-1`, in `HarpguruCertificate` | **merged** and deployed 2026-11-06; certificate issued | — |
-| 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | **branch pushed** 2026-11-06, not deployed | *you*: diff and deploy from the branch, then merge |
+| 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | **branch pushed** 2026-11-06; diffed, as predicted; not deployed | *you*: deploy from the branch, then merge |
 
 **Next up, as of 2026-11-06:**
-1. #8: diff and deploy `HarpguruSite` from the branch; the agent runs the smoke test and the
-   checks in #8; then merge. That ships Phase A.
+1. #8: deploy `HarpguruSite` from the branch; the agent runs the smoke test and the checks
+   in #8; then merge. That ships Phase A.
 2. Then Phase B is planned, in its own file here, after re-reading the roadmap.
 
 ## Accounts
@@ -671,7 +671,10 @@ Doing it, *you*, from `/app/infra`:
    is all `[+]`: the bucket and its policy, the OAC, the response headers policy, the function,
    the distribution, four record sets, two `Custom::CDKBucketDeployment`, and the upload's
    Lambda, role, policy, two layers and log group. Its IAM section lists the bucket policy's
-   CloudFront grant and the Lambda's role.
+   TLS-only deny and CloudFront grant, and the Lambda's role, with
+   `cloudfront:CreateInvalidation` on `*`. A mapping, `AWSCloudFrontPartitionHostedZoneIdMap`,
+   holds CloudFront's fixed hosted zone ID, which every alias to CloudFront names. Run on
+   2026-11-06: exactly this.
 2. `cdk deploy HarpguruSite --profile harpguru --require-approval never`. CloudFront takes a
    few minutes to create the distribution, and the upload waits for its invalidation.
 3. `scripts/smoke-site.sh`. A resolver that asked for `harpguru.com` before the records
@@ -683,6 +686,10 @@ Doing it, *you*, from `/app/infra`:
    certificate in use and eligible for renewal; and reads Apple's CDN copy,
    `https://app-site-association.cdn-apple.com/a/v1/harpguru.com`, and Google's,
    `https://digitalassetlinks.googleapis.com/v1/statements:list?source.web.site=https://harpguru.com&relation=delegate_permission/common.handle_all_urls`.
+   And it runs the redirect function with `aws cloudfront test-function` on a query string
+   holding an encoded `&`, such as `?a=b%26c`. CloudFront's guide doesn't say whether the
+   function sees values encoded or decoded, and the redirect rebuilds the query string from
+   them; if decoded, it must re-encode them.
 
 ## Inputs needed from the user
 

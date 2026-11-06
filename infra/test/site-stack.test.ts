@@ -38,7 +38,7 @@ const distributionConfig = (template: Template) => {
 }
 
 describe('the bucket', () => {
-  test('is private and only takes TLS', () => {
+  test('blocks all public access', () => {
     synth().hasResourceProperties('AWS::S3::Bucket', {
       PublicAccessBlockConfiguration: {
         BlockPublicAcls: true,
@@ -49,7 +49,7 @@ describe('the bucket', () => {
     })
   })
 
-  test('is readable only by CloudFront, on behalf of this distribution', () => {
+  test('takes only TLS, and is readable only by CloudFront for this distribution', () => {
     synth().hasResourceProperties('AWS::S3::BucketPolicy', {
       PolicyDocument: {
         Statement: Match.arrayWith([
