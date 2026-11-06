@@ -32,12 +32,12 @@ Update this table in the PR that moves a row. **You** means the user.
 | 6 | `1-dns-zone`: hosted zone, then the nameserver switch at Heart | **done**: zone deployed 2026-10-26; switch made and mail tested 2026-10-27 | — |
 | 6a | `1-mail-canary`: a weekly pair of messages showing `contact@` still forwards, in `HarpguruMailCanary` | **merged** and deployed 2026-10-27; first pair arrived 2026-10-28 | — |
 | 7 | `1-certificate`: ACM in `us-east-1`, in `HarpguruCertificate` | **merged** and deployed 2026-11-06; certificate issued | — |
-| 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | **deployed** 2026-11-06, from the branch; smoke test passed | *you*: merge |
+| 8 | `1-site`: bucket, CloudFront, landing page, `.well-known` | **merged** and deployed 2026-11-06; smoke test passed | — |
 
 **Next up, as of 2026-11-06:**
-1. #8: merge. It is deployed and checked, and merging it ships Phase A. The learning
-   companion then needs a refresh to cover #8.
-2. Then Phase B is planned, in its own file here, after re-reading the roadmap.
+
+Phase A has shipped: every step is merged, and the learning companion covers all of it.
+1. Plan Phase B, in its own file here, after re-reading the roadmap.
 
 ## Accounts
 
@@ -501,8 +501,8 @@ Heart until the nameservers move, so the steps can be split across sessions at t
 
 The apex and `www` are left out of the zone on purpose. Before the switch they pointed at
 Heart's parked page, which has no HTTPS, and #8 points them at CloudFront. Since the switch they
-don't resolve, and won't until #8. Nor does `ftp.harpguru.com` (`79.170.44.11`), which nothing
-uses. Heart also served a wildcard,
+didn't resolve until #8 added their alias records, on 2026-11-06. `ftp.harpguru.com`
+(`79.170.44.11`) still doesn't, and nothing uses it. Heart also served a wildcard,
 `*.harpguru.com` to the parked address, so every made-up name resolved there, `webmail` and
 `imap` included; and a `_domainconnect` TXT record, Heart's hook for letting third parties set
 up DNS. Both are left behind too. Mail is forwarded, not kept in a mailbox, so nothing reads
@@ -613,6 +613,7 @@ CloudFormation, not declared as resources, so they appear in the zone but in no 
 `docs/outside-cdk.md` lists them. The stack is not termination protected: nothing in it is
 hard to recreate, and once CloudFront uses the certificate, ACM refuses to delete it. Until
 #8 nothing uses it, so ACM won't renew it, which is harmless with its expiry months away.
+Since #8's deploy it is `InUse` and `ELIGIBLE`; see #8.
 
 **Deployed 2026-11-06, from the branch.** `HarpguruDns` had no changes; the certificate was
 issued about two and a half minutes after CloudFormation requested it, both names validated,
@@ -653,6 +654,12 @@ zone, which now holds nine record sets. The template, as deployed, reads the zon
   - **`assetlinks.json`**: package `com.jslog.harpguru` and the Play **app signing** key's
     SHA-256 fingerprint, received 2026-11-06. Not the upload key: Play re-signs every
     release, so phones only see the app signing key.
+    The fingerprint is public by nature, since anyone can read it from the published app, and
+    publishing it gives nothing away: it says *which* key the site trusts, and only Google
+    holds that key's private half. An app can only claim the domain if its manifest names it
+    and it is signed with that key, so another app can't take the links, and another site
+    naming our app in its own file changes nothing, since Android only checks the domains the
+    app itself lists.
   - Neither file does anything until the app declares the domain, its associated domains and
     intent filters, in Phase B. Apple fetches the AASA file through its own CDN, so a change
     can take a day to reach devices.
@@ -853,7 +860,8 @@ Doing it, *you*, from `/app/infra`:
   - HSTS for a year, without `includeSubDomains` or preload. Preload is hard to undo, and the
     policy can't vouch for every subdomain.
   - `PriceClass_100`: the cheapest edges, North America and Europe. Visitors elsewhere are
-    served from the nearest of those.
+    served from the nearest of those, a little more slowly. Within the free tier it saves
+    nothing today; it keeps the price per gigabyte at its lowest if traffic grows.
   - No CloudFront access logs yet: nothing reads them before Phase D, which decides how
     traffic is measured.
   - No contact address on the page, since addresses are kept out of the repo, and no privacy
