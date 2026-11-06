@@ -1,6 +1,6 @@
 # Syllabus
 
-**As of 2026-11-06.** Covers Phase A steps 0–7: the SSO login, the CDK app
+**As of 2026-11-06.** Covers all of Phase A, steps 0–8: the SSO login, the CDK app
 skeleton, the $10 budget, and the workload account with its OU and guardrails, including step
 3a, which switches SCPs on through a custom resource, and step 3b, which imported the
 console-made permission set into a stack and listed everything CDK doesn't manage. Step 1 is the
@@ -26,11 +26,16 @@ So the Organization really does hold the `Workloads` OU with five SCPs of ours, 
 account, a trail over both accounts, Config recording daily, and GuardDuty watching both
 accounts. Step 7 is **merged and deployed**, on 2026-11-06: `HarpguruCertificate`, an ACM
 certificate for harpguru.com and `www`, in the workload account in `us-east-1`, issued the same
-day but not yet used by anything. The status table in `docs/plans/phase-a.md` says the same.
-Step 8, the site itself, is not started; see the last section.
+day. Step 4d is **merged and deployed**, on 2026-11-06: the GuardDuty SCP also denies setting a
+subscription's attributes, and a real call showed it refused. Step 8 is **merged and
+deployed**, on 2026-11-06: `HarpguruSite`, harpguru.com itself, served by CloudFront from a
+private bucket, with the landing page and the two `.well-known` files the apps' links will need.
+The certificate is now in use by it. That completes Phase A, whose deliverable this is. The
+status table in `docs/plans/phase-a.md` says the same.
 
-**Priority now: topic 13**, GuardDuty, if it is still shaky; it is the newest must-own topic.
-Then topic 24, the certificate, the newest of all.
+**Priority now: topic 14**, the site; it is the newest must-own topic and the one Phase B
+builds on. Then topic 26, CloudFront's mechanics, and topic 13, GuardDuty, if it is still
+shaky.
 
 Each topic gives its tier and why, what I should be able to answer, and its sources. The
 sources hold the facts; this file deliberately does not restate them. Sources are named by
@@ -313,23 +318,57 @@ records are in the zone but in no template, and who wrote them; where a
   which of them has anything to scan here; why every finding is emailed, at every severity, and
   why that takes four rules, four topics and four confirmations; how often a repeat of a finding
   is sent; what the SCP denies, including the two ways to silence GuardDuty without touching the
-  detector, and what it doesn't cover; why it is a policy of its own, and how many an OU may
-  have; why GuardDuty was deployed before the SCP; how the SCP and the email were each shown to
-  work, why each sample finding needed a new type, and what the spam folder taught; what it
-  costs.
+  detector, and what it doesn't cover: the gap step 4d closed, why a filter policy could
+  silence the email, the two gaps left and why, and what is still unproven about the CDK
+  exemption; why it is a policy of its own, and how many an OU may have; why GuardDuty was deployed before the SCP; how the SCP and the email were each shown to
+  work, why each sample finding needed a new type, and what the spam folder taught; why step
+  4d's deny was tested with a real call rather than the policy simulator, and which ARN SNS
+  checked; what it costs.
 - **Sources:** `docs/aws-concepts.md` "GuardDuty", "EventBridge rules and SNS topics" and
-  "Service Control Policy (SCP)"; `docs/plans/phase-a.md` "Steps" (item 4c) and "Decisions" (the
-  2026-10-27 entry about GuardDuty in both accounts, and the 2026-11-03 entry);
+  "Service Control Policy (SCP)"; `docs/plans/phase-a.md` "Steps" (items 4c and 4d) and
+  "Decisions" (the 2026-10-27 entry about GuardDuty in both accounts, the 2026-11-03 entry,
+  and the 2026-11-06 entry about `sns:SetSubscriptionAttributes`);
   `infra/lib/guardduty-stack.ts`; `infra/lib/guardrails-stack.ts`;
   `infra/test/guardrails-stack.test.ts`; `docs/outside-cdk.md`;
   `roadmap-planning/aws-pathway-findings.md` "Step 4c deployed: GuardDuty in both accounts,
-  2026-11-05".
+  2026-11-05" and "Step 4d deployed: the GuardDuty SCP's subscription gap, 2026-11-06".
+
+### 14. harpguru.com: a private bucket, one distribution, and the files the apps need
+
+- **Covers:** step 8: `HarpguruSite`, in the workload account in London: a private S3 bucket
+  that only one CloudFront distribution can read, through OAC; the distribution for the apex
+  and `www`, with step 7's certificate; the security headers; the `www` redirect; the landing
+  page; and `apple-app-site-association` and `assetlinks.json`, which let the apps claim
+  harpguru.com links once Phase B ships.
+- **Why must own:** it is Phase A's deliverable and the base Phase B builds on, and its
+  decisions are security properties I should defend unprompted: why nothing reaches the
+  bucket but CloudFront, why the app-link files can be trusted though everything in them is
+  public, and what the headers make browsers refuse.
+- **Be able to answer:** why the bucket is private, how CloudFront is let in, and what stops
+  another distribution reading it; what a direct request to the bucket gets; why S3 answers a
+  missing file with 403, and what the site answers instead; why one distribution, and what
+  Phase B will add to it; why the stack is in London but its certificate in `us-east-1`;
+  what the two `.well-known` files are for, and the four things each must be when served
+  (200, `application/json`, no redirect, from the apex); why the AASA file needs its type set
+  by hand, and how that is done; how the `www` redirect is kept away from them; why the
+  fingerprint is the Play app signing key's, not the upload key's, and why publishing it is
+  safe; why neither file does anything yet; why the security headers are a response headers
+  policy and the redirect a function; what HSTS was set to, and why not subdomains or
+  preload; what the CSP allows, and why so little; why the stack isn't termination
+  protected, and what happens to the bucket if it is deleted; how the site was shown to work,
+  and what Apple and Google already had; what it costs.
+- **Sources:** `docs/plans/phase-a.md` "Steps" (item 8) and "Decisions" (the 2026-09-26 entry
+  about security headers, and the 2026-11-06 entry about #8's choices); `docs/aws-concepts.md`
+  "CloudFront distributions, behaviours and caching", "Origin Access Control (OAC)" and
+  "Response headers policies"; `infra/lib/site-stack.ts`; `infra/test/site-stack.test.ts`;
+  `infra/scripts/smoke-site.sh`; `docs/orientation.md` "Facts that bite";
+  `roadmap-planning/aws-pathway-findings.md` "Step 8 deployed: harpguru.com, 2026-11-06".
 
 ---
 
 ## Should understand
 
-### 14. Regions, environments and bootstrap
+### 15. Regions, environments and bootstrap
 
 - **Covers:** where things run, how a stack is pinned to an account and region without the
   account ID being in the code, and what bootstrap prepares.
@@ -346,14 +385,14 @@ records are in the zone but in no template, and who wrote them; where a
   `infra/lib/config.ts`; `infra/bin/harpguru.ts`; `docs/plans/phase-a.md` "Steps" (items 4c
   and 5) and "Decisions" (the 2026-10-26 entry); `docs/outside-cdk.md`.
 
-### 15. Tags and cost allocation
+### 16. Tags and cost allocation
 
 - **Covers:** tagging once at the app root, the budget's exception to it, and why a cost
   allocation tag needs activating.
 - **Sources:** `docs/aws-concepts.md` "Tags and cost allocation tags" and
   "L1 and L2 constructs"; `infra/lib/tags.ts`; `infra/lib/budget-stack.ts`.
 
-### 16. Testing infrastructure code
+### 17. Testing infrastructure code
 
 - **Covers:** what assertions against a synthesised template can and cannot prove, including a
   test that exists to stop an expensive mistake rather than to check behaviour, and tests that
@@ -363,20 +402,25 @@ records are in the zone but in no template, and who wrote them; where a
   added after something went wrong or nearly did: one that fails if an escape hatch lands on
   the wrong policy statement, and one forbidding the dependency that deadlocked Config's first
   deploy. And two from step 4c that check what a diff would show: that the alert's topic only
-  admits its own rule, and that the email address is in no logical ID.
+  admits its own rule, and that the email address is in no logical ID. And from step 8: a test
+  that runs the CloudFront Function's own code as CloudFront would, and tests that check the
+  `.well-known` files' contents, not only the template. Also what a unit test couldn't settle
+  there, and what was run against the deployed site instead.
 - **Sources:** `infra/README.md`; `infra/test/app.ts`; `infra/test/budget-stack.test.ts`;
   `infra/test/accounts-stack.test.ts`; `infra/test/guardrails-stack.test.ts`;
   `infra/test/policy-types-stack.test.ts`; `infra/test/trail-stack.test.ts`;
-  `infra/test/config-stack.test.ts`; `infra/test/guardduty-stack.test.ts`.
+  `infra/test/config-stack.test.ts`; `infra/test/guardduty-stack.test.ts`;
+  `infra/test/site-stack.test.ts`; `infra/scripts/smoke-site.sh`; `docs/plans/phase-a.md`
+  "Steps" (item 8).
 
-### 17. Account IDs, ARNs and keeping them out of a public repo
+### 18. Account IDs, ARNs and keeping them out of a public repo
 
 - **Covers:** what an ARN is made of, why an account ID is not a secret but is still kept out,
   and how the repo avoids ever committing one.
 - **Sources:** `docs/aws-concepts.md` "Account ID and ARNs";
   `infra/README.md` "Deploy-time values"; `infra/lib/config.ts`.
 
-### 18. Three stacks, cross-stack references and deploy order
+### 19. Three stacks, cross-stack references and deploy order
 
 - **Covers:** why step 3 is three stacks; how the OU's ID gets from the guardrails to the
   accounts stack, and how that forces the guardrails to deploy first; and how the guardrails
@@ -386,13 +430,16 @@ records are in the zone but in no template, and who wrote them; where a
   region, reaches the London bucket with no reference at all, and is made to deploy second.
   And the first reference between regions, step 7's: how the certificate in `us-east-1` reads
   the zone's ID from London with no custom resource, and why `HarpguruDns` showed no change
-  when it did.
+  when it did. And step 8's, the other way: how the site in London reads the certificate's ARN
+  from `us-east-1`, what `HarpguruCertificate` gained for it, and why deploying the site
+  deployed the certificate and zone stacks first.
 - **Sources:** `docs/aws-concepts.md` "Cross-stack references" and
-  "Apps, stacks and constructs"; `docs/plans/phase-a.md` "Decisions" and "Steps" (items 3, 4b
-  and 7); `infra/bin/harpguru.ts`; `infra/lib/config-stack.ts`;
-  `infra/lib/certificate-stack.ts`; `infra/test/certificate-stack.test.ts`.
+  "Apps, stacks and constructs"; `docs/plans/phase-a.md` "Decisions" and "Steps" (items 3, 4b,
+  7 and 8); `infra/bin/harpguru.ts`; `infra/lib/config-stack.ts`;
+  `infra/lib/certificate-stack.ts`; `infra/test/certificate-stack.test.ts`;
+  `infra/lib/site-stack.ts`; `infra/test/site-stack.test.ts`.
 
-### 19. How I get into the new account
+### 20. How I get into the new account
 
 - **Covers:** the Identity Center assignment that gives my existing login access to the new
   account, the second CLI profile that uses it, and `OrganizationAccountAccessRole` as the way
@@ -401,7 +448,7 @@ records are in the zone but in no template, and who wrote them; where a
   "OrganizationAccountAccessRole"; `infra/lib/accounts-stack.ts`; `docs/plans/phase-a.md`
   "Steps" (item 3).
 
-### 20. SES and Scheduler, the mechanics
+### 21. SES and Scheduler, the mechanics
 
 - **Covers:** how the canary is wired: the domain and the forwarding address as SES identities,
   Easy DKIM's three records written into the zone, the universal target that calls SES's
@@ -418,23 +465,25 @@ records are in the zone but in no template, and who wrote them; where a
   `infra/bin/harpguru.ts`; `docs/plans/phase-a.md` "Steps" (item 6a); `docs/outside-cdk.md`
   "Workload account `harpguru`".
 
-### 21. Service principals, service-linked roles and the confused deputy
+### 22. Service principals, service-linked roles and the confused deputy
 
 - **Covers:** how an AWS service is let into my resources: a service-linked role it acts as
   inside the account, or a bucket policy granting its service principal; and the conditions
   that keep a grant to a service from being used on someone else's behalf.
-- **Why not must own:** the security decisions are topics 11, 12 and 13's; this is the
+- **Why not must own:** the security decisions are topics 11, 12, 13 and 14's; this is the
   mechanism under them. Know what a service-linked role is and who can change it; which ones
   arrived on their own, GuardDuty's two included, and which one a stack created; why Config's
   role can't deliver to S3, and how Config delivers instead; what `aws:SourceArn` and
-  `AWS:SourceAccount` each narrow a grant to, and which bucket uses which; and why the
-  findings topic's grant to EventBridge needed an `aws:SourceArn` CDK didn't give it.
+  `AWS:SourceAccount` each narrow a grant to, and which bucket uses which; why the
+  findings topic's grant to EventBridge needed an `aws:SourceArn` CDK didn't give it; and how
+  the site bucket's grant to CloudFront is narrowed to one distribution, and what a grant
+  without it would allow.
 - **Sources:** `docs/aws-concepts.md` "Service-linked roles",
-  "S3 buckets, bucket policies and lifecycle rules" and "EventBridge rules and SNS topics";
-  `infra/lib/config-stack.ts`; `infra/lib/trail-stack.ts`; `infra/lib/guardduty-stack.ts`;
-  `docs/outside-cdk.md`.
+  "S3 buckets, bucket policies and lifecycle rules", "EventBridge rules and SNS topics" and
+  "Origin Access Control (OAC)"; `infra/lib/config-stack.ts`; `infra/lib/trail-stack.ts`;
+  `infra/lib/guardduty-stack.ts`; `infra/lib/site-stack.ts`; `docs/outside-cdk.md`.
 
-### 22. When a deploy rolls back: Config's deadlock
+### 23. When a deploy rolls back: Config's deadlock
 
 - **Covers:** Config's first deploy on 2026-10-30, which waited nine minutes, failed and rolled
   back; how the cause was found; the fix; and the clear-up the rollback left.
@@ -450,7 +499,7 @@ records are in the zone but in no template, and who wrote them; where a
   `roadmap-planning/aws-pathway-findings.md` "Step 4b deployed: Config in the workload account,
   2026-10-30".
 
-### 23. The findings email, the mechanics
+### 24. The findings email, the mechanics
 
 - **Covers:** how step 4c's email is wired: the EventBridge rule's pattern, the input
   transformer that writes the message, the SNS topic and its policy, and the subscription CDK
@@ -467,24 +516,45 @@ records are in the zone but in no template, and who wrote them; where a
   `infra/test/guardduty-stack.test.ts`; `docs/plans/phase-a.md` "Steps" (item 4c);
   `docs/outside-cdk.md` "Changes made outside CDK".
 
-### 24. The certificate: ACM and DNS validation
+### 25. The certificate: ACM and DNS validation
 
 - **Covers:** step 7: `HarpguruCertificate`, one ACM certificate for harpguru.com and `www`,
-  in the workload account in `us-east-1`, validated through DNS in the London zone, ready for
+  in the workload account in `us-east-1`, validated through DNS in the London zone, and used by
   step 8's CloudFront.
 - **Why not must own:** it is one resource, and its one real constraint, the region, is topic
-  14's. Know what ACM does and what it charges; why the certificate is in `us-east-1`; why
+  15's. Know what ACM does and what it charges; why the certificate is in `us-east-1`; why
   `www` is on it, though `www` will only redirect; what DNS validation proves, who wrote the
   validation records and why they must stay; what the deploy waited for before it
-  finished, and how long it took; how long the certificate is valid for, and why ACM says it
-  can't be renewed yet; why the stack isn't termination protected; why the zone reaches it as a
-  reference rather than a zone ID in the code or a lookup; and what a `CAA` record, if one
-  were ever added, would have to allow.
+  finished, and how long it took; how long the certificate is valid for, why ACM said it
+  couldn't be renewed until step 8, and what it says now; why the stack isn't termination
+  protected; why the zone reaches it as a reference rather than a zone ID in the code or a
+  lookup; and what a `CAA` record, if one were ever added, would have to allow.
 - **Sources:** `docs/aws-concepts.md` "ACM certificates and DNS validation" and
-  "Cross-stack references"; `docs/plans/phase-a.md` "Steps" (item 7) and "Decisions" (the
-  2026-11-06 entry); `infra/lib/certificate-stack.ts`; `infra/test/certificate-stack.test.ts`;
+  "Cross-stack references"; `docs/plans/phase-a.md` "Steps" (items 7 and 8) and "Decisions"
+  (the 2026-11-06 entry about the weak cross-region reference); `infra/lib/certificate-stack.ts`; `infra/test/certificate-stack.test.ts`;
   `docs/outside-cdk.md`; `roadmap-planning/aws-pathway-findings.md` "Step 7 deployed: the
   certificate, 2026-11-06".
+
+### 26. CloudFront's mechanics: caching, the redirect function, aliases and the upload
+
+- **Covers:** how step 8's pieces work underneath topic 14's decisions: the edge cache and
+  invalidation, the price class, the CloudFront Function, the alias records, and the two
+  `BucketDeployment`s that upload the files.
+- **Why not must own:** the decisions are topic 14's; this is how they are carried out. Know
+  what an edge location, a cache behaviour and an invalidation are, what an invalidation costs
+  and when the site makes one; what `x-cache` and `x-amz-cf-pop` tell you; what
+  `PriceClass_100` saves and costs; what a CloudFront Function can't do that Lambda@Edge can,
+  how the redirect keeps the path and query string, and what was found about encoded values;
+  why `describe-function` showed `DEVELOPMENT`; why the apex needs an alias rather than a
+  `CNAME`, and why there are four records; how two uploads share one bucket without deleting
+  each other's file, and why only one invalidates; what CDK granted the upload's Lambda more
+  broadly than it needs; and why the first deploy failed with "no credentials" though the CLI
+  worked.
+- **Sources:** `docs/aws-concepts.md` "CloudFront distributions, behaviours and caching",
+  "CloudFront Functions", "Route 53 alias records" and "Custom resources";
+  `infra/lib/site-stack.ts`; `infra/lib/functions/www-redirect.js`;
+  `infra/test/site-stack.test.ts`; `docs/plans/phase-a.md` "Steps" (item 8);
+  `roadmap-planning/aws-pathway-findings.md` "Step 8 deployed: harpguru.com, 2026-11-06".
 
 ---
 
@@ -503,7 +573,8 @@ These are worth your time if they interest you. Skipping them leaves no gap.
 
 ## Not yet built, so not for study
 
-- S3 for the site and CloudFront (step 8); the CloudWatch alarm
-  that would catch the canary failing on the AWS side; and everything in phases B–F. Some of
+- The CloudWatch alarm that would catch the canary failing on the AWS side; the app's side of
+  the links, its associated domains and intent filters, which Phase B adds; and everything in
+  phases B–F. Some of
   these already have concept entries, written ahead of the work; read them as reading ahead,
   and do not test me on them.

@@ -653,6 +653,12 @@ zone, which now holds nine record sets. The template, as deployed, reads the zon
   - **`assetlinks.json`**: package `com.jslog.harpguru` and the Play **app signing** key's
     SHA-256 fingerprint, received 2026-11-06. Not the upload key: Play re-signs every
     release, so phones only see the app signing key.
+    The fingerprint is public by nature, since anyone can read it from the published app, and
+    publishing it gives nothing away: it says *which* key the site trusts, and only Google
+    holds that key's private half. An app can only claim the domain if its manifest names it
+    and it is signed with that key, so another app can't take the links, and another site
+    naming our app in its own file changes nothing, since Android only checks the domains the
+    app itself lists.
   - Neither file does anything until the app declares the domain, its associated domains and
     intent filters, in Phase B. Apple fetches the AASA file through its own CDN, so a change
     can take a day to reach devices.
