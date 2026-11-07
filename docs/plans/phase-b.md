@@ -98,7 +98,7 @@ distribution, which is the point of having one.
   replaced but the function, which CloudFormation made, swapped in and then deleted. The
   distribution was `Deployed` within minutes. `scripts/smoke-site.sh` and
   `scripts/smoke-pages.sh` both passed; the bucket was empty again afterwards. With
-  `--pause`, a local page framing `/e/` in Firefox was refused: "The page's settings blocked
+  `--pause`, a local page framing `/e/` was refused by the browser: "The page's settings blocked
   the loading of a resource (frame-ancestors) … because it violates the following directive:
   'frame-ancestors 'self''".
 - **Smoke test, `scripts/smoke-pages.sh`:** placeholder pages uploaded by the script, then
