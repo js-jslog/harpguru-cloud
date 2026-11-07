@@ -798,8 +798,7 @@ certificate and one domain."
 
 **See it:** the distribution:
 `aws cloudfront list-distributions --profile harpguru --query 'DistributionList.Items[].[Id,DomainName,Aliases.Items,PriceClass,Status]'`.
-Its behaviours, each path pattern with the origin it is sent to (`null` before Phase B's step
-1 is deployed):
+Its behaviours, each path pattern with the origin it is sent to:
 `aws cloudfront get-distribution-config --profile harpguru --id $(aws cloudformation describe-stacks --stack-name HarpguruSite --profile harpguru --query "Stacks[0].Outputs[?OutputKey=='DistributionId'].OutputValue" --output text) --query 'DistributionConfig.CacheBehaviors.Items[].[PathPattern,TargetOriginId]'`.
 A response's trip through the cache, where `x-cache` says `Hit` or `Miss` and `x-amz-cf-pop`
 names the edge that answered:
@@ -829,9 +828,10 @@ cached object."
 
 **See it:** the managed policy's key and TTLs:
 `aws cloudfront get-cache-policy --id 658327ea-f89d-4fab-a63d-7e88639e58f6 --profile harpguru --query 'CachePolicy.CachePolicyConfig.{Name:Name,DefaultTTL:DefaultTTL,QueryStrings:ParametersInCacheKeyAndForwardedToOrigin.QueryStringsConfig.QueryStringBehavior}'`.
-The query string left out of the key, once step 1 is deployed and a page is there: run
+The query string left out of the key, once a tuning page is there: run
 `curl -s -o /dev/null https://harpguru.com/t/country?k=C`, then
-`curl -sI https://harpguru.com/t/country?k=D | grep -i '^x-cache:'`, which says `Hit`.
+`curl -sI https://harpguru.com/t/country?k=D | grep -i '^x-cache:'`, which says `Hit`. Until
+`harpguru` deploys the widget, `infra/scripts/smoke-pages.sh` does the same with a placeholder.
 
 #### Origin Access Control (OAC)
 
@@ -887,7 +887,9 @@ embed only inside those sites' pages. The list starts empty.
 headers policy; code at the edge is for logic that depends on the request."
 
 **See it:** `curl -sI https://harpguru.com/ | grep -iE '^(strict-transport-security|content-security-policy|x-frame-options|x-content-type-options|referrer-policy):'`,
-and the same for `https://harpguru.com/e/` once Phase B's step 1 is deployed,
+and the same for `https://harpguru.com/e/` once an embed is there. Before then it returns the
+404 page, which carries the default behaviour's headers, not the embed policy's: an error page
+takes the policy of the behaviour that serves its own path,
 and `aws cloudfront list-response-headers-policies --type custom --profile harpguru --query 'ResponseHeadersPolicyList.Items[].ResponseHeadersPolicy.ResponseHeadersPolicyConfig.Name'`.
 
 #### CloudFront Functions
@@ -915,8 +917,7 @@ query string values still encoded, so they reach the apex unchanged.
 and URL rewrites; anything needing the network or more time is Lambda@Edge."
 
 **See it:** `aws cloudfront describe-function --name harpguru-viewer-request --stage LIVE --profile harpguru --query 'FunctionSummary.[Name,FunctionMetadata.Stage,FunctionConfig.Runtime]'`.
-Until Phase B's step 1 is deployed, the name is `harpguru-www-redirect`. Without
-`--stage LIVE` it shows `DEVELOPMENT`, the stage a change is tested in before it is
+Without `--stage LIVE` it shows `DEVELOPMENT`, the stage a change is tested in before it is
 published; CloudFront serves `LIVE`. The function running, without a browser:
 `curl -sI 'https://www.harpguru.com/s/x?a=1' | grep -iE '^(HTTP|location)'`.
 
