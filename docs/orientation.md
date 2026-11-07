@@ -111,8 +111,8 @@ cloud work land against that issue, not against the one in the app repo.
 | Phase | `harpguru` | `harpguru-cloud` |
 | --- | --- | --- |
 | A — Ground the domain | the browser spike (**done**) | everything else |
-| B — The public harpface | widget, tuning pages, deep-link config | API, DynamoDB, CloudFront, routing |
-| C — The tuning workbench | creator UI, `TuningIds` widening | schema, validation, Step Functions |
+| B — The public harpface | widget, tuning pages, share button, deep-link config | CloudFront routing, deploy role, request logs |
+| C — The tuning workbench | creator UI, `TuningIds` widening | API, DynamoDB, schema, validation, Step Functions |
 | D — Demand signal | telemetry emission in the app | ingestion, Athena, reporting |
 | E — Verified publishers | — | Cognito, publisher console |
 | F — Harden and migrate | — | everything |
@@ -150,7 +150,7 @@ Full list in the roadmap. These are the ones reachable from inside this repo:
   require it, so nothing in Phase B works without it. This is the hard prerequisite hiding
   inside Phase A.
 - **One CloudFront distribution, several behaviours** — apex to marketing, `/t/*` to tuning
-  pages, `/e/*` to embeds, `/s/*` to the link resolver. Cheaper than several distributions,
+  pages, `/e/*` to embeds, `/s/*` to setup links. Cheaper than several distributions,
   and the behaviour ordering is examinable.
 - **Nothing is dynamic at request time.** Prerendered HTML plus a client bundle; no server
   participates in a page view.

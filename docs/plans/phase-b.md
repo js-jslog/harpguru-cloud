@@ -18,12 +18,12 @@ Update this table in the PR that moves a row. **You** means the user.
 | --- | --- | --- | --- |
 | — | `1-phase-b-plan`: this file | **in review** | you: open the PR |
 | 1 | `1-pages`: the pages bucket, the `/t/`, `/s/`, `/e/` and `/w/` behaviours, their function, cache and headers policies | planned | — |
-| 2 | `1-deploy-role`: the GitHub OIDC provider and the role `harpguru`'s workflow assumes | planned | #1; you: the environment name |
-| 3 | `1-request-logs`: CloudFront access logs to S3 | planned | you: retention |
+| 2 | `1-deploy-role`: the GitHub OIDC provider and the role `harpguru`'s workflow assumes | planned | #1 |
+| 3 | `1-request-logs`: CloudFront access logs to S3, kept 90 days | planned | — |
 | 4 | `1-aasa-browser-marker`: `/s/*` excludes the open-in-browser marker | planned | the app side naming the marker |
 
-**Next up, as of 2026-11-07:** merge this plan, then #1, which needs nothing from the app side
-to begin: it is smoke-tested with placeholder pages.
+**Next up, as of 2026-11-07:** merge this plan. #1 is under way on `1-pages`, branched from
+this one; it needs nothing from the app side, being smoke-tested with placeholder pages.
 
 ## The work in `harpguru`, for reference
 
@@ -63,6 +63,10 @@ distribution, which is the point of having one.
   `/t/<slug>/index.html`, and anything under `/s/` or `/e/` to that path's one shell. A
   function rather than S3's website hosting, which does index documents but can't sit behind
   OAC.
+- **The `www` redirect has to cover the new paths too.** Today it is attached to the default
+  behaviour only, so `www.harpguru.com/t/…` would be served on `www`, not redirected. A
+  behaviour takes one viewer-request function, so the new behaviours get one function that
+  redirects `www` first and maps the path otherwise.
 - **The cache key ignores query strings.** The parameters are read by the bundle after load,
   so one cached copy of each page serves every configuration. They still reach the logs (#3).
 - **Two new response headers policies.** Both keep the site policy's HSTS, `nosniff` and
@@ -75,15 +79,17 @@ distribution, which is the point of having one.
   Their content security policy allows the bundle's own scripts, styles and fonts. Whether
   `react-native-web`'s injected styles need `'unsafe-inline'` is checked against a real export
   before this merges.
-- **Smoke test:** placeholder pages uploaded by the script, then removed; `/t/x?k=C` and
-  `/t/x?k=D` return one cached object; the embed is framed by a local page served from an
-  allowlisted origin and refused from another.
+- **Smoke test:** placeholder pages uploaded by the script, then removed. `/t/x?k=C` then
+  `/t/x?k=D` is a cache hit the second time; `/s/` and `/e/` with any path or query return
+  their shell; `www` redirects on every path; each path carries its own policy's headers.
+  In a browser, a local page framing `/e/` is refused, its origin not being on the empty
+  allowlist; allowing one is tested when the first partner is added.
 
 **2 · `1-deploy-role`.** In the workload account: the GitHub OIDC identity provider, and one
 role. No access keys anywhere.
 
 - **Trust:** `token.actions.githubusercontent.com`, audience `sts.amazonaws.com`, subject
-  `repo:js-jslog/harpguru:environment:<name>`. An environment rather than a branch, so its
+  `repo:js-jslog/harpguru:environment:harpguru.com`. An environment rather than a branch, so its
   protection rules in GitHub decide who may deploy, and no other workflow in the repo can.
 - **Permissions:** list, put and delete in the `Pages` bucket only, and
   `cloudfront:CreateInvalidation` on this distribution only.
@@ -113,9 +119,9 @@ $0.10 per million, and a few megabytes of logs a month. No new fixed monthly cha
 
 ## Inputs needed from the user
 
-- #2: the name of the GitHub environment `harpguru`'s deploy job runs in. `harpguru.com` is
-  proposed.
-- #3: how long request logs are kept. 90 days is proposed, enough for Phase D to start from.
+- None outstanding.
+- Received 2026-11-07: #2's GitHub environment is **`harpguru.com`**; #3's logs are kept
+  **90 days**.
 
 ## Decisions
 
@@ -129,6 +135,8 @@ $0.10 per million, and a few megabytes of logs a month. No new fixed monthly cha
   browser. The user's choice.
 - 2026-11-07: **the pages get a second bucket**, so the site's pruning upload can never delete
   them. Proposed by the agent.
+- 2026-11-07: **the deploy job runs in a GitHub environment named `harpguru.com`, and request
+  logs are kept 90 days.** Proposed by the agent, accepted by the user.
 - 2026-11-07: **the GitHub OIDC provider arrives in Phase B**, for `harpguru`'s deploys, not
   Phase F. The roadmap already required it in "How the two connect"; its Phase F line now
   covers this repo's own deploys. Proposed by the agent.
