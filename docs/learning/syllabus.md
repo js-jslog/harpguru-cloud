@@ -393,9 +393,9 @@ records are in the zone but in no template, and who wrote them; where a
   there; what `/t/`, `/s/` and `/e/` are each for, and why configuration and cell interaction
   never share a page; why hand-editing a URL is accepted rather than guarded; why the pages
   get a bucket of their own, and what would happen to them in the site's bucket; why one
-  function on every behaviour, and what broke without it; why the cache key leaves out the
-  query string, and how configurations can still be counted; why the embed policy leaves out
-  `X-Frame-Options`, what `frame-ancestors 'self'` allows, and where the partner list lives
+  function on every behaviour, and what would break without it; why the cache key leaves out
+  the query string, and how configurations will still be counted once step 3's logs exist;
+  why the embed policy leaves out `X-Frame-Options`, what `frame-ancestors 'self'` allows, and where the partner list lives
   and why there; why the widget's styles need `'unsafe-inline'` but its scripts need no
   `eval`; what the `harpguru` side has to do for these paths to work; how step 1 was shown to
   work before any widget existed, the browser included; and why its paths answer 404 today.

@@ -61,6 +61,9 @@ export const CONTENT_SECURITY_POLICY = [
 // bundle's own scripts. Styles allow 'unsafe-inline' because react-native-web
 // writes its styles into the page at run time, as <style> rules and style
 // attributes; a hash or a nonce can't cover styles made after the page loads.
+// connect-src and manifest-src allow only harpguru.com itself, for data the
+// widget may fetch from its own origin and a web manifest. The app's export
+// was not seen to need either; they are a same-origin allowance, nothing wider.
 const widgetPolicy = (frameAncestors: string) =>
   [
     "default-src 'none'",
@@ -75,7 +78,7 @@ const widgetPolicy = (frameAncestors: string) =>
     `frame-ancestors ${frameAncestors}`,
   ].join('; ')
 
-// /t/ and /s/: no site may frame them.
+// /w/, /t/ and /s/: no site may frame them.
 export const PAGES_CONTENT_SECURITY_POLICY = widgetPolicy("'none'")
 
 // /e/: harpguru.com itself and the partners in lib/partners.ts may frame it.

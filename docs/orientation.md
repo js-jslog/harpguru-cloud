@@ -141,10 +141,11 @@ Full list in the roadmap. These are the ones reachable from inside this repo:
 
 - **Region is `eu-west-2`** — but the CloudFront certificate must be issued in `us-east-1`
   regardless of where the rest of the stack lives.
-- **harpguru.com is registered through Heart Internet**, parked on a shared IP with no HTTPS
-  at all. Nothing on the web depends on it, but **mail does**: `contact@harpguru.com`
-  forwards through Heart, so the hosted zone must carry its `MX` records. **Delegate to a
-  Route 53 hosted zone rather than transferring** the registration.
+- **harpguru.com is registered through Heart Internet**, and since 2026-10-27 its DNS is
+  delegated to a Route 53 hosted zone rather than transferred. **Mail still goes through
+  Heart**: `contact@harpguru.com` forwards there, so the hosted zone carries its `MX` records.
+  Since 2026-11-06 the site is served by CloudFront over HTTPS. Before that, the domain was
+  parked on a shared IP with no HTTPS at all.
 - **`/.well-known/apple-app-site-association` and `/.well-known/assetlinks.json` must be
   served as JSON over HTTPS with no redirects.** Universal Links and Android App Links both
   require it, so nothing in Phase B works without it. This is the hard prerequisite hiding
