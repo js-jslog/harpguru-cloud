@@ -32,8 +32,10 @@ cache stamp is, because the tutor's fetch tool caches by URL.
   and no "Generated with" line. This overrides any default the agent's tooling suggests.
 - **The user opens the PRs.** Push the branch and say what it contains. There is no `gh`,
   and none will be installed.
-- **The user runs `cdk diff` and `cdk deploy`.** Prepare the change, explain what the diff
-  will show, and let them run it. Read-only `aws` queries are fine to run directly.
+- **The user runs `cdk diff` and `cdk deploy`, from the branch, before it merges.** Prepare
+  the change, explain what the diff will show, and let them run it. What the deploy and its
+  smoke test establish is committed to the same branch, so a PR merges already deployed.
+  Read-only `aws` queries are fine to run directly.
 - **`docs/aws-concepts.md` is the user's study companion.** Every PR that introduces an
   AWS concept adds its entry in that same PR. Keep entries short: what it is, how it is
   used here, one sentence worth saying in an interview, and a command to see it for real.

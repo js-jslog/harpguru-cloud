@@ -3,7 +3,7 @@
 *For humans:* this file is the tutor's entry point. Start a session by sending the tutor its
 raw URL, with this file's current cache stamp, and "Please read this and follow its
 instructions":
-`https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/README.md?v=2026-11-07T2221Z`.
+`https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/README.md?v=2026-11-07T2236Z`.
 The tutor replies with a block of links. Paste it back as your next message, unchanged, and
 repeat until it says the last batch is in; then the session starts.
 
@@ -46,53 +46,53 @@ the most your tool fetches in one turn.
 ### Batch 1 of 2
 
 ```
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/syllabus.md?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/plans/phase-a.md?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/outside-cdk.md?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-conventions.md?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/aws-pathway-findings.md?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/roadmap.md?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/budget-stack.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/policy-types-stack.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/guardrails-stack.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/accounts-stack.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/identity-stack.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/dns-stack.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/mail-canary-stack.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/trail-stack.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/config-stack.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/guardduty-stack.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/certificate-stack.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/site-stack.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/functions/www-redirect.js?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/bin/harpguru.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/config.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/tags.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/accounts-stack.test.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/guardrails-stack.test.ts?v=2026-11-07T2221Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/syllabus.md?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/plans/phase-a.md?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/outside-cdk.md?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-conventions.md?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/aws-pathway-findings.md?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/roadmap.md?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/budget-stack.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/policy-types-stack.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/guardrails-stack.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/accounts-stack.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/identity-stack.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/dns-stack.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/mail-canary-stack.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/trail-stack.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/config-stack.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/guardduty-stack.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/certificate-stack.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/site-stack.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/functions/viewer-request.js?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/bin/harpguru.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/config.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/tags.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/accounts-stack.test.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/guardrails-stack.test.ts?v=2026-11-07T2236Z
 ```
 
 ### Batch 2 of 2
 
 ```
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/policy-types-stack.test.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/identity-stack.test.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/dns-stack.test.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/mail-canary-stack.test.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/trail-stack.test.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/config-stack.test.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/guardduty-stack.test.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/certificate-stack.test.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/site-stack.test.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/app.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/budget-stack.test.ts?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/scripts/identity-center-values.sh?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/scripts/identity-import-mapping.sh?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/scripts/smoke-site.sh?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/README.md?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/orientation.md?v=2026-11-07T2221Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/CLAUDE.md?v=2026-11-07T2221Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/policy-types-stack.test.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/identity-stack.test.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/dns-stack.test.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/mail-canary-stack.test.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/trail-stack.test.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/config-stack.test.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/guardduty-stack.test.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/certificate-stack.test.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/site-stack.test.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/app.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/budget-stack.test.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/scripts/identity-center-values.sh?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/scripts/identity-import-mapping.sh?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/scripts/smoke-site.sh?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/README.md?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/orientation.md?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/CLAUDE.md?v=2026-11-07T2236Z
 ```
 
 ## The 42 sources
@@ -143,7 +143,7 @@ links; the links are in the batches.
 - `infra/lib/site-stack.ts`: `HarpguruSite`: harpguru.com itself: the private bucket, the
   CloudFront distribution, its security headers and redirect, the uploaded files and the
   records. Deployed 2026-11-06.
-- `infra/lib/functions/www-redirect.js`: The CloudFront Function that sends `www` to the apex.
+- `infra/lib/functions/viewer-request.js`: The CloudFront Function that sends `www` to the apex and, from Phase B, maps the widget's paths to their pages. It was `www-redirect.js` until then.
   Deployed with `HarpguruSite`.
 - `infra/bin/harpguru.ts`: The app: creates the stacks and applies the tags.
 - `infra/lib/config.ts`: Regions, deploy-time values, and the management and workload account

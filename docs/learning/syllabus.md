@@ -552,7 +552,7 @@ records are in the zone but in no template, and who wrote them; where a
   worked.
 - **Sources:** `docs/aws-concepts.md` "CloudFront distributions, behaviours and caching",
   "CloudFront Functions", "Route 53 alias records" and "Custom resources";
-  `infra/lib/site-stack.ts`; `infra/lib/functions/www-redirect.js`;
+  `infra/lib/site-stack.ts`; `infra/lib/functions/viewer-request.js`;
   `infra/test/site-stack.test.ts`; `docs/plans/phase-a.md` "Steps" (item 8);
   `roadmap-planning/aws-pathway-findings.md` "Step 8 deployed: harpguru.com, 2026-11-06".
 
