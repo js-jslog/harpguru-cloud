@@ -886,11 +886,14 @@ embed only inside those sites' pages. The list starts empty.
 **Say it:** "Security headers that never vary are configuration, so they go in a response
 headers policy; code at the edge is for logic that depends on the request."
 
-**See it:** `curl -sI https://harpguru.com/ | grep -iE '^(strict-transport-security|content-security-policy|x-frame-options|x-content-type-options|referrer-policy):'`,
-and the same for `https://harpguru.com/e/` once an embed is there. Before then it returns the
-404 page, which carries the default behaviour's headers, not the embed policy's: an error page
-takes the policy of the behaviour that serves its own path,
-and `aws cloudfront list-response-headers-policies --type custom --profile harpguru --query 'ResponseHeadersPolicyList.Items[].ResponseHeadersPolicy.ResponseHeadersPolicyConfig.Name'`.
+**See it:** the policies:
+`aws cloudfront list-response-headers-policies --type custom --profile harpguru --query 'ResponseHeadersPolicyList.Items[].ResponseHeadersPolicy.ResponseHeadersPolicyConfig.Name'`.
+The headers a response carries:
+`curl -sI https://harpguru.com/ | grep -iE '^(strict-transport-security|content-security-policy|x-frame-options|x-content-type-options|referrer-policy):'`.
+The same for `https://harpguru.com/e/` shows the embed policy once an embed is there. Until
+then it returns the 404 page, carrying the default behaviour's headers rather than the embed
+policy's: an error page takes the policy of the behaviour that serves the error page's own
+path, `/404.html`.
 
 #### CloudFront Functions
 

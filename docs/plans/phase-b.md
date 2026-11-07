@@ -16,7 +16,7 @@ Update this table in the PR that moves a row. **You** means the user.
 
 | # | Step | Status | Blocked on |
 | --- | --- | --- | --- |
-| — | `1-phase-b-plan`: this file | **in review** | you: open the PR |
+| — | `1-phase-b-plan`: this file | **merged** 2026-11-07 | — |
 | 1 | `1-pages`: the pages bucket, the `/t/`, `/s/`, `/e/` and `/w/` behaviours, their function, cache and headers policies | **deployed** and verified 2026-11-07, from the branch; in review | you: merge |
 | 2 | `1-deploy-role`: the GitHub OIDC provider and the role `harpguru`'s workflow assumes | planned | #1 |
 | 3 | `1-request-logs`: CloudFront access logs to S3, kept 90 days | planned | — |
@@ -94,8 +94,9 @@ distribution, which is the point of having one.
   writes styles at run time, so styles need `'unsafe-inline'`; the bundle's two `eval` calls
   can't run in a browser; its fonts are its own `.ttf` files. A static check only: the
   widget's first deploy is the test in a browser.
-- **Deployed 2026-11-07**, from the branch, before merging: 70 seconds of stack time, nothing
-  replaced but the function, which CloudFormation made, swapped in and then deleted. The
+- **Deployed 2026-11-07**, from the branch, before merging: 70 seconds of stack time. Only
+  the function was replaced: CloudFormation made the new one, pointed every behaviour at it,
+  then deleted the old one. The
   distribution was `Deployed` within minutes. `scripts/smoke-site.sh` and
   `scripts/smoke-pages.sh` both passed; the bucket was empty again afterwards. With
   `--pause`, a local page framing `/e/` was refused by the browser: "The page's settings blocked
