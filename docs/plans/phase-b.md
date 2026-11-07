@@ -17,7 +17,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | # | Step | Status | Blocked on |
 | --- | --- | --- | --- |
 | — | `1-phase-b-plan`: this file | **in review** | you: open the PR |
-| 1 | `1-pages`: the pages bucket, the `/t/`, `/s/`, `/e/` and `/w/` behaviours, their function, cache and headers policies | **deployed** 2026-11-07 from the branch; smoke test passed; in review | you: the framing check in a browser, then merge |
+| 1 | `1-pages`: the pages bucket, the `/t/`, `/s/`, `/e/` and `/w/` behaviours, their function, cache and headers policies | **deployed** 2026-11-07 from the branch; smoke test passed; in review | you: the framing check, `scripts/smoke-pages.sh --pause`, then merge |
 | 2 | `1-deploy-role`: the GitHub OIDC provider and the role `harpguru`'s workflow assumes | planned | #1 |
 | 3 | `1-request-logs`: CloudFront access logs to S3, kept 90 days | planned | — |
 | 4 | `1-aasa-browser-marker`: `/s/*` excludes the open-in-browser marker | planned | the app side naming the marker |
@@ -103,7 +103,8 @@ distribution, which is the point of having one.
   `/t/x?k=D` is a cache hit the second time; `/s/` and `/e/` with any path or query return
   their shell; `www` redirects on every path; each path carries its own policy's headers.
   In a browser, a local page framing `/e/` is refused, its origin not being on the empty
-  allowlist; allowing one is tested when the first partner is added.
+  allowlist: `--pause` holds the placeholders up and prints that page. Allowing an origin is
+  tested when the first partner is added.
 
 **2 · `1-deploy-role`.** In the workload account: the GitHub OIDC identity provider, and one
 role. No access keys anywhere.

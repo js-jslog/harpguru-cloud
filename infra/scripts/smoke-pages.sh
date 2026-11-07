@@ -4,16 +4,24 @@
 # account:
 #
 #   AWS_PROFILE=harpguru scripts/smoke-pages.sh
+#   AWS_PROFILE=harpguru scripts/smoke-pages.sh --pause
 #
 # Until harpguru's workflow has deployed the widget, the pages bucket is
 # empty, so the script uploads placeholder pages, checks against them, then
 # deletes them and invalidates their paths. It never touches a page that was
 # already there: if a real one exists, it is checked as it stands.
 #
-# Not checked here: framing. Open a local file containing
-#   <iframe src="https://harpguru.com/e/"></iframe>
-# in a browser; the console should report it refused by frame-ancestors.
+# Framing can only be tested in a browser, which obeys frame-ancestors. With
+# --pause, the script stops after its checks, with the placeholders still up,
+# and prints a page to open; Enter then cleans up as usual.
 set -uo pipefail
+
+PAUSE=0
+case "${1:-}" in
+  '') ;;
+  --pause) PAUSE=1 ;;
+  *) echo "usage: $0 [--pause]"; exit 2 ;;
+esac
 
 HOST=harpguru.com
 FAILED=0
@@ -122,4 +130,22 @@ grep -qi '^strict-transport-security:' <<<"$h" && pass "/e/: HSTS" || fail "/e/:
 
 echo
 if [[ $FAILED == 0 ]]; then echo "All checks passed."; else echo "Some checks failed."; fi
+
+if [[ $PAUSE == 1 ]]; then
+  cat <<'PAGE'
+
+Paused, with the placeholders up. Save this as an .html file on the machine your
+browser runs on, and open it from there:
+
+  <!doctype html>
+  <p>harpguru.com/e/ framed from a page that isn't on the allowlist:</p>
+  <iframe src="https://harpguru.com/e/" width="400" height="200"></iframe>
+
+Expect an empty or error frame, and in the developer console (F12) a message
+that the frame was refused because of frame-ancestors 'self'. Opening
+https://harpguru.com/e/ directly, in a tab, shows the placeholder.
+
+PAGE
+  read -r -p "Press Enter to remove the placeholders. " _
+fi
 exit $FAILED
