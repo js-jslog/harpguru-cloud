@@ -13,7 +13,10 @@
 #
 # Framing can only be tested in a browser, which obeys frame-ancestors. With
 # --pause, the script stops after its checks, with the placeholders still up,
-# and prints a page to open; Enter then cleans up as usual.
+# and prints a page to open; Enter then cleans up as usual. It needs a
+# keyboard: run from Claude Code's ! prompt or by an agent, there is no input
+# to wait on, so it cleans up at once. An agent can hold it open by giving it a
+# named pipe as input and writing a line to the pipe when the check is done.
 set -uo pipefail
 
 PAUSE=0
