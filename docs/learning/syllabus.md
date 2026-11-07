@@ -1,12 +1,13 @@
 # Syllabus
 
-**As of 2026-11-07.** Covers all of Phase A, steps 0–8, and Phase B's step 1: the SSO login, the CDK app
-skeleton, the $10 budget, and the workload account with its OU and guardrails, including step
-3a, which switches SCPs on through a custom resource, and step 3b, which imported the
-console-made permission set into a stack and listed everything CDK doesn't manage. Step 1 is the
-skeleton and deploys nothing itself; the rest are **deployed**: step 2 on 2026-10-13, and step
-3's three stacks on 2026-10-22. Step 3b's `HarpguruIdentity` was imported and deployed, and step
-5, bootstrapping the workload account in two regions, was done, both the same day.
+**As of 2026-11-07.** Covers all of Phase A, steps 0–8, and Phase B's step 1. Phase A is the
+SSO login, the CDK app skeleton, the $10 budget, and the workload account with its OU and
+guardrails, including step 3a, which switches SCPs on through a custom resource, and step 3b,
+which imported the console-made permission set into a stack and listed everything CDK doesn't
+manage. Phase A's step 1 is the skeleton and deploys nothing itself; the rest are **deployed**:
+step 2 on 2026-10-13, and step 3's three stacks on 2026-10-22. Step 3b's `HarpguruIdentity` was
+imported and deployed, and step 5, bootstrapping the workload account in two regions, was done,
+both the same day.
 
 Step 6 is **done**. The hosted zone, `HarpguruDns`, was deployed on 2026-10-26, and the
 nameserver switch at Heart was made on 2026-10-27, with mail tested before and after: the
@@ -356,16 +357,16 @@ records are in the zone but in no template, and who wrote them; where a
 - **Be able to answer:** why the bucket is private, how CloudFront is let in, and what stops
   another distribution reading it; what a direct request to the bucket gets; why S3 answers a
   missing file with 403, and what the site answers instead; why one distribution, and what
-  Phase B's step 1 added to it (topic 27 has the detail); why the stack is in London but its certificate in `us-east-1`;
-  what the two `.well-known` files are for, and how each must be served (over HTTPS, 200,
-  `application/json`, no redirect); why the AASA file needs its type set
-  by hand, and how that is done; how the `www` redirect is kept away from them; why the
+  Phase B's step 1 added to it (topic 27 has the detail); why the stack is in London but its
+  certificate in `us-east-1`; what the two `.well-known` files are for, and how each must be
+  served (over HTTPS, 200, `application/json`, no redirect); why the AASA file needs its type
+  set by hand, and how that is done; how the `www` redirect is kept away from them; why the
   fingerprint is the Play app signing key's, not the upload key's, and why publishing it is
   safe; why neither file does anything yet; why the security headers are a response headers
-  policy and the redirect a function; what HSTS was set to, and why not subdomains or
-  preload; what the CSP allows, and why so little; why the stack isn't termination
-  protected, and what happens to the bucket if it is deleted; how the site was shown to work,
-  and what Apple and Google already had; what it costs.
+  policy and the redirect a function; what HSTS was set to, and why not subdomains or preload;
+  what the CSP allows, and why so little; why the stack isn't termination protected, and what
+  happens to the bucket if it is deleted; how the site was shown to work, and what Apple and
+  Google already had; what it costs.
 - **Sources:** `docs/plans/phase-a.md` "Steps" (item 8) and "Decisions" (the 2026-09-26 entry
   about security headers, and the 2026-11-06 entry about #8's choices); `docs/aws-concepts.md`
   "CloudFront distributions, behaviours and caching", "Origin Access Control (OAC)" and
@@ -391,23 +392,24 @@ records are in the zone but in no template, and who wrote them; where a
   rather than a short code looked up in DynamoDB; what short codes would have given, and why
   none of it was worth a datastore; where the API, DynamoDB and WAF went instead, and why
   there; what `/t/`, `/s/` and `/e/` are each for, and why configuration and cell interaction
-  never share a page; why hand-editing a URL is accepted rather than guarded; why the pages
-  get a bucket of their own, and what would happen to them in the site's bucket; why one
-  function on every behaviour, and what would break without it; why the cache key leaves out
-  the query string, and how configurations will still be counted once step 3's logs exist;
-  why the embed policy leaves out `X-Frame-Options`, what `frame-ancestors 'self'` allows, and where the partner list lives
-  and why there; why the widget's styles need `'unsafe-inline'` but its scripts need no
-  `eval`; what the `harpguru` side has to do for these paths to work; how step 1 was shown to
-  work before any widget existed, the browser included; and why its paths answer 404 today.
+  never share a page; why hand-editing a URL is accepted rather than guarded; why the pages get
+  a bucket of their own, and what would happen to them in the site's bucket; why one function
+  on every behaviour, and what would break without it; why the cache key leaves out the query
+  string, and how configurations will still be counted once step 3's logs exist; why the embed
+  policy leaves out `X-Frame-Options`, what `frame-ancestors 'self'` allows, and where the
+  partner list lives and why there; why the widget's styles need `'unsafe-inline'` but its
+  scripts need no `eval`; what the `harpguru` side has to do for these paths to work; how step
+  1 was shown to work before any widget existed, the browser included; and why its paths answer
+  404 today.
 - **Sources:** `docs/plans/phase-b.md` "Status", "The work in `harpguru`, for reference",
-  "Steps" (item 1) and "Decisions"; `roadmap-planning/roadmap.md` "Locked decisions" (the
-  entry on the widget's frozen scope) and "Settled since writing" (the three 2026-11-07
-  entries); `docs/aws-concepts.md` "Cache policies and the cache key" and "Response headers
-  policies"; `infra/lib/site-stack.ts`; `infra/lib/partners.ts`;
-  `infra/lib/functions/viewer-request.js`; `infra/test/site-stack.test.ts`;
-  `infra/scripts/smoke-pages.sh`; `roadmap-planning/aws-pathway-findings.md` "Phase B step 1
-  deployed: the widget's paths, 2026-11-07" and "What a web export needs from a content
-  security policy, checked 2026-11-07".
+  "Steps" (item 1) and "Decisions"; `roadmap-planning/roadmap.md` "Locked decisions" (the entry
+  on the widget's frozen scope), "Phase B — The public harpface" (what each page type is for)
+  and "Settled since writing" (the three 2026-11-07 entries); `docs/aws-concepts.md` "Cache
+  policies and the cache key" and "Response headers policies"; `infra/lib/site-stack.ts`;
+  `infra/lib/partners.ts`; `infra/lib/functions/viewer-request.js`;
+  `infra/test/site-stack.test.ts`; `infra/scripts/smoke-pages.sh`;
+  `roadmap-planning/aws-pathway-findings.md` "Phase B step 1 deployed: the widget's paths,
+  2026-11-07" and "What a web export needs from a content security policy, checked 2026-11-07".
 
 ## Should understand
 
@@ -635,6 +637,6 @@ These are worth your time if they interest you. Skipping them leaves no gap.
   the links, its associated domains and intent filters, which Phase B adds; the widget itself
   and its deploy workflow, in the `harpguru` repo; Phase B's steps 2–4, the GitHub deploy role,
   the request logs and the browser marker in the AASA file, which are planned in
-  `docs/plans/phase-b.md` but not built; and everything in phases C–F. Some of
-  these already have concept entries, written ahead of the work; read them as reading ahead,
-  and do not test me on them.
+  `docs/plans/phase-b.md` but not built; and everything in phases C–F. Some of these already
+  have concept entries, written ahead of the work; read them as reading ahead, and do not test
+  me on them.
