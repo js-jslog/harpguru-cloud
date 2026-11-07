@@ -17,14 +17,14 @@ Update this table in the PR that moves a row. **You** means the user.
 | # | Step | Status | Blocked on |
 | --- | --- | --- | --- |
 | — | `1-phase-b-plan`: this file | **in review** | you: open the PR |
-| 1 | `1-pages`: the pages bucket, the `/t/`, `/s/`, `/e/` and `/w/` behaviours, their function, cache and headers policies | **in review** | you: open the PR, then `cdk deploy HarpguruSite` and `scripts/smoke-pages.sh` |
+| 1 | `1-pages`: the pages bucket, the `/t/`, `/s/`, `/e/` and `/w/` behaviours, their function, cache and headers policies | **in review** | you: from the branch, `cdk diff` and `cdk deploy HarpguruSite`, then `scripts/smoke-pages.sh`; the results are recorded here before merge |
 | 2 | `1-deploy-role`: the GitHub OIDC provider and the role `harpguru`'s workflow assumes | planned | #1 |
 | 3 | `1-request-logs`: CloudFront access logs to S3, kept 90 days | planned | — |
 | 4 | `1-aasa-browser-marker`: `/s/*` excludes the open-in-browser marker | planned | the app side naming the marker |
 
-**Next up, as of 2026-11-07:** merge this plan, then #1, whose branch `1-pages` is built on
-this one; it needs nothing from the app side, being smoke-tested with placeholder pages. Then
-#2.
+**Next up, as of 2026-11-07:** merge this plan. Deploy #1 from its branch, `1-pages`, which
+is built on this one, and smoke-test it with placeholder pages; it needs nothing from the app
+side. Then #2.
 
 ## The work in `harpguru`, for reference
 
