@@ -37,7 +37,7 @@ Update this table in the PR that moves a row. **You** means the user.
 **Next up, as of 2026-11-06:**
 
 Phase A has shipped: every step is merged, and the learning companion covers all of it.
-1. Plan Phase B, in its own file here, after re-reading the roadmap.
+Phase B is planned in [phase-b.md](phase-b.md), which now carries the next step.
 
 ## Accounts
 
