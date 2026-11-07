@@ -2,6 +2,8 @@ import { join } from 'node:path'
 import { CfnOutput, Duration, Stack, type StackProps } from 'aws-cdk-lib'
 import type { ICertificate } from 'aws-cdk-lib/aws-certificatemanager'
 import {
+  type BehaviorOptions,
+  CachePolicy,
   Distribution,
   Function as CloudFrontFunction,
   FunctionCode,
@@ -28,6 +30,7 @@ import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment'
 import type { Construct } from 'constructs'
 import { WWW_DOMAIN } from './certificate-stack'
 import { DOMAIN } from './dns-stack'
+import { EMBED_PARTNER_ORIGINS } from './partners'
 
 // The files the site serves, uploaded as they are.
 export const SITE_DIR = join(__dirname, '..', 'site')
@@ -53,6 +56,38 @@ export const CONTENT_SECURITY_POLICY = [
   "frame-ancestors 'none'",
 ].join('; ')
 
+// The widget's pages, from Phase B: a prerendered page or a shell, and the
+// bundle under /w/ that renders the harp face into it. They may run only the
+// bundle's own scripts. Styles allow 'unsafe-inline' because react-native-web
+// writes its styles into the page at run time, as <style> rules and style
+// attributes; a hash or a nonce can't cover styles made after the page loads.
+const widgetPolicy = (frameAncestors: string) =>
+  [
+    "default-src 'none'",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data:",
+    "font-src 'self'",
+    "connect-src 'self'",
+    "manifest-src 'self'",
+    "base-uri 'none'",
+    "form-action 'none'",
+    `frame-ancestors ${frameAncestors}`,
+  ].join('; ')
+
+// /t/ and /s/: no site may frame them.
+export const PAGES_CONTENT_SECURITY_POLICY = widgetPolicy("'none'")
+
+// /e/: harpguru.com itself and the partners in lib/partners.ts may frame it.
+export const EMBED_CONTENT_SECURITY_POLICY = widgetPolicy(
+  ["'self'", ...EMBED_PARTNER_ORIGINS].join(' ')
+)
+
+// The behaviours ahead of the default, each a path pattern served from the
+// pages bucket. CloudFront tries them in order and the first match wins; the
+// patterns don't overlap, so here the order changes nothing.
+export const PAGE_PATHS = ['/w/*', '/t/*', '/s/*', '/e/*'] as const
+
 export type SiteStackProps = StackProps & {
   zone: IPublicHostedZone
   // From HarpguruCertificate in us-east-1, the only region CloudFront takes
@@ -65,51 +100,124 @@ export type SiteStackProps = StackProps & {
 // a CloudFront Function. The apex serves the landing page and the two
 // .well-known files Universal Links and App Links need.
 //
-// Not termination protected: everything in it is rebuilt from this repo.
-// The bucket is retained, CDK's default, so a deleted stack leaves its files.
+// From Phase B it also serves the widget's pages, /t/, /s/ and /e/, and their
+// bundle, /w/, from a second bucket. harpguru's deploy workflow fills that
+// one; nothing in this repo writes to it.
+//
+// Not termination protected: everything in it is rebuilt from this repo, or
+// from harpguru's. Both buckets are retained, CDK's default, so a deleted
+// stack leaves their files.
 export class SiteStack extends Stack {
   readonly distribution: Distribution
+  readonly pagesBucket: Bucket
 
   constructor(scope: Construct, id: string, props: SiteStackProps) {
     super(scope, id, props)
 
-    const bucket = new Bucket(this, 'Content', {
-      blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
-      enforceSSL: true,
-      encryption: BucketEncryption.S3_MANAGED,
-    })
+    const privateBucket = (id: string) =>
+      new Bucket(this, id, {
+        blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
+        enforceSSL: true,
+        encryption: BucketEncryption.S3_MANAGED,
+      })
+    const bucket = privateBucket('Content')
+    // The widget's pages. A bucket of their own, because the site's upload
+    // below deletes anything in its bucket it didn't put there.
+    this.pagesBucket = privateBucket('Pages')
 
-    const securityHeaders = new ResponseHeadersPolicy(this, 'SecurityHeaders', {
-      responseHeadersPolicyName: 'harpguru-security-headers',
-      comment: 'Security headers for harpguru.com',
-      securityHeadersBehavior: {
-        strictTransportSecurity: {
-          accessControlMaxAge: Duration.days(365),
-          includeSubdomains: false,
-          preload: false,
-          override: true,
-        },
-        contentTypeOptions: { override: true },
-        frameOptions: { frameOption: HeadersFrameOption.DENY, override: true },
-        referrerPolicy: {
-          referrerPolicy: HeadersReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
-          override: true,
-        },
-        contentSecurityPolicy: {
-          contentSecurityPolicy: CONTENT_SECURITY_POLICY,
-          override: true,
-        },
+    // The same on every response: HSTS for a year, without subdomains, which
+    // this policy can't speak for, or the preload list, which is hard to
+    // leave; no type sniffing; and no full URLs sent to other sites.
+    const commonHeaders = {
+      strictTransportSecurity: {
+        accessControlMaxAge: Duration.days(365),
+        includeSubdomains: false,
+        preload: false,
+        override: true,
       },
-    })
+      contentTypeOptions: { override: true },
+      referrerPolicy: {
+        referrerPolicy: HeadersReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN,
+        override: true,
+      },
+    }
+    const headersPolicy = (
+      id: string,
+      name: string,
+      comment: string,
+      contentSecurityPolicy: string,
+      frameable: boolean
+    ) =>
+      new ResponseHeadersPolicy(this, id, {
+        responseHeadersPolicyName: name,
+        comment,
+        securityHeadersBehavior: {
+          ...commonHeaders,
+          // X-Frame-Options can say DENY or SAMEORIGIN, never a list, so a
+          // page partners may frame leaves it out and relies on the CSP's
+          // frame-ancestors, which every current browser obeys.
+          ...(frameable
+            ? {}
+            : {
+                frameOptions: {
+                  frameOption: HeadersFrameOption.DENY,
+                  override: true,
+                },
+              }),
+          contentSecurityPolicy: { contentSecurityPolicy, override: true },
+        },
+      })
 
-    // Depends on the Host header, so it is a function, not configuration.
-    const wwwRedirect = new CloudFrontFunction(this, 'WwwRedirect', {
-      functionName: 'harpguru-www-redirect',
-      comment: 'Redirects www.harpguru.com to the apex',
+    const securityHeaders = headersPolicy(
+      'SecurityHeaders',
+      'harpguru-security-headers',
+      'Security headers for harpguru.com',
+      CONTENT_SECURITY_POLICY,
+      false
+    )
+    const pagesHeaders = headersPolicy(
+      'PagesHeaders',
+      'harpguru-pages-headers',
+      'Security headers for the widget pages, which nothing may frame',
+      PAGES_CONTENT_SECURITY_POLICY,
+      false
+    )
+    const embedHeaders = headersPolicy(
+      'EmbedHeaders',
+      'harpguru-embed-headers',
+      'Security headers for embeds, which partners may frame',
+      EMBED_CONTENT_SECURITY_POLICY,
+      true
+    )
+
+    // Depends on the Host header and the path, so it is a function, not
+    // configuration. Every behaviour runs it, so www redirects on every path.
+    const viewerRequest = new CloudFrontFunction(this, 'ViewerRequest', {
+      functionName: 'harpguru-viewer-request',
+      comment: 'Redirects www to the apex; maps widget paths to their pages',
       runtime: FunctionRuntime.JS_2_0,
       code: FunctionCode.fromFile({
-        filePath: join(__dirname, 'functions', 'www-redirect.js'),
+        filePath: join(__dirname, 'functions', 'viewer-request.js'),
       }),
+    })
+    const functionAssociations = [
+      { function: viewerRequest, eventType: FunctionEventType.VIEWER_REQUEST },
+    ]
+
+    // CachingOptimized, AWS's managed cache policy, is the default
+    // behaviour's too: the cache key is the path alone, with no query string,
+    // headers or cookies, so every configuration of a page is one cached copy.
+    // Copies last a day unless the upload says otherwise, and every deploy
+    // invalidates.
+    const pagesOrigin = S3BucketOrigin.withOriginAccessControl(this.pagesBucket)
+    const pageBehavior = (
+      responseHeadersPolicy: ResponseHeadersPolicy
+    ): BehaviorOptions => ({
+      origin: pagesOrigin,
+      viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+      cachePolicy: CachePolicy.CACHING_OPTIMIZED,
+      responseHeadersPolicy,
+      functionAssociations,
     })
 
     this.distribution = new Distribution(this, 'Distribution', {
@@ -127,16 +235,19 @@ export class SiteStack extends Stack {
         // policy CDK writes admits only this distribution.
         origin: S3BucketOrigin.withOriginAccessControl(bucket),
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        cachePolicy: CachePolicy.CACHING_OPTIMIZED,
         responseHeadersPolicy: securityHeaders,
-        functionAssociations: [
-          {
-            function: wwwRedirect,
-            eventType: FunctionEventType.VIEWER_REQUEST,
-          },
-        ],
+        functionAssociations,
       },
-      // CloudFront may not list the bucket, so S3 answers a missing file
-      // with 403, not 404. Both become a 404 with a page of our own.
+      additionalBehaviors: Object.fromEntries(
+        PAGE_PATHS.map((path) => [
+          path,
+          pageBehavior(path === '/e/*' ? embedHeaders : pagesHeaders),
+        ])
+      ),
+      // CloudFront may not list either bucket, so S3 answers a missing file
+      // with 403, not 404. Both become a 404 with the site's own page, which
+      // CloudFront fetches through the default behaviour.
       errorResponses: [403, 404].map((httpStatus) => ({
         httpStatus,
         responseHttpStatus: 404,
@@ -192,5 +303,8 @@ export class SiteStack extends Stack {
       value: this.distribution.distributionDomainName,
     })
     new CfnOutput(this, 'BucketName', { value: bucket.bucketName })
+    new CfnOutput(this, 'PagesBucketName', {
+      value: this.pagesBucket.bucketName,
+    })
   }
 }

@@ -17,13 +17,14 @@ Update this table in the PR that moves a row. **You** means the user.
 | # | Step | Status | Blocked on |
 | --- | --- | --- | --- |
 | — | `1-phase-b-plan`: this file | **in review** | you: open the PR |
-| 1 | `1-pages`: the pages bucket, the `/t/`, `/s/`, `/e/` and `/w/` behaviours, their function, cache and headers policies | planned | — |
+| 1 | `1-pages`: the pages bucket, the `/t/`, `/s/`, `/e/` and `/w/` behaviours, their function, cache and headers policies | **in review** | you: open the PR, then `cdk deploy HarpguruSite` and `scripts/smoke-pages.sh` |
 | 2 | `1-deploy-role`: the GitHub OIDC provider and the role `harpguru`'s workflow assumes | planned | #1 |
 | 3 | `1-request-logs`: CloudFront access logs to S3, kept 90 days | planned | — |
 | 4 | `1-aasa-browser-marker`: `/s/*` excludes the open-in-browser marker | planned | the app side naming the marker |
 
-**Next up, as of 2026-11-07:** merge this plan. #1 is under way on `1-pages`, branched from
-this one; it needs nothing from the app side, being smoke-tested with placeholder pages.
+**Next up, as of 2026-11-07:** merge this plan, then #1, whose branch `1-pages` is built on
+this one; it needs nothing from the app side, being smoke-tested with placeholder pages. Then
+#2.
 
 ## The work in `harpguru`, for reference
 
@@ -35,9 +36,19 @@ Not tracked here, but it shapes what is built here. From the roadmap's Phase B:
 - the share button and QR code in the app; opening a link app first, with the harp-face choice
 - the deploy workflow, which assumes #2's role
 
-**What this side needs from that side:** the path prefix the widget's bundle is exported under
-(#1), what its content security policy must allow (#1), the GitHub environment its deploy job
-runs in (#2), and the open-in-browser marker (#4).
+**What this side needs from that side:**
+
+- #1, built: **the widget's export puts every file under `/w/`.** A default Expo web export
+  uses two prefixes, `/_expo/` and `/assets/`; Expo's base URL setting moves both. Its pages
+  are `t/<slug>/index.html`, `s/index.html` and `e/index.html` in the pages bucket.
+- #1, built: **the content security policy the pages are served with**, in
+  `infra/lib/site-stack.ts`: the bundle's own scripts and fonts, `data:` images, and inline
+  styles. A change needs a deploy here.
+- #1: **the workflow sets `Cache-Control` on upload**, long and immutable for `/w/`'s hashed
+  files and `no-cache` for the HTML, and invalidates the HTML's paths after a deploy.
+  CloudFront keeps copies a day otherwise.
+- #2: the deploy job runs in the GitHub environment `harpguru.com`.
+- #4: the open-in-browser marker.
 
 ## Steps
 
@@ -50,25 +61,28 @@ distribution, which is the point of having one.
   would wipe the widget on the next `cdk deploy` here. Nothing in this repo uploads to it.
 - **Four behaviours**, ahead of the default:
 
-  | Path | Serves | Headers policy | Cached |
-  | --- | --- | --- | --- |
-  | `/w/*` | the widget's bundle and assets | pages | long: the filenames are hashed |
-  | `/e/*` | one embed shell for every embed | embed | short; a deploy invalidates |
-  | `/s/*` | one setup shell for every setup link | pages | short; a deploy invalidates |
-  | `/t/*` | one prerendered page per tuning | pages | short; a deploy invalidates |
+  | Path | Serves | Headers policy |
+  | --- | --- | --- |
+  | `/w/*` | the widget's bundle and assets | pages |
+  | `/t/*` | one prerendered page per tuning | pages |
+  | `/s/*` | one setup shell for every setup link | pages |
+  | `/e/*` | one embed shell for every embed | embed |
 
-  `/w/` is provisional: it is whatever prefix the export uses, ideally one prefix for all of
-  the bundle's files.
+  How long each is cached is set by the upload's `Cache-Control`, so it is `harpguru`'s
+  workflow's choice, within the cache policy below.
 - **A viewer-request CloudFront Function maps a path to its object**: `/t/<slug>` to
   `/t/<slug>/index.html`, and anything under `/s/` or `/e/` to that path's one shell. A
   function rather than S3's website hosting, which does index documents but can't sit behind
   OAC.
-- **The `www` redirect has to cover the new paths too.** Today it is attached to the default
-  behaviour only, so `www.harpguru.com/t/…` would be served on `www`, not redirected. A
-  behaviour takes one viewer-request function, so the new behaviours get one function that
-  redirects `www` first and maps the path otherwise.
-- **The cache key ignores query strings.** The parameters are read by the bundle after load,
-  so one cached copy of each page serves every configuration. They still reach the logs (#3).
+- **The `www` redirect has to cover the new paths too.** It was attached to the default
+  behaviour only, so `www.harpguru.com/t/…` would have been served on `www`, not redirected. A
+  behaviour takes one viewer-request function, so the redirect and the mapping are one
+  function, `harpguru-viewer-request`, on every behaviour, replacing `harpguru-www-redirect`.
+  It also adds the missing slash to `/t`, `/s` and `/e`.
+- **The cache key ignores query strings**: AWS's managed `CachingOptimized` policy, which the
+  default behaviour already had as CDK's default. The parameters are read by the bundle after
+  load, so one cached copy of each page serves every configuration. They still reach the logs
+  (#3).
 - **Two new response headers policies.** Both keep the site policy's HSTS, `nosniff` and
   referrer policy, and differ in framing:
   - *pages*: `X-Frame-Options: DENY` and `frame-ancestors 'none'`.
@@ -76,10 +90,14 @@ distribution, which is the point of having one.
     `frame-ancestors 'self'` plus the partner allowlist. The list starts empty and lives in
     code: it is public by nature, being sent in every response.
 
-  Their content security policy allows the bundle's own scripts, styles and fonts. Whether
-  `react-native-web`'s injected styles need `'unsafe-inline'` is checked against a real export
-  before this merges.
-- **Smoke test:** placeholder pages uploaded by the script, then removed. `/t/x?k=C` then
+  Their content security policy allows the bundle's own scripts and fonts, `data:` images,
+  and inline styles, and no `eval`. Checked 2026-11-07 against a real web export of the app,
+  a superset of the widget: `index.html` carries an inline `<style>` and react-native-web
+  writes styles at run time, so styles need `'unsafe-inline'`; the bundle's two `eval` calls
+  can't run in a browser; its fonts are its own `.ttf` files. A static check only: the
+  widget's first deploy is the test in a browser.
+- **Smoke test, `scripts/smoke-pages.sh`:** placeholder pages uploaded by the script, then
+  removed, and any real page left as it is. `/t/x?k=C` then
   `/t/x?k=D` is a cache hit the second time; `/s/` and `/e/` with any path or query return
   their shell; `www` redirects on every path; each path carries its own policy's headers.
   In a browser, a local page framing `/e/` is refused, its origin not being on the empty
@@ -137,6 +155,12 @@ $0.10 per million, and a few megabytes of logs a month. No new fixed monthly cha
   them. Proposed by the agent.
 - 2026-11-07: **the deploy job runs in a GitHub environment named `harpguru.com`, and request
   logs are kept 90 days.** Proposed by the agent, accepted by the user.
+- 2026-11-07: **one viewer-request function on every behaviour**, `harpguru-viewer-request`,
+  replacing `harpguru-www-redirect`, because a behaviour takes only one, and every one needs the
+  redirect. Proposed by the agent.
+- 2026-11-07: **every behaviour uses the managed `CachingOptimized` policy**, rather than a
+  custom one with a short TTL: cache lifetimes are set per file by `harpguru`'s upload, and its
+  deploys invalidate. Proposed by the agent.
 - 2026-11-07: **the GitHub OIDC provider arrives in Phase B**, for `harpguru`'s deploys, not
   Phase F. The roadmap already required it in "How the two connect"; its Phase F line now
   covers this repo's own deploys. Proposed by the agent.

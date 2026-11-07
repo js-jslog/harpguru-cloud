@@ -785,10 +785,12 @@ doesn't expire.
 `www.harpguru.com`, with the certificate from `HarpguruCertificate`. That is why the
 certificate lives in `us-east-1`: CloudFront takes no other region's. The stack itself is
 in London, beside the zone, and reads the certificate's ARN across regions as a weak
-reference. There is one behaviour, the default, in front of the private bucket; Phase B adds
-`/t/*`, `/e/*` and `/s/*` to the same distribution rather than making more. HTTP is redirected
-to HTTPS, `/` serves `index.html`, and a missing file gets `/404.html` with a 404. A deploy
-that changes the files invalidates `/*` once, after they are all in.
+reference. The default behaviour serves the site's bucket. Phase B's step 1 puts four
+behaviours ahead of it, on the same distribution rather than more: `/w/*`, `/t/*`, `/s/*` and
+`/e/*`, all served from a second bucket, `Pages`, which `harpguru`'s workflow fills. That is
+two **origins** behind one distribution. HTTP is redirected to HTTPS, `/` serves `index.html`,
+and a missing file in either bucket gets `/404.html` with a 404. A deploy that changes the
+site's files invalidates `/*` once, after they are all in.
 
 **Say it:** "One distribution, several behaviours: each path pattern picks its own origin and
 caching, and the default behaviour catches the rest, so a whole site stays behind one
@@ -796,9 +798,40 @@ certificate and one domain."
 
 **See it:** the distribution:
 `aws cloudfront list-distributions --profile harpguru --query 'DistributionList.Items[].[Id,DomainName,Aliases.Items,PriceClass,Status]'`.
+Its behaviours, each path pattern with the origin it is sent to (`null` before Phase B's step
+1 is deployed):
+`aws cloudfront get-distribution-config --profile harpguru --id $(aws cloudformation describe-stacks --stack-name HarpguruSite --profile harpguru --query "Stacks[0].Outputs[?OutputKey=='DistributionId'].OutputValue" --output text) --query 'DistributionConfig.CacheBehaviors.Items[].[PathPattern,TargetOriginId]'`.
 A response's trip through the cache, where `x-cache` says `Hit` or `Miss` and `x-amz-cf-pop`
 names the edge that answered:
 `curl -sI https://harpguru.com/ | grep -iE '^(x-cache|age|x-amz-cf-pop):'`. Run it twice.
+
+#### Cache policies and the cache key
+
+**What:** a **cache policy** says what goes into a behaviour's **cache key**, the identity
+CloudFront stores a response under, and how long copies live. The path is always in the key;
+the policy adds any of the query string, headers and cookies. Anything left out of the key
+doesn't make a new cached copy, and, under the same policy, isn't sent to the origin either.
+A key that holds too much splits one page into many copies and lowers the hit rate. AWS
+publishes **managed** policies; `CachingOptimized` keys on the path alone, and keeps copies a
+day unless the origin's `Cache-Control` says otherwise. A cache policy's companion, the
+**origin request policy**, sends values to the origin without putting them in the key.
+
+**Here:** every behaviour uses `CachingOptimized`, the default behaviour included, where it
+was already CDK's default. It matters for the widget's pages from Phase B's step 1: a page's
+configuration is in its query string, which only the page's own script reads, so
+`/t/country?k=C` and `/t/country?k=D` are one cached copy, and S3 never sees the query. The
+request logs still record it. The cache key is made after the viewer-request function has run,
+so every `/s/` path, mapped to `/s/index.html`, also shares one copy.
+
+**Say it:** "The cache key should hold only what changes the response. Static pages that read
+their own query string in the browser key on the path alone, so a thousand variants are one
+cached object."
+
+**See it:** the managed policy's key and TTLs:
+`aws cloudfront get-cache-policy --id 658327ea-f89d-4fab-a63d-7e88639e58f6 --profile harpguru --query 'CachePolicy.CachePolicyConfig.{Name:Name,DefaultTTL:DefaultTTL,QueryStrings:ParametersInCacheKeyAndForwardedToOrigin.QueryStringsConfig.QueryStringBehavior}'`.
+The query string left out of the key, once step 1 is deployed and a page is there: run
+`curl -s -o /dev/null https://harpguru.com/t/country?k=C`, then
+`curl -sI https://harpguru.com/t/country?k=D | grep -i '^x-cache:'`, which says `Hit`.
 
 #### Origin Access Control (OAC)
 
@@ -809,8 +842,9 @@ bucket stays fully blocked from public access, so the only way to its files is t
 that distribution, its headers and its HTTPS. It replaced **OAI** (Origin Access Identity),
 the older mechanism, which can't sign for buckets encrypted with KMS keys.
 
-**Here:** the site's bucket in step 8. CDK's `S3BucketOrigin.withOriginAccessControl` makes
-the OAC and writes the policy statement. It is the confused-deputy guard from
+**Here:** the site's bucket in step 8, and the widget pages' bucket from Phase B's step 1, each
+with an OAC of its own. CDK's `S3BucketOrigin.withOriginAccessControl` makes the OAC and writes
+the policy statement. It is the confused-deputy guard from
 [S3 buckets](#s3-buckets-bucket-policies-and-lifecycle-rules) again: a grant to CloudFront
 alone would let any distribution, in any account, read the bucket. CloudFront isn't granted
 `s3:ListBucket`, so S3 answers a missing file with 403, not 404, and the distribution turns
@@ -840,12 +874,20 @@ year, without subdomains, which it can't speak for, and without the preload list
 slow to leave. The CSP allows only the site's own images and styles, since the page has no
 scripts. A response headers policy rather than a CloudFront Function, a decision recorded on
 2026-09-26: fixed headers are configuration, so there's nothing to test and nothing to pay per
-request. Phase B's embeds, under `/e/*`, will need a policy of their own that allows framing.
+request.
+
+Phase B's step 1 adds two more. `harpguru-pages-headers`, on `/w/*`, `/t/*` and `/s/*`, and
+`harpguru-embed-headers`, on `/e/*`, share HSTS, `nosniff` and the referrer policy, and allow
+the widget's own scripts and its run-time styles. They differ in framing: the pages refuse it
+outright, and the embeds leave `X-Frame-Options` out, since it can name no list, and send
+`frame-ancestors 'self'` plus the partners in `infra/lib/partners.ts`. A browser then shows an
+embed only inside those sites' pages. The list starts empty.
 
 **Say it:** "Security headers that never vary are configuration, so they go in a response
 headers policy; code at the edge is for logic that depends on the request."
 
-**See it:** `curl -sI https://harpguru.com/ | grep -iE '^(strict-transport-security|content-security-policy|x-frame-options|x-content-type-options|referrer-policy):'`
+**See it:** `curl -sI https://harpguru.com/ | grep -iE '^(strict-transport-security|content-security-policy|x-frame-options|x-content-type-options|referrer-policy):'`,
+and the same for `https://harpguru.com/e/` once Phase B's step 1 is deployed,
 and `aws cloudfront list-response-headers-policies --type custom --profile harpguru --query 'ResponseHeadersPolicyList.Items[].ResponseHeadersPolicy.ResponseHeadersPolicyConfig.Name'`.
 
 #### CloudFront Functions
@@ -857,18 +899,24 @@ compute, no network, no file system, 10 KB of code. **Lambda@Edge** is the heavi
 call other services and see the origin's side, at many times the price and latency. Two
 million Function invocations a month are free.
 
-**Here:** `harpguru-www-redirect`, on every viewer request in step 8. It answers
-`www.harpguru.com` with a 301 to the same path and query string on the apex, and passes every
-other request through, so the apex's `.well-known` files are never redirected. Its code is
-`infra/lib/functions/www-redirect.js`, which the unit tests also run. Phase D's geo-aware links
-are the other planned use. Deployed 2026-11-06: CloudFront passes it query string values still
-encoded, so they reach the apex unchanged.
+**Here:** `harpguru-viewer-request`, on every viewer request, on every behaviour. It answers
+`www.harpguru.com` with a 301 to the same path and query string on the apex, and passes the
+apex's own files through, so its `.well-known` files are never redirected. From Phase B's step
+1 it also maps the widget's paths to the objects that hold them: any `/s/` or `/e/` path to
+that path's one shell, and `/t/<tuning>` to `/t/<tuning>/index.html`. That is the index
+document S3's website hosting would give, which can't sit behind OAC. A behaviour takes only
+one viewer-request function, so the redirect and the mapping are one function. Its code is
+`infra/lib/functions/viewer-request.js`, which the unit tests also run. Until step 1 it was
+`harpguru-www-redirect`, which did the redirect alone and ran on the default behaviour only.
+Phase D's geo-aware links are the other planned use. Deployed 2026-11-06: CloudFront passes
+query string values still encoded, so they reach the apex unchanged.
 
 **Say it:** "CloudFront Functions are for cheap, per-request logic at the edge, like redirects
 and URL rewrites; anything needing the network or more time is Lambda@Edge."
 
-**See it:** `aws cloudfront describe-function --name harpguru-www-redirect --stage LIVE --profile harpguru --query 'FunctionSummary.[Name,FunctionMetadata.Stage,FunctionConfig.Runtime]'`.
-Without `--stage LIVE` it shows `DEVELOPMENT`, the stage a change is tested in before it is
+**See it:** `aws cloudfront describe-function --name harpguru-viewer-request --stage LIVE --profile harpguru --query 'FunctionSummary.[Name,FunctionMetadata.Stage,FunctionConfig.Runtime]'`.
+Until Phase B's step 1 is deployed, the name is `harpguru-www-redirect`. Without
+`--stage LIVE` it shows `DEVELOPMENT`, the stage a change is tested in before it is
 published; CloudFront serves `LIVE`. The function running, without a browser:
 `curl -sI 'https://www.harpguru.com/s/x?a=1' | grep -iE '^(HTTP|location)'`.
 
