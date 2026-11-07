@@ -3,7 +3,7 @@
 *For humans:* this file is the tutor's entry point. Start a session by sending the tutor its
 raw URL, with this file's current cache stamp, and "Please read this and follow its
 instructions":
-`https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/README.md?v=2026-11-07T2236Z`.
+`https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/README.md?v=2026-11-07T2319Z`.
 The tutor replies with a block of links. Paste it back as your next message, unchanged, and
 repeat until it says the last batch is in; then the session starts.
 
@@ -46,56 +46,59 @@ the most your tool fetches in one turn.
 ### Batch 1 of 2
 
 ```
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/syllabus.md?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/plans/phase-a.md?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/outside-cdk.md?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-conventions.md?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/aws-pathway-findings.md?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/roadmap.md?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/budget-stack.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/policy-types-stack.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/guardrails-stack.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/accounts-stack.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/identity-stack.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/dns-stack.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/mail-canary-stack.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/trail-stack.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/config-stack.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/guardduty-stack.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/certificate-stack.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/site-stack.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/functions/viewer-request.js?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/bin/harpguru.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/config.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/tags.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/accounts-stack.test.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/guardrails-stack.test.ts?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/learning/syllabus.md?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/plans/phase-a.md?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/plans/phase-b.md?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-concepts.md?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/outside-cdk.md?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/aws-conventions.md?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/aws-pathway-findings.md?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru/178-build-the-harp-face-widget/roadmap-planning/roadmap.md?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/budget-stack.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/policy-types-stack.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/guardrails-stack.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/accounts-stack.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/identity-stack.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/dns-stack.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/mail-canary-stack.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/trail-stack.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/config-stack.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/guardduty-stack.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/certificate-stack.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/site-stack.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/functions/viewer-request.js?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/partners.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/bin/harpguru.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/config.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/lib/tags.ts?v=2026-11-07T2319Z
 ```
 
 ### Batch 2 of 2
 
 ```
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/policy-types-stack.test.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/identity-stack.test.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/dns-stack.test.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/mail-canary-stack.test.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/trail-stack.test.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/config-stack.test.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/guardduty-stack.test.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/certificate-stack.test.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/site-stack.test.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/app.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/budget-stack.test.ts?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/scripts/identity-center-values.sh?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/scripts/identity-import-mapping.sh?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/scripts/smoke-site.sh?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/README.md?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/orientation.md?v=2026-11-07T2236Z
-https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/CLAUDE.md?v=2026-11-07T2236Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/accounts-stack.test.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/guardrails-stack.test.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/policy-types-stack.test.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/identity-stack.test.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/dns-stack.test.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/mail-canary-stack.test.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/trail-stack.test.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/config-stack.test.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/guardduty-stack.test.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/certificate-stack.test.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/site-stack.test.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/app.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/test/budget-stack.test.ts?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/scripts/identity-center-values.sh?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/scripts/identity-import-mapping.sh?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/scripts/smoke-site.sh?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/scripts/smoke-pages.sh?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/infra/README.md?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/docs/orientation.md?v=2026-11-07T2319Z
+https://raw.githubusercontent.com/js-jslog/harpguru-cloud/master/CLAUDE.md?v=2026-11-07T2319Z
 ```
 
-## The 42 sources
+## The 45 sources
 
 What each one is, in the order of the batches, most important first. These are paths, not
 links; the links are in the batches.
@@ -104,6 +107,8 @@ links; the links are in the batches.
   should be able to answer, and its sources.
 - `docs/plans/phase-a.md`: The Phase A plan: its status table (what is merged, what is deployed)
   and its dated decisions.
+- `docs/plans/phase-b.md`: The Phase B plan: its status table, what the `harpguru` side has to
+  do, its steps and its dated decisions. Step 1 is deployed; the rest is planned.
 - `docs/aws-concepts.md`: My study companion: one entry per AWS concept, each with what it is,
   how it is used here, one sentence to say in an interview, and a command to see it.
 - `docs/outside-cdk.md`: Everything in the accounts that no stack manages, why, and a log of
@@ -113,9 +118,12 @@ links; the links are in the batches.
   vocabulary, the AWS account state, what the step 3 deploy showed, and the DNS records Heart
   served for harpguru.com, with what the hosted zone's deploy, the nameserver switch and the
   mail canary's first send showed, and what the trail's, Config's, GuardDuty's, the
-  certificate's and the site's deploys showed, and step 4d's test of the GuardDuty SCP.
+  certificate's and the site's deploys showed, and step 4d's test of the GuardDuty SCP; and,
+  for Phase B, what a web export of the app needs from a content security policy, and what
+  step 1's deploy showed.
 - `roadmap-planning/roadmap.md` (in `harpguru`): The decisions, sequence and scope. Its
-  decisions section matters more than its phase list.
+  decisions section matters more than its phase list. Phase B's product design, settled
+  2026-11-07, is in its locked decisions and "Settled since writing".
 - `infra/lib/budget-stack.ts`: `HarpguruBudget`: the $10 monthly budget. Deployed 2026-10-13.
 - `infra/lib/policy-types-stack.ts`: `HarpguruPolicyTypes`: the custom resource that switches
   SCPs on. Deployed 2026-10-22.
@@ -140,11 +148,14 @@ links; the links are in the batches.
 - `infra/lib/certificate-stack.ts`: `HarpguruCertificate`: the ACM certificate for harpguru.com
   and `www`, in the workload account in `us-east-1`. Deployed 2026-11-06, and used by
   `HarpguruSite` since the same day.
-- `infra/lib/site-stack.ts`: `HarpguruSite`: harpguru.com itself: the private bucket, the
-  CloudFront distribution, its security headers and redirect, the uploaded files and the
-  records. Deployed 2026-11-06.
-- `infra/lib/functions/viewer-request.js`: The CloudFront Function that sends `www` to the apex and, from Phase B, maps the widget's paths to their pages. It was `www-redirect.js` until then.
-  Deployed with `HarpguruSite`.
+- `infra/lib/site-stack.ts`: `HarpguruSite`: harpguru.com itself: the site's private bucket,
+  the CloudFront distribution, its headers policies and function, the uploaded files and the
+  records, and, from Phase B's step 1, the widget pages' bucket and their four paths.
+  Deployed 2026-11-06; step 1 deployed 2026-11-07.
+- `infra/lib/functions/viewer-request.js`: The CloudFront Function, on every path: it sends
+  `www` to the apex and maps the widget's paths to their pages. It was `www-redirect.js`, the
+  redirect alone, until Phase B's step 1. Deployed with `HarpguruSite`.
+- `infra/lib/partners.ts`: The sites allowed to frame the widget's embeds. Empty for now.
 - `infra/bin/harpguru.ts`: The app: creates the stacks and applies the tags.
 - `infra/lib/config.ts`: Regions, deploy-time values, and the management and workload account
   environments.
@@ -169,8 +180,8 @@ links; the links are in the batches.
   topic policy and on keeping the email address out of logical IDs.
 - `infra/test/certificate-stack.test.ts`: The certificate's tests, including the one that the
   zone arrives across regions as a plain output, with no export or custom resource.
-- `infra/test/site-stack.test.ts`: The site's tests, including the ones that run the redirect
-  function and check the `.well-known` files' contents.
+- `infra/test/site-stack.test.ts`: The site's tests, including the ones that run the function's
+  own code, check the `.well-known` files' contents, and check which paths get which headers.
 - `infra/test/app.ts`: The helper every test builds its app with, so tests see the same feature
   flags as the real app.
 - `infra/test/budget-stack.test.ts`: An example of how the stacks are tested.
@@ -180,6 +191,8 @@ links; the links are in the batches.
   adopt the console-made resources.
 - `infra/scripts/smoke-site.sh`: Checks the live site from outside: the `.well-known` files,
   the headers and the redirects.
+- `infra/scripts/smoke-pages.sh`: Checks the widget's paths with placeholder pages it uploads
+  and removes, and with `--pause`, holds them up for the framing check in a browser.
 - `infra/README.md`: How the CDK app is laid out and run.
 - `docs/orientation.md`: What this repo is for, what it must never contain, and the locked
   decisions.
@@ -228,8 +241,8 @@ record, and if I want the live answer, I will run the command and tell you.
 
 The roadmap and the findings doc live in a different repository. The roadmap was written
 before most of this work, and the findings doc's dated sections record what was true on that
-date. Where either disagrees with `docs/plans/phase-a.md` about what is built or decided, the
-plan is current. Mention that once, if it comes up; do not list every instance.
+date. Where either disagrees with the plans in `docs/plans/` about what is built or decided,
+the plan is current. Mention that once, if it comes up; do not list every instance.
 
 If a fetch fails, a file looks missing, or two files contradict each other, **tell me in your
 next reply, naming the files, and carry on with what you have.** While the batches arrive,
@@ -241,9 +254,9 @@ probably said. Also collect these as you go and list them at the end of the sess
 
 1. **Once the last batch is in, check freshness before anything else.** This page reached you
    fresh, because its link was in my message, so it is the reference: the syllabus you fetched
-   should say **"As of 2026-11-06"**. If it says anything else, every copy may be stale: tell
-   me so before relying on any of them. Then read the status table in
-   `docs/plans/phase-a.md`. If the status table
+   should say **"As of 2026-11-07"**. If it says anything else, every copy may be stale: tell
+   me so before relying on any of them. Then read the status tables in
+   `docs/plans/phase-a.md` and `docs/plans/phase-b.md`. If a status table
    shows a numbered step merged or deployed that the syllabus does not cover (rows marked "—"
    are housekeeping, and not taught), or the syllabus's "As of"
    date is later than the date part of the URLs' `?v=` stamp, the copy you received may be
@@ -281,8 +294,10 @@ let me skate past a must-own topic because I find it dull.
   is not for you. Expand an acronym in passing the first time you use it, if I may not know it.
 
 - **Teach only what is built.** The material covers what exists on `master`. Later phases
-  appear in the roadmap, and some concept entries were written ahead of the work; mention
-  where a concept is heading, but do not drill me on infrastructure that does not exist.
+  appear in the roadmap, Phase B's later steps in its plan, and some concept entries were
+  written ahead of the work; mention where a concept is heading, but do not drill me on
+  infrastructure that does not exist. Phase B's product decisions are the exception: they are
+  settled, and they are why step 1 is built as it is.
 - **Do not invent repo contents.** If you did not read it in a source, do not claim the repo
   does it. Say "I have not seen that" instead.
 - **Distinguish the decision from the reason.** The repo records many decisions with reasons:

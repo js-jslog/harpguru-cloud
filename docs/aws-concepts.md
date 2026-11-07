@@ -35,6 +35,7 @@ the account ID, it fetches it with `aws sts get-caller-identity`.
 [Route 53 hosted zones and delegation](#route-53-hosted-zones-and-delegation) ·
 [ACM certificates and DNS validation](#acm-certificates-and-dns-validation) ·
 [CloudFront distributions, behaviours and caching](#cloudfront-distributions-behaviours-and-caching) ·
+[Cache policies and the cache key](#cache-policies-and-the-cache-key) ·
 [Origin Access Control (OAC)](#origin-access-control-oac) ·
 [Response headers policies](#response-headers-policies) ·
 [CloudFront Functions](#cloudfront-functions) ·
@@ -815,12 +816,13 @@ publishes **managed** policies; `CachingOptimized` keys on the path alone, and k
 day unless the origin's `Cache-Control` says otherwise. A cache policy's companion, the
 **origin request policy**, sends values to the origin without putting them in the key.
 
-**Here:** every behaviour uses `CachingOptimized`, the default behaviour included, where it
-was already CDK's default. It matters for the widget's pages from Phase B's step 1: a page's
+**Here:** every behaviour uses `CachingOptimized`, the default behaviour included, where it was
+already CDK's default. It matters for the widget's pages from Phase B's step 1: a page's
 configuration is in its query string, which only the page's own script reads, so
-`/t/country?k=C` and `/t/country?k=D` are one cached copy, and S3 never sees the query. The
-request logs still record it. The cache key is made after the viewer-request function has run,
-so every `/s/` path, mapped to `/s/index.html`, also shares one copy.
+`/t/country?k=C` and `/t/country?k=D` are one cached copy, and S3 never sees the query. Request
+logs, planned for Phase B's step 3, will still record it. The cache key is made after the
+viewer-request function has run, so every `/s/` path, mapped to `/s/index.html`, also shares
+one copy.
 
 **Say it:** "The cache key should hold only what changes the response. Static pages that read
 their own query string in the browser key on the path alone, so a thousand variants are one

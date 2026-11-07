@@ -17,12 +17,12 @@ Update this table in the PR that moves a row. **You** means the user.
 | # | Step | Status | Blocked on |
 | --- | --- | --- | --- |
 | — | `1-phase-b-plan`: this file | **merged** 2026-11-07 | — |
-| 1 | `1-pages`: the pages bucket, the `/t/`, `/s/`, `/e/` and `/w/` behaviours, their function, cache and headers policies | **deployed** and verified 2026-11-07, from the branch; in review | you: merge |
+| 1 | `1-pages`: the pages bucket, the `/t/`, `/s/`, `/e/` and `/w/` behaviours, their function, cache and headers policies | **merged** and deployed 2026-11-07; verified in a browser before the merge | — |
 | 2 | `1-deploy-role`: the GitHub OIDC provider and the role `harpguru`'s workflow assumes | planned | #1 |
 | 3 | `1-request-logs`: CloudFront access logs to S3, kept 90 days | planned | — |
 | 4 | `1-aasa-browser-marker`: `/s/*` excludes the open-in-browser marker | planned | the app side naming the marker |
 
-**Next up, as of 2026-11-07:** merge #1, then #2.
+**Next up, as of 2026-11-07:** #2, the deploy role.
 
 ## The work in `harpguru`, for reference
 
@@ -168,6 +168,9 @@ $0.10 per million, and a few megabytes of logs a month. No new fixed monthly cha
 - 2026-11-07: **every behaviour uses the managed `CachingOptimized` policy**, rather than a
   custom one with a short TTL: cache lifetimes are set per file by `harpguru`'s upload, and its
   deploys invalidate. Proposed by the agent.
+- 2026-11-07: **request logs arrive in Phase B's step 3**, overtaking Phase A's 2026-11-06
+  choice of none until Phase D: counting which setups and embeds are opened is now what makes
+  the logs worth reading. Settled with the user's 90-day retention, above.
 - 2026-11-07: **the GitHub OIDC provider arrives in Phase B**, for `harpguru`'s deploys, not
   Phase F. The roadmap already required it in "How the two connect"; its Phase F line now
   covers this repo's own deploys. Proposed by the agent.

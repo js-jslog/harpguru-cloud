@@ -638,7 +638,8 @@ zone, which now holds nine record sets. The template, as deployed, reads the zon
 - **A CloudFront Function**, `harpguru-www-redirect`, on every viewer request: `www` gets a
   301 to the same path and query string on the apex, and everything else passes through, so the
   apex's `.well-known` files are never redirected. `infra/lib/functions/www-redirect.js`; the
-  unit tests run it.
+  unit tests run it. Replaced in Phase B's step 1 by `harpguru-viewer-request`, in
+  `infra/lib/functions/viewer-request.js`, which also maps the widget's paths.
 - **Four alias records**, `A` and `AAAA` for the apex and `www`. The apex has had no address since
   the nameserver switch, so nothing is replaced.
 - **The files**, in `infra/site/`, uploaded by two `BucketDeployment` custom resources: the AASA
@@ -863,6 +864,7 @@ Doing it, *you*, from `/app/infra`:
     served from the nearest of those, a little more slowly. Within the free tier it saves
     nothing today; it keeps the price per gigabyte at its lowest if traffic grows.
   - No CloudFront access logs yet: nothing reads them before Phase D, which decides how
-    traffic is measured.
+    traffic is measured. Overtaken on 2026-11-07: Phase B's step 3 adds them; see
+    `docs/plans/phase-b.md`.
   - No contact address on the page, since addresses are kept out of the repo, and no privacy
     policy: the app repo holds it, and moving it is not part of this step.
