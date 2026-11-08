@@ -18,12 +18,14 @@ Update this table in the PR that moves a row. **You** means the user.
 | --- | --- | --- | --- |
 | — | `1-phase-b-plan`: this file | **merged** 2026-11-07 | — |
 | 1 | `1-pages`: the pages bucket, the `/t/`, `/s/`, `/e/` and `/w/` behaviours, their function, cache and headers policies | **merged** and deployed 2026-11-07; verified in a browser before the merge | — |
-| 2 | `1-deploy-role`: the GitHub OIDC provider and the role `harpguru`'s workflow assumes | **deployed** 2026-11-08, from the branch; smoke test passed; in review | you: merge; then, in GitHub, the `harpguru.com` environment and the role-ARN variable |
+| 2 | `1-deploy-role`: the GitHub OIDC provider and the role `harpguru`'s workflow assumes | **deployed** 2026-11-08, from the branch; smoke test passed. Done when its PR merges: check `git log master` | — |
+| 2a | GitHub settings in `js-jslog/harpguru`: the `harpguru.com` environment, and a variable holding `HarpguruGitHub`'s `PagesDeployRoleArn` output | **waiting on you**; not needed until `harpguru`'s deploy workflow exists | you |
 | 3 | `1-request-logs`: CloudFront access logs to S3, kept 90 days | planned | — |
 | 4 | `1-aasa-browser-marker`: `/s/*` excludes the open-in-browser marker | planned | the app side naming the marker |
 
-**Next up, as of 2026-11-08:** #3, the request logs. #2's trust policy is proved by
-`harpguru`'s first deploy workflow run.
+**Next up, as of 2026-11-08:** #3, the request logs, which nothing blocks. Still open from #2:
+you make #2a's settings, and the trust policy has no real test until `harpguru`'s first deploy
+workflow run. That workflow is `harpguru`'s work, and deploys the widget once it exists.
 
 ## The work in `harpguru`, for reference
 
@@ -168,7 +170,10 @@ $0.10 per million, and a few megabytes of logs a month. No new fixed monthly cha
 
 ## Inputs needed from the user
 
-- None outstanding.
+- **#2a, the GitHub settings**, above. Needed before `harpguru`'s first deploy workflow run,
+  not before #3. The ARN contains the account ID, so it goes in a GitHub variable, never a file;
+  `aws cloudformation describe-stacks --stack-name HarpguruGitHub --profile harpguru --query 'Stacks[0].Outputs'`
+  prints it.
 - Received 2026-11-07: #2's GitHub environment is **`harpguru.com`**; #3's logs are kept
   **90 days**.
 
