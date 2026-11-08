@@ -1,7 +1,7 @@
 # Syllabus
 
-**As of 2026-11-08.** Covers all of Phase A, steps 0–8, and Phase B's steps 1 and 2. Phase A is the
-SSO login, the CDK app skeleton, the $10 budget, and the workload account with its OU and
+**As of 2026-11-08.** Covers all of Phase A, steps 0–8, and Phase B's steps 1 and 2. Phase A is
+the SSO login, the CDK app skeleton, the $10 budget, and the workload account with its OU and
 guardrails, including step 3a, which switches SCPs on through a custom resource, and step 3b,
 which imported the console-made permission set into a stack and listed everything CDK doesn't
 manage. Phase A's step 1 is the skeleton and deploys nothing itself; the rest are **deployed**:
@@ -39,8 +39,8 @@ setup link is a URL that describes the setup itself, so there is no setup databa
 `1-pages`, is **merged and deployed**, on 2026-11-07, deployed from its branch before the merge:
 `HarpguruSite` gained a second private bucket for the widget's pages, served under `/w/`, `/t/`,
 `/s/` and `/e/`, with one function on every path, a cache that ignores the query string, and
-headers that let only partners frame the embeds. The bucket is empty: the widget itself is
-built in the `harpguru` repo and hasn't been deployed, so those paths answer 404 for now. Step 2,
+headers that let only partners frame the embeds. The bucket is empty: the widget itself is built
+in the `harpguru` repo and hasn't been deployed, so those paths answer 404 for now. Step 2,
 `1-deploy-role`, is **merged and deployed**, on 2026-11-08, again from its branch before the
 merge: `HarpguruGitHub`, GitHub's OIDC provider and the role `harpguru`'s deploy workflow will
 assume to fill that bucket, with no access keys. Nothing has used the role yet: the workflow
@@ -680,7 +680,7 @@ These are worth your time if they interest you. Skipping them leaves no gap.
 - The CloudWatch alarm that would catch the canary failing on the AWS side; the app's side of
   the links, its associated domains and intent filters, which Phase B adds; the widget itself
   and its deploy workflow, in the `harpguru` repo; Phase B's step 2a, the GitHub environment and
-  variable, not yet made; Phase B's steps 3 and 4, the request logs and the browser marker in the
-  AASA file, which are planned in `docs/plans/phase-b.md` but not built; and everything in phases C–F. Some of these already
-  have concept entries, written ahead of the work; read them as reading ahead, and do not test
-  me on them.
+  variable, not yet made; Phase B's steps 3 and 4, the request logs and the browser marker in
+  the AASA file, which are planned in `docs/plans/phase-b.md` but not built; and everything in
+  phases C–F. Some of these already have concept entries, written ahead of the work; read them
+  as reading ahead, and do not test me on them.
