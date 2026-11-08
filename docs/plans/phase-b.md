@@ -18,11 +18,14 @@ Update this table in the PR that moves a row. **You** means the user.
 | --- | --- | --- | --- |
 | — | `1-phase-b-plan`: this file | **merged** 2026-11-07 | — |
 | 1 | `1-pages`: the pages bucket, the `/t/`, `/s/`, `/e/` and `/w/` behaviours, their function, cache and headers policies | **merged** and deployed 2026-11-07; verified in a browser before the merge | — |
-| 2 | `1-deploy-role`: the GitHub OIDC provider and the role `harpguru`'s workflow assumes | planned | #1 |
+| 2 | `1-deploy-role`: the GitHub OIDC provider and the role `harpguru`'s workflow assumes | **deployed** 2026-11-08, from the branch; smoke test passed. Done when its PR merges: check `git log master` | — |
+| 2a | GitHub settings in `js-jslog/harpguru`: the `harpguru.com` environment, and a variable holding `HarpguruGitHub`'s `PagesDeployRoleArn` output | **waiting on you**; not needed until `harpguru`'s deploy workflow exists | you |
 | 3 | `1-request-logs`: CloudFront access logs to S3, kept 90 days | planned | — |
 | 4 | `1-aasa-browser-marker`: `/s/*` excludes the open-in-browser marker | planned | the app side naming the marker |
 
-**Next up, as of 2026-11-07:** #2, the deploy role.
+**Next up, as of 2026-11-08:** #3, the request logs, which nothing blocks. Still open from #2:
+you make #2a's settings, and the trust policy has no real test until `harpguru`'s first deploy
+workflow run. That workflow is `harpguru`'s work, and deploys the widget once it exists.
 
 ## The work in `harpguru`, for reference
 
@@ -45,7 +48,12 @@ Not tracked here, but it shapes what is built here. From the roadmap's Phase B:
 - #1: **the workflow sets `Cache-Control` on upload**, long and immutable for `/w/`'s hashed
   files and `no-cache` for the HTML, and invalidates the HTML's paths after a deploy.
   CloudFront keeps copies a day otherwise.
-- #2: the deploy job runs in the GitHub environment `harpguru.com`.
+- #2: the deploy job runs in the GitHub environment `harpguru.com`, with `id-token: write`
+  permission, and assumes the role with `aws-actions/configure-aws-credentials` in
+  `eu-west-2`. The role's ARN is `HarpguruGitHub`'s `PagesDeployRoleArn` output, kept in a
+  GitHub variable; the bucket name and distribution ID are `HarpguruSite`'s
+  `PagesBucketName` and `DistributionId` outputs. The role can list but not read objects:
+  `aws s3 sync --delete` needs only that, comparing by size and time from the listing.
 - #4: the open-in-browser marker.
 
 ## Steps
@@ -120,6 +128,24 @@ role. No access keys anywhere.
   `cloudfront:CreateInvalidation` on this distribution only.
 - **The role's ARN goes into `harpguru` as a GitHub variable**, not into either repo's files:
   it carries the account ID.
+- **Built 2026-11-08** as a stack of its own, `HarpguruGitHub`, in London beside the site: the
+  provider is one per issuer per account, and Phase F's role for this repo's deploys will
+  trust it too. The bucket and distribution arrive as weak cross-stack references, so
+  `HarpguruSite` gains only two outputs. The role is named, `harpguru-pages-deploy`. The
+  provider is the native `AWS::IAM::OIDCProvider`, with no thumbprints and no custom resource.
+  The role may also `s3:AbortMultipartUpload` on the bucket's objects: the CLI uploads files
+  over 8 MB in parts, and when one fails it aborts, which would otherwise be denied and leave
+  the parts in the bucket, billed, with no lifecycle rule to remove them.
+- **Deployed 2026-11-08**, from the branch, before merging: 43 seconds of stack time.
+  `HarpguruSite` gained only its two outputs. `scripts/smoke-deploy-role.sh` passed all 13
+  checks. Given no thumbprint, IAM recorded one itself. CDK's approval prompt for the IAM
+  changes can't be answered from Claude Code's `!` prompt, so the deploy ran with
+  `--require-approval never`, after the diff was read.
+- **Smoke test, `scripts/smoke-deploy-role.sh`:** read-only. It reads the provider and the trust
+  policy, and asks IAM's policy simulator what the role may do: list, put, delete and abort
+  uploads in the pages bucket and invalidate the distribution, but not read objects, touch the
+  site's bucket, invalidate another distribution or change this one. The simulator can't present
+  a GitHub token, so the trust policy's real test is `harpguru`'s first workflow run.
 
 **3 · `1-request-logs`.** CloudFront's standard logs, delivered to an S3 bucket in the workload
 account, with a lifecycle rule deleting them after the retention the user chooses.
@@ -144,7 +170,10 @@ $0.10 per million, and a few megabytes of logs a month. No new fixed monthly cha
 
 ## Inputs needed from the user
 
-- None outstanding.
+- **#2a, the GitHub settings**, above. Needed before `harpguru`'s first deploy workflow run,
+  not before #3. The ARN contains the account ID, so it goes in a GitHub variable, never a file;
+  `aws cloudformation describe-stacks --stack-name HarpguruGitHub --profile harpguru --query 'Stacks[0].Outputs'`
+  prints it.
 - Received 2026-11-07: #2's GitHub environment is **`harpguru.com`**; #3's logs are kept
   **90 days**.
 
@@ -174,3 +203,9 @@ $0.10 per million, and a few megabytes of logs a month. No new fixed monthly cha
 - 2026-11-07: **the GitHub OIDC provider arrives in Phase B**, for `harpguru`'s deploys, not
   Phase F. The roadmap already required it in "How the two connect"; its Phase F line now
   covers this repo's own deploys. Proposed by the agent.
+- 2026-11-08: **the provider and role get a stack of their own, `HarpguruGitHub`**, rather than
+  joining `HarpguruSite`: the provider is account-wide and outlives any one site. Proposed by
+  the agent.
+- 2026-11-08: **the deploy role may also abort multipart uploads** in the pages bucket, beyond
+  the planned list, put and delete, so a failed upload of a file over 8 MB leaves nothing
+  billed behind. Proposed by the agent in the branch review, accepted by the user.

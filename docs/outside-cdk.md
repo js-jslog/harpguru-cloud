@@ -70,6 +70,7 @@ Keep this list current: anything made outside a stack is added here in the PR th
 | The harpguru.com registration | Heart Internet | Decided before Phase A: delegate the domain to Route 53 rather than transfer it. The nameserver switch in step 6 was made in Heart's panel on 2026-10-27. What Heart serves that the new zone leaves behind, deliberately, is listed in `docs/plans/phase-a.md` "Steps" (item 6) |
 | `contact@harpguru.com` forwarding | Heart's mail hosting | Mail stays with Heart. Step 6's hosted zone carries its `MX` record so it keeps working |
 | CLI profiles | `~/.aws/config` | Local to the container. `[default]` reaches the management account and `[profile harpguru]` the workload account, through one SSO session |
+| The `harpguru.com` environment, and the variable holding `harpguru-pages-deploy`'s ARN | `js-jslog/harpguru`'s settings in GitHub | Phase B's step 2. The role trusts only jobs in that environment, so its protection rules decide who may deploy. The ARN carries the account ID, so it goes in a variable rather than either repo's files. Made by hand in GitHub, before `harpguru`'s first deploy |
 | Deploy-time values | `infra/deploy.local.json` | Gitignored, because the repo is public. See `infra/README.md` "Deploy-time values" |
 
 ## Moved into CDK

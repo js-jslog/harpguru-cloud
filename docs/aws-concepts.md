@@ -45,7 +45,8 @@ the account ID, it fetches it with `aws sts get-caller-identity`.
 [CloudTrail](#cloudtrail) ·
 [S3 buckets, bucket policies and lifecycle rules](#s3-buckets-bucket-policies-and-lifecycle-rules) ·
 [Config](#config) · [GuardDuty](#guardduty) ·
-[EventBridge rules and SNS topics](#eventbridge-rules-and-sns-topics)
+[EventBridge rules and SNS topics](#eventbridge-rules-and-sns-topics) ·
+[IAM OIDC federation](#iam-oidc-federation)
 
 ---
 
@@ -607,7 +608,9 @@ the hosted zone's ID from `HarpguruDns`'s output in London, with `Fn::GetStackOu
 the region. It is the output `HarpguruMailCanary` already reads in the same region, so
 `HarpguruDns` didn't change. Step 8 added a second, the other way: `HarpguruSite`, in London,
 reads the certificate's ARN from `us-east-1`, and `HarpguruCertificate` gained one output for it.
-*(PRs `1-certificate`, `1-site`)*
+*(PRs `1-certificate`, `1-site`)* Phase B's step 2 adds two in London: `HarpguruGitHub` reads
+the pages bucket's ARN and the distribution's ID from `HarpguruSite`, which gained an output
+for each. *(PR `1-deploy-role`)*
 
 **Say it:** "A strong reference locks the producer while it's consumed; a weak one just reads
 its output at deploy time, so stability has to come from somewhere else, like termination
@@ -1138,3 +1141,44 @@ on the event bus, rather than waiting for someone to open the console."
 `aws events list-targets-by-rule --rule harpguru-guardduty-findings --profile harpguru`, and
 `aws sns list-subscriptions --profile harpguru --query 'Subscriptions[].[TopicArn,Protocol,SubscriptionArn]'`,
 where a `SubscriptionArn` of `PendingConfirmation` hasn't been clicked yet.
+
+---
+
+## Phase B — The public harpface
+
+### Identity for CI
+
+#### IAM OIDC federation
+
+**What:** a way for a machine outside AWS to get temporary credentials with no access key. An
+**OIDC identity provider** in IAM names an outside issuer of signed tokens, such as GitHub's
+`token.actions.githubusercontent.com`, and the **audiences** it accepts. A role whose **trust
+policy** names that provider as a `Federated` principal can be assumed with
+`sts:AssumeRoleWithWebIdentity`: the caller presents a token, STS checks its signature against
+the issuer's published keys, and the trust policy's conditions test its **claims**. For GitHub,
+`aud` is who the token is for, and `sub` says which repo and job asked: a branch, a tag, a pull
+request or, as here, an **environment**. A role has two policies: the trust policy says who may
+become it, and its permissions policies say what it may then do.
+
+**Here:** Phase B's step 2, `HarpguruGitHub`, holds the provider, with `sts.amazonaws.com` as
+its one audience, and the role `harpguru-pages-deploy`. Its trust policy accepts only
+`repo:js-jslog/harpguru:environment:harpguru.com`, with `StringEquals`, so no wildcard reaches
+the subject. An environment rather than a branch: its protection rules in GitHub decide who may
+deploy. The role may list, put and delete in the pages bucket, abort a failed multipart upload
+so its parts aren't left billed, and invalidate the one distribution; nothing on the site's own
+bucket. Sessions last an hour at most. The provider is one per issuer per account, so Phase F's
+role for this repo's own deploys will trust the same one. It is the native
+`AWS::IAM::OIDCProvider`, given no thumbprint: IAM records one itself, as the deploy on
+2026-11-08 showed, and since July 2023 doesn't use it for GitHub, checking GitHub's certificate
+against its own trusted root CAs. CDK's older `OpenIdConnectProvider` makes a custom resource to
+do the same job. No charge. *(PR `1-deploy-role`)*
+
+**Say it:** "CI has no AWS keys: GitHub signs a token saying which repo and environment the job
+runs in, and STS swaps it for an hour of a role whose trust policy accepts only that subject."
+
+**See it:** `aws iam list-open-id-connect-providers --profile harpguru`, then
+`aws iam get-role --role-name harpguru-pages-deploy --profile harpguru --query 'Role.AssumeRolePolicyDocument'`
+for who may assume it, and
+`aws iam list-role-policies --role-name harpguru-pages-deploy --profile harpguru` for the name
+of its inline policy, to read with `aws iam get-role-policy`. `scripts/smoke-deploy-role.sh`
+asks IAM's policy simulator what the role may and may not do.

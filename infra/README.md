@@ -18,6 +18,11 @@ cdk deploy <stack> # the user runs this, after reading the diff
 
 `cdk` is the CLI baked into the image (pinned to 2.1139.0), not a project dependency.
 
+Run `cdk` from `infra/`, where `cdk.json` is; elsewhere it fails with "--app is required". A
+deploy that changes IAM asks for confirmation, which Claude Code's `!` prompt can't give: CDK
+stops before running that stack's change set. After reading the diff, add
+`--require-approval never`, or deploy from a terminal.
+
 ## Deploy-time values
 
 Some stacks need values that are fine to know but shouldn't be published, because this
@@ -44,25 +49,26 @@ signed in, through `CDK_DEFAULT_ACCOUNT`, which the CLI fills in from the SSO lo
 
 ## Layout
 
-| Path                        | Holds                                                                                                     |
-| --------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `bin/harpguru.ts`           | the app: creates each stack and applies the project tags                                                  |
-| `lib/config.ts`             | regions, the deploy-time values, the management and workload account environments                         |
-| `lib/tags.ts`               | the tags every resource carries                                                                           |
-| `lib/budget-stack.ts`       | `HarpguruBudget`: the $10 monthly budget, in the management account                                       |
-| `lib/identity-stack.ts`     | `HarpguruIdentity`: the permission set and management account assignment, imported from the console       |
-| `lib/policy-types-stack.ts` | `HarpguruPolicyTypes`: the custom resource that switches SCPs on                                          |
-| `lib/guardrails-stack.ts`   | `HarpguruGuardrails`: the `Workloads` OU and its SCPs                                                     |
-| `lib/accounts-stack.ts`     | `HarpguruAccounts`: the `harpguru` account and its Identity Center access                                 |
-| `lib/trail-stack.ts`        | `HarpguruTrail`: the Organization trail and its log bucket, in the management account                     |
-| `lib/dns-stack.ts`          | `HarpguruDns`: the harpguru.com hosted zone and its mail records, in the workload account                 |
-| `lib/mail-canary-stack.ts`  | `HarpguruMailCanary`: the weekly messages that show `contact@` still forwards, in the workload account    |
-| `lib/certificate-stack.ts`  | `HarpguruCertificate`: the ACM certificate for the apex and `www`, in the workload account in `us-east-1` |
-| `lib/config-stack.ts`       | `HarpguruConfig` and `HarpguruConfigEdge`: Config in the workload account, in London and `us-east-1`      |
-| `lib/guardduty-stack.ts`    | `HarpguruGuardDuty*`: a GuardDuty detector and the email of its findings, in each account and region      |
-| `lib/site-stack.ts`         | `HarpguruSite`: harpguru.com's two buckets, CloudFront distribution, headers, files and records           |
-| `lib/partners.ts`           | the origins allowed to frame the widget's embeds                                                          |
-| `lib/functions/`            | CloudFront Function code, inlined into templates: the `www` redirect and the widget's paths               |
-| `site/`                     | the files harpguru.com serves: the landing page and the two `.well-known` files                           |
-| `scripts/`                  | helpers for `deploy.local.json` values; `smoke-site.sh` and `smoke-pages.sh` check the live site          |
-| `test/`                     | one test file per module or stack, and `app.ts`, which gives tests `cdk.json`'s flags                     |
+| Path                        | Holds                                                                                                                  |
+| --------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `bin/harpguru.ts`           | the app: creates each stack and applies the project tags                                                               |
+| `lib/config.ts`             | regions, the deploy-time values, the management and workload account environments                                      |
+| `lib/tags.ts`               | the tags every resource carries                                                                                        |
+| `lib/budget-stack.ts`       | `HarpguruBudget`: the $10 monthly budget, in the management account                                                    |
+| `lib/identity-stack.ts`     | `HarpguruIdentity`: the permission set and management account assignment, imported from the console                    |
+| `lib/policy-types-stack.ts` | `HarpguruPolicyTypes`: the custom resource that switches SCPs on                                                       |
+| `lib/guardrails-stack.ts`   | `HarpguruGuardrails`: the `Workloads` OU and its SCPs                                                                  |
+| `lib/accounts-stack.ts`     | `HarpguruAccounts`: the `harpguru` account and its Identity Center access                                              |
+| `lib/trail-stack.ts`        | `HarpguruTrail`: the Organization trail and its log bucket, in the management account                                  |
+| `lib/dns-stack.ts`          | `HarpguruDns`: the harpguru.com hosted zone and its mail records, in the workload account                              |
+| `lib/mail-canary-stack.ts`  | `HarpguruMailCanary`: the weekly messages that show `contact@` still forwards, in the workload account                 |
+| `lib/certificate-stack.ts`  | `HarpguruCertificate`: the ACM certificate for the apex and `www`, in the workload account in `us-east-1`              |
+| `lib/config-stack.ts`       | `HarpguruConfig` and `HarpguruConfigEdge`: Config in the workload account, in London and `us-east-1`                   |
+| `lib/guardduty-stack.ts`    | `HarpguruGuardDuty*`: a GuardDuty detector and the email of its findings, in each account and region                   |
+| `lib/site-stack.ts`         | `HarpguruSite`: harpguru.com's two buckets, CloudFront distribution, headers, files and records                        |
+| `lib/github-stack.ts`       | `HarpguruGitHub`: GitHub's OIDC provider and the role `harpguru`'s deploy workflow assumes                             |
+| `lib/partners.ts`           | the origins allowed to frame the widget's embeds                                                                       |
+| `lib/functions/`            | CloudFront Function code, inlined into templates: the `www` redirect and the widget's paths                            |
+| `site/`                     | the files harpguru.com serves: the landing page and the two `.well-known` files                                        |
+| `scripts/`                  | helpers for `deploy.local.json` values; `smoke-site.sh`, `smoke-pages.sh` and `smoke-deploy-role.sh` check what's live |
+| `test/`                     | one test file per module or stack, and `app.ts`, which gives tests `cdk.json`'s flags                                  |
