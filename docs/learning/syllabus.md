@@ -1,6 +1,6 @@
 # Syllabus
 
-**As of 2026-11-07.** Covers all of Phase A, steps 0–8, and Phase B's step 1. Phase A is the
+**As of 2026-11-08.** Covers all of Phase A, steps 0–8, and Phase B's steps 1 and 2. Phase A is the
 SSO login, the CDK app skeleton, the $10 budget, and the workload account with its OU and
 guardrails, including step 3a, which switches SCPs on through a custom resource, and step 3b,
 which imported the console-made permission set into a stack and listed everything CDK doesn't
@@ -40,12 +40,16 @@ setup link is a URL that describes the setup itself, so there is no setup databa
 `HarpguruSite` gained a second private bucket for the widget's pages, served under `/w/`, `/t/`,
 `/s/` and `/e/`, with one function on every path, a cache that ignores the query string, and
 headers that let only partners frame the embeds. The bucket is empty: the widget itself is
-built in the `harpguru` repo and hasn't been deployed, so those paths answer 404 for now. Steps
-2–4 are planned, not built. The status table in `docs/plans/phase-b.md` says the same.
+built in the `harpguru` repo and hasn't been deployed, so those paths answer 404 for now. Step 2,
+`1-deploy-role`, is **merged and deployed**, on 2026-11-08, again from its branch before the
+merge: `HarpguruGitHub`, GitHub's OIDC provider and the role `harpguru`'s deploy workflow will
+assume to fill that bucket, with no access keys. Nothing has used the role yet: the workflow
+doesn't exist, and step 2a, the two settings I make in GitHub, is still waiting on me. Steps 3
+and 4 are planned, not built. The status table in `docs/plans/phase-b.md` says the same.
 
-**Priority now: topic 27**, Phase B's design and the widget's paths; it is the newest must-own
-topic. Then topic 26, CloudFront's mechanics, which step 1 extended, and topic 14, the site, if
-it is still shaky.
+**Priority now: topic 28**, GitHub's way in; it is the newest must-own topic. Then topic 27,
+Phase B's design and the widget's paths, if it is still shaky, and topic 26, CloudFront's
+mechanics, which step 1 extended.
 
 Each topic gives its tier and why, what I should be able to answer, and its sources. The
 sources hold the facts; this file deliberately does not restate them. Sources are named by
@@ -67,7 +71,7 @@ in the README, and the tiering here is a proposal, to be argued with.
   permission set is, and what it turns into inside an account; why the three-field sign-in page
   can never work for my Identity Center user, and which page does; what
   `aws sso login --use-device-code` does, and why the device-code flow is needed in this
-  container.
+  container. How a machine, GitHub's deploy workflow, gets in without a key is topic 28.
 - **Sources:** `docs/aws-concepts.md` "Root user", "IAM users" and "IAM Identity Center";
   `docs/aws-conventions.md` "First-run setup"; `roadmap-planning/aws-pathway-findings.md`
   "AWS account state, checked 2026-09-26".
@@ -84,12 +88,14 @@ in the README, and the tiering here is a proposal, to be argued with.
   what app, stack and construct mean, and why stacks are split by lifecycle and location; what
   an L1 construct is and why the budget had to use one; how to find out why a deploy failed;
   when a new stack starts to exist, and why the first step 3 deploy left an empty stack it
-  could not delete; why `--require-approval never` is only safe once the diff has been read.
+  could not delete; why `--require-approval never` is only safe once the diff has been read, and
+  why Phase B's step 2 deploy needed it.
 - **Sources:** `docs/aws-concepts.md` "CloudFormation and CDK",
   "Change sets, stack events and logical IDs", "Apps, stacks and constructs" and
   "L1 and L2 constructs"; `infra/bin/harpguru.ts`; `infra/lib/budget-stack.ts`;
   `docs/plans/phase-a.md` "Steps" (item 3, the paragraph after its numbered deploy steps);
-  `roadmap-planning/aws-pathway-findings.md` "Step 3 deployed, 2026-10-22".
+  `roadmap-planning/aws-pathway-findings.md` "Step 3 deployed, 2026-10-22" and "Phase B step 2
+  deployed: the deploy role, 2026-11-08".
 
 ### 3. Cost control as a design constraint
 
@@ -411,6 +417,39 @@ records are in the zone but in no template, and who wrote them; where a
   `roadmap-planning/aws-pathway-findings.md` "Phase B step 1 deployed: the widget's paths,
   2026-11-07" and "What a web export needs from a content security policy, checked 2026-11-07".
 
+### 28. GitHub's way in: OIDC federation and the deploy role
+
+- **Covers:** Phase B's step 2, `1-deploy-role`: `HarpguruGitHub`, in the workload account in
+  London, holding GitHub's OIDC identity provider and one role, `harpguru-pages-deploy`, which
+  `harpguru`'s deploy workflow will assume to upload the widget and clear CloudFront's cache.
+  Also what OIDC stands for, and step 2a, the settings made in GitHub rather than in AWS.
+  Numbered 28 because topics are numbered as they are added; it belongs with the must-own
+  topics.
+- **Why must own:** "no access keys anywhere" is a security property I chose, and this is
+  where a machine outside AWS gets in. Its trust policy and its permissions are the whole of
+  what stands between a GitHub workflow and my account, so I should be able to defend both
+  unprompted.
+- **Be able to answer:** what OIDC stands for, and what an OIDC identity provider in IAM is;
+  why GitHub gets no access key, and what it presents instead; what a trust policy is, and how
+  it differs from the role's permissions; what the token's `aud` and `sub` claims are, and what
+  this role's trust policy requires of each; why the subject names an environment rather than a
+  branch, and what then decides who may deploy; why `StringEquals` and not a wildcard; exactly
+  what the role may do, why it can't read objects, and why aborting a multipart upload was
+  added; how long its credentials last; why the provider and role are a stack of their own
+  rather than part of `HarpguruSite`, and who else will trust the provider; why the provider
+  arrived in Phase B rather than Phase F; why it was given no thumbprint, and what IAM did
+  anyway; where the role's ARN goes and why not in either repo; what the smoke test proved,
+  what it couldn't, and what will prove the rest; what a refusal on the workflow's first run
+  would mean.
+- **Sources:** `docs/aws-concepts.md` "IAM OIDC federation" and "IAM users";
+  `docs/plans/phase-b.md` "Status", "The work in `harpguru`, for reference", "Steps" (item 2),
+  "Inputs needed from the user" and "Decisions" (the 2026-11-07 entry about the OIDC provider,
+  and the two 2026-11-08 entries); `roadmap-planning/roadmap.md` "How the two connect";
+  `infra/lib/github-stack.ts`; `infra/test/github-stack.test.ts`;
+  `infra/scripts/smoke-deploy-role.sh`; `docs/outside-cdk.md` "Not AWS";
+  `roadmap-planning/aws-pathway-findings.md` "Phase B step 2 deployed: the deploy role,
+  2026-11-08".
+
 ## Should understand
 
 ### 15. Regions, environments and bootstrap
@@ -454,14 +493,17 @@ records are in the zone but in no template, and who wrote them; where a
   smoke test checks paths whose bucket is empty, by uploading placeholders it never lets
   overwrite a real page; why a framing rule can only be tested in a browser, and how the
   script's `--pause` holds the placeholders up for it; and how the CSP was checked against a
-  real web export before any widget existed, and what that check could not prove.
+  real web export before any widget existed, and what that check could not prove. And from
+  step 2: how the role's permissions were checked with IAM's policy simulator, why that is
+  read-only, and why it can't test a trust policy.
 - **Sources:** `infra/README.md`; `infra/test/app.ts`; `infra/test/budget-stack.test.ts`;
   `infra/test/accounts-stack.test.ts`; `infra/test/guardrails-stack.test.ts`;
   `infra/test/policy-types-stack.test.ts`; `infra/test/trail-stack.test.ts`;
   `infra/test/config-stack.test.ts`; `infra/test/guardduty-stack.test.ts`;
   `infra/test/site-stack.test.ts`; `infra/scripts/smoke-site.sh`;
-  `infra/scripts/smoke-pages.sh`; `docs/plans/phase-a.md` "Steps" (item 8);
-  `docs/plans/phase-b.md` "Steps" (item 1);
+  `infra/scripts/smoke-pages.sh`; `infra/test/github-stack.test.ts`;
+  `infra/scripts/smoke-deploy-role.sh`; `docs/plans/phase-a.md` "Steps" (item 8);
+  `docs/plans/phase-b.md` "Steps" (items 1 and 2);
   `roadmap-planning/aws-pathway-findings.md` "What a web export needs from a content security
   policy, checked 2026-11-07".
 
@@ -484,12 +526,14 @@ records are in the zone but in no template, and who wrote them; where a
   the zone's ID from London with no custom resource, and why `HarpguruDns` showed no change
   when it did. And step 8's, the other way: how the site in London reads the certificate's ARN
   from `us-east-1`, what `HarpguruCertificate` gained for it, and why deploying the site
-  deployed the certificate and zone stacks first.
+  deployed the certificate and zone stacks first. And Phase B step 2's two, in London: what
+  `HarpguruGitHub` reads from `HarpguruSite`, and what `HarpguruSite` gained for it.
 - **Sources:** `docs/aws-concepts.md` "Cross-stack references" and
   "Apps, stacks and constructs"; `docs/plans/phase-a.md` "Decisions" and "Steps" (items 3, 4b,
   7 and 8); `infra/bin/harpguru.ts`; `infra/lib/config-stack.ts`;
   `infra/lib/certificate-stack.ts`; `infra/test/certificate-stack.test.ts`;
-  `infra/lib/site-stack.ts`; `infra/test/site-stack.test.ts`.
+  `infra/lib/site-stack.ts`; `infra/test/site-stack.test.ts`; `infra/lib/github-stack.ts`;
+  `docs/plans/phase-b.md` "Steps" (item 2).
 
 ### 20. How I get into the new account
 
@@ -635,8 +679,8 @@ These are worth your time if they interest you. Skipping them leaves no gap.
 
 - The CloudWatch alarm that would catch the canary failing on the AWS side; the app's side of
   the links, its associated domains and intent filters, which Phase B adds; the widget itself
-  and its deploy workflow, in the `harpguru` repo; Phase B's steps 2–4, the GitHub deploy role,
-  the request logs and the browser marker in the AASA file, which are planned in
-  `docs/plans/phase-b.md` but not built; and everything in phases C–F. Some of these already
+  and its deploy workflow, in the `harpguru` repo; Phase B's step 2a, the GitHub environment and
+  variable, not yet made; Phase B's steps 3 and 4, the request logs and the browser marker in the
+  AASA file, which are planned in `docs/plans/phase-b.md` but not built; and everything in phases C–F. Some of these already
   have concept entries, written ahead of the work; read them as reading ahead, and do not test
   me on them.

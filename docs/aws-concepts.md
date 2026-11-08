@@ -1151,9 +1151,9 @@ where a `SubscriptionArn` of `PendingConfirmation` hasn't been clicked yet.
 #### IAM OIDC federation
 
 **What:** a way for a machine outside AWS to get temporary credentials with no access key. An
-**OIDC identity provider** in IAM names an outside issuer of signed tokens, such as GitHub's
-`token.actions.githubusercontent.com`, and the **audiences** it accepts. A role whose **trust
-policy** names that provider as a `Federated` principal can be assumed with
+**OIDC** (OpenID Connect) **identity provider** in IAM names an outside issuer of signed tokens,
+such as GitHub's `token.actions.githubusercontent.com`, and the **audiences** it accepts. A role
+whose **trust policy** names that provider as a `Federated` principal can be assumed with
 `sts:AssumeRoleWithWebIdentity`: the caller presents a token, STS checks its signature against
 the issuer's published keys, and the trust policy's conditions test its **claims**. For GitHub,
 `aud` is who the token is for, and `sub` says which repo and job asked: a branch, a tag, a pull
