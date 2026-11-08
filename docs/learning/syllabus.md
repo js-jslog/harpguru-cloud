@@ -422,9 +422,9 @@ records are in the zone but in no template, and who wrote them; where a
 - **Covers:** Phase B's step 2, `1-deploy-role`: `HarpguruGitHub`, in the workload account in
   London, holding GitHub's OIDC identity provider and one role, `harpguru-pages-deploy`, which
   `harpguru`'s deploy workflow will assume to upload the widget and clear CloudFront's cache.
-  Also what OIDC stands for, and step 2a, the settings made in GitHub rather than in AWS.
-  Numbered 28 because topics are numbered as they are added; it belongs with the must-own
-  topics.
+  Also what OIDC stands for, and what step 2a, the settings made in GitHub rather than in AWS,
+  will be: explain it, but don't test me on it, because it isn't made yet. Numbered 28 because
+  topics are numbered as they are added; it belongs with the must-own topics.
 - **Why must own:** "no access keys anywhere" is a security property I chose, and this is
   where a machine outside AWS gets in. Its trust policy and its permissions are the whole of
   what stands between a GitHub workflow and my account, so I should be able to defend both
@@ -680,7 +680,8 @@ These are worth your time if they interest you. Skipping them leaves no gap.
 - The CloudWatch alarm that would catch the canary failing on the AWS side; the app's side of
   the links, its associated domains and intent filters, which Phase B adds; the widget itself
   and its deploy workflow, in the `harpguru` repo; Phase B's step 2a, the GitHub environment and
-  variable, not yet made; Phase B's steps 3 and 4, the request logs and the browser marker in
-  the AASA file, which are planned in `docs/plans/phase-b.md` but not built; and everything in
-  phases C–F. Some of these already have concept entries, written ahead of the work; read them
-  as reading ahead, and do not test me on them.
+  variable, not yet made, though topic 28 explains what it will be; Phase B's steps 3 and 4, the
+  request logs and the browser marker in the AASA file, which are planned in
+  `docs/plans/phase-b.md` but not built; and everything in phases C–F. Some of these already
+  have concept entries, written ahead of the work; read them as reading ahead, and do not test
+  me on them.

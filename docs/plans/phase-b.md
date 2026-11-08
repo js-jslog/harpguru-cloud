@@ -18,7 +18,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | --- | --- | --- | --- |
 | — | `1-phase-b-plan`: this file | **merged** 2026-11-07 | — |
 | 1 | `1-pages`: the pages bucket, the `/t/`, `/s/`, `/e/` and `/w/` behaviours, their function, cache and headers policies | **merged** and deployed 2026-11-07; verified in a browser before the merge | — |
-| 2 | `1-deploy-role`: the GitHub OIDC provider and the role `harpguru`'s workflow assumes | **deployed** 2026-11-08, from the branch; smoke test passed. Done when its PR merges: check `git log master` | — |
+| 2 | `1-deploy-role`: the GitHub OIDC provider and the role `harpguru`'s workflow assumes | **merged** and deployed 2026-11-08; deployed and smoke-tested from the branch before the merge | — |
 | 2a | GitHub settings in `js-jslog/harpguru`: the `harpguru.com` environment, and a variable holding `HarpguruGitHub`'s `PagesDeployRoleArn` output | **waiting on you**; not needed until `harpguru`'s deploy workflow exists | you |
 | 3 | `1-request-logs`: CloudFront access logs to S3, kept 90 days | planned | — |
 | 4 | `1-aasa-browser-marker`: `/s/*` excludes the open-in-browser marker | planned | the app side naming the marker |
@@ -129,13 +129,15 @@ role. No access keys anywhere.
 - **The role's ARN goes into `harpguru` as a GitHub variable**, not into either repo's files:
   it carries the account ID.
 - **Built 2026-11-08** as a stack of its own, `HarpguruGitHub`, in London beside the site: the
-  provider is one per issuer per account, and Phase F's role for this repo's deploys will
-  trust it too. The bucket and distribution arrive as weak cross-stack references, so
-  `HarpguruSite` gains only two outputs. The role is named, `harpguru-pages-deploy`. The
-  provider is the native `AWS::IAM::OIDCProvider`, with no thumbprints and no custom resource.
-  The role may also `s3:AbortMultipartUpload` on the bucket's objects: the CLI uploads files
-  over 8 MB in parts, and when one fails it aborts, which would otherwise be denied and leave
-  the parts in the bucket, billed, with no lifecycle rule to remove them.
+  provider is one per issuer per account, and Phase F's role for this repo's deploys will trust
+  it too. The bucket and distribution arrive as weak cross-stack references, so `HarpguruSite`
+  gains only two outputs: the pages bucket's ARN and the distribution's ID, with generated names
+  starting `PublishOutput`. `PagesBucketName` and `DistributionId`, which the workflow reads,
+  date from step 1. The role is named, `harpguru-pages-deploy`. The provider is the native
+  `AWS::IAM::OIDCProvider`, with no thumbprints and no custom resource. The role may also
+  `s3:AbortMultipartUpload` on the bucket's objects: the CLI uploads files over 8 MB in parts,
+  and when one fails it aborts, which would otherwise be denied and leave the parts in the
+  bucket, billed, with no lifecycle rule to remove them.
 - **Deployed 2026-11-08**, from the branch, before merging: 43 seconds of stack time.
   `HarpguruSite` gained only its two outputs. `scripts/smoke-deploy-role.sh` passed all 13
   checks. Given no thumbprint, IAM recorded one itself. CDK's approval prompt for the IAM
