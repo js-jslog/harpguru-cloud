@@ -18,6 +18,11 @@ cdk deploy <stack> # the user runs this, after reading the diff
 
 `cdk` is the CLI baked into the image (pinned to 2.1139.0), not a project dependency.
 
+Run `cdk` from `infra/`, where `cdk.json` is; elsewhere it fails with "--app is required". A
+deploy that changes IAM asks for confirmation, which Claude Code's `!` prompt can't give: CDK
+stops before running that stack's change set. After reading the diff, add
+`--require-approval never`, or deploy from a terminal.
+
 ## Deploy-time values
 
 Some stacks need values that are fine to know but shouldn't be published, because this

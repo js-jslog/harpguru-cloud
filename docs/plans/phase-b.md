@@ -18,11 +18,12 @@ Update this table in the PR that moves a row. **You** means the user.
 | --- | --- | --- | --- |
 | — | `1-phase-b-plan`: this file | **merged** 2026-11-07 | — |
 | 1 | `1-pages`: the pages bucket, the `/t/`, `/s/`, `/e/` and `/w/` behaviours, their function, cache and headers policies | **merged** and deployed 2026-11-07; verified in a browser before the merge | — |
-| 2 | `1-deploy-role`: the GitHub OIDC provider and the role `harpguru`'s workflow assumes | **in review**: built and tested, not yet deployed | you: open the PR, then `cdk deploy HarpguruGitHub` and `scripts/smoke-deploy-role.sh` |
+| 2 | `1-deploy-role`: the GitHub OIDC provider and the role `harpguru`'s workflow assumes | **deployed** 2026-11-08, from the branch; smoke test passed; in review | you: merge; then, in GitHub, the `harpguru.com` environment and the role-ARN variable |
 | 3 | `1-request-logs`: CloudFront access logs to S3, kept 90 days | planned | — |
 | 4 | `1-aasa-browser-marker`: `/s/*` excludes the open-in-browser marker | planned | the app side naming the marker |
 
-**Next up, as of 2026-11-08:** #2's deploy, then #3, the request logs.
+**Next up, as of 2026-11-08:** #3, the request logs. #2's trust policy is proved by
+`harpguru`'s first deploy workflow run.
 
 ## The work in `harpguru`, for reference
 
@@ -133,6 +134,11 @@ role. No access keys anywhere.
   The role may also `s3:AbortMultipartUpload` on the bucket's objects: the CLI uploads files
   over 8 MB in parts, and when one fails it aborts, which would otherwise be denied and leave
   the parts in the bucket, billed, with no lifecycle rule to remove them.
+- **Deployed 2026-11-08**, from the branch, before merging: 43 seconds of stack time.
+  `HarpguruSite` gained only its two outputs. `scripts/smoke-deploy-role.sh` passed all 13
+  checks. Given no thumbprint, IAM recorded one itself. CDK's approval prompt for the IAM
+  changes can't be answered from Claude Code's `!` prompt, so the deploy ran with
+  `--require-approval never`, after the diff was read.
 - **Smoke test, `scripts/smoke-deploy-role.sh`:** read-only. It reads the provider and the trust
   policy, and asks IAM's policy simulator what the role may do: list, put, delete and abort
   uploads in the pages bucket and invalidate the distribution, but not read objects, touch the
