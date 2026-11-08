@@ -1167,8 +1167,9 @@ the subject. An environment rather than a branch: its protection rules in GitHub
 deploy. The role may list, put and delete in the pages bucket, and invalidate the one
 distribution; nothing on the site's own bucket. Sessions last an hour at most. The provider is
 one per issuer per account, so Phase F's role for this repo's own deploys will trust the same
-one. It is the native `AWS::IAM::OIDCProvider` with no thumbprints: IAM checks GitHub's
-certificate itself. CDK's older `OpenIdConnectProvider` makes a custom resource to do the same
+one. It is the native `AWS::IAM::OIDCProvider`, given no thumbprint: IAM records one itself,
+and since July 2023 doesn't use it for GitHub, checking GitHub's certificate against its own
+trusted root CAs. CDK's older `OpenIdConnectProvider` makes a custom resource to do the same
 job. No charge. *(PR `1-deploy-role`)*
 
 **Say it:** "CI has no AWS keys: GitHub signs a token saying which repo and environment the job

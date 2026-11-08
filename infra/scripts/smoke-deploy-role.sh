@@ -49,13 +49,16 @@ jq -e --arg p "$PROVIDER_ARN" --arg i "$ISSUER" --arg s "$SUBJECT" '
 ' <<<"$trust" >/dev/null && pass "only $SUBJECT, through the provider" ||
   fail "unexpected trust policy: $trust"
 
+# A resource as printed: without the account ID, in case the output is pasted.
+shown() { local r=${1#arn:aws:}; echo "${r//$ACCOUNT/<account>}"; }
+
 # One simulated request: "expected action resource".
 simulate() {
   local expected=$1 action=$2 resource=$3 decision
   decision=$(aws iam simulate-principal-policy --policy-source-arn "$ROLE_ARN" \
     --action-names "$action" --resource-arns "$resource" \
     --query 'EvaluationResults[0].EvalDecision' --output text)
-  [[ "$decision" == "$expected" ]] && pass "$action on ${resource#arn:aws:}: $decision" ||
+  [[ "$decision" == "$expected" ]] && pass "$action on $(shown "$resource"): $decision" ||
     fail "$action on $resource: $decision, expected $expected"
 }
 

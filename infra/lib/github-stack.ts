@@ -25,8 +25,8 @@ export const PAGES_DEPLOY_SUBJECT =
 export const PAGES_DEPLOY_ROLE_NAME = 'harpguru-pages-deploy'
 
 export type GitHubStackProps = StackProps & {
-  // From HarpguruSite, as cross-stack references: CloudFormation exports
-  // there, imports here.
+  // From HarpguruSite, as weak cross-stack references: plain outputs there,
+  // read here with Fn::GetStackOutput, so nothing locks HarpguruSite.
   pagesBucket: IBucket
   distribution: IDistribution
 }
@@ -34,7 +34,8 @@ export type GitHubStackProps = StackProps & {
 // How GitHub Actions reaches this account: an OIDC identity provider, and the
 // role harpguru's deploy workflow assumes with a token from it. No access
 // keys exist anywhere. The workflow swaps a token GitHub signs for an hour of
-// the role's credentials, and the trust policy checks who the token is for.
+// the role's credentials, and the trust policy checks which repo and
+// environment the token was issued to.
 //
 // Not termination protected: everything in it is rebuilt by a deploy, and
 // deleting it only stops harpguru's deploys until it is back.
@@ -46,7 +47,8 @@ export class GitHubStack extends Stack {
     super(scope, id, props)
 
     // The native CloudFormation resource, not CDK's older custom resource.
-    // No thumbprints: IAM checks GitHub's certificate itself.
+    // No thumbprints: IAM records one itself, and for GitHub doesn't use it,
+    // checking the certificate against its own trusted root CAs instead.
     this.provider = new OidcProviderNative(this, 'Provider', {
       url: `https://${GITHUB_ISSUER}`,
       clientIds: [STS_AUDIENCE],

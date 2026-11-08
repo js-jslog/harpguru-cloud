@@ -183,9 +183,8 @@ const site = new SiteStack(app, 'HarpguruSite', {
 })
 
 // How harpguru's deploy workflow reaches the pages bucket: GitHub's OIDC
-// provider and the role it assumes, with no access keys. Beside the site, in
-// London, so the bucket and distribution arrive as ordinary cross-stack
-// references.
+// provider and the role it assumes, with no access keys. In London beside the
+// site, whose bucket and distribution it reads as weak cross-stack references.
 new GitHubStack(app, 'HarpguruGitHub', {
   env: workloadEnv(config),
   description: "GitHub's OIDC provider and the role harpguru's deploys assume",
