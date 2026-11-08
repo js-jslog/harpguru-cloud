@@ -5,6 +5,7 @@ import { BudgetStack } from '../lib/budget-stack'
 import { CertificateStack } from '../lib/certificate-stack'
 import { ConfigStack } from '../lib/config-stack'
 import { DnsStack } from '../lib/dns-stack'
+import { GitHubStack } from '../lib/github-stack'
 import { MailCanaryStack } from '../lib/mail-canary-stack'
 import {
   EDGE_REGION,
@@ -174,9 +175,20 @@ const certificate = new CertificateStack(app, 'HarpguruCertificate', {
 // page, the .well-known files, and the apex and www records. In London, with
 // the zone; the certificate reaches it the other way across regions, as an
 // output of HarpguruCertificate read from us-east-1.
-new SiteStack(app, 'HarpguruSite', {
+const site = new SiteStack(app, 'HarpguruSite', {
   env: workloadEnv(config),
   description: 'harpguru.com: its bucket, CloudFront, landing page and records',
   zone: dns.zone,
   certificate: certificate.certificate,
+})
+
+// How harpguru's deploy workflow reaches the pages bucket: GitHub's OIDC
+// provider and the role it assumes, with no access keys. Beside the site, in
+// London, so the bucket and distribution arrive as ordinary cross-stack
+// references.
+new GitHubStack(app, 'HarpguruGitHub', {
+  env: workloadEnv(config),
+  description: "GitHub's OIDC provider and the role harpguru's deploys assume",
+  pagesBucket: site.pagesBucket,
+  distribution: site.distribution,
 })
