@@ -132,12 +132,12 @@ role. No access keys anywhere.
   provider is one per issuer per account, and Phase F's role for this repo's deploys will trust
   it too. The bucket and distribution arrive as weak cross-stack references, so `HarpguruSite`
   gains only two outputs: the pages bucket's ARN and the distribution's ID, with generated names
-  starting `PublishOutput`. `PagesBucketName` and `DistributionId`, which the workflow reads,
-  date from step 1. The role is named, `harpguru-pages-deploy`. The provider is the native
-  `AWS::IAM::OIDCProvider`, with no thumbprints and no custom resource. The role may also
-  `s3:AbortMultipartUpload` on the bucket's objects: the CLI uploads files over 8 MB in parts,
-  and when one fails it aborts, which would otherwise be denied and leave the parts in the
-  bucket, billed, with no lifecycle rule to remove them.
+  starting `PublishOutput`. The two the workflow reads are older: `PagesBucketName`, from step
+  1, and `DistributionId`, from Phase A's step 8. The role is named, `harpguru-pages-deploy`.
+  The provider is the native `AWS::IAM::OIDCProvider`, with no thumbprints and no custom
+  resource. The role may also `s3:AbortMultipartUpload` on the bucket's objects: the CLI uploads
+  files over 8 MB in parts, and when one fails it aborts, which would otherwise be denied and
+  leave the parts in the bucket, billed, with no lifecycle rule to remove them.
 - **Deployed 2026-11-08**, from the branch, before merging: 43 seconds of stack time.
   `HarpguruSite` gained only its two outputs. `scripts/smoke-deploy-role.sh` passed all 13
   checks. Given no thumbprint, IAM recorded one itself. CDK's approval prompt for the IAM
