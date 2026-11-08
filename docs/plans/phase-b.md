@@ -126,15 +126,18 @@ role. No access keys anywhere.
 - **The role's ARN goes into `harpguru` as a GitHub variable**, not into either repo's files:
   it carries the account ID.
 - **Built 2026-11-08** as a stack of its own, `HarpguruGitHub`, in London beside the site: the
-  provider is one per issuer per account, and Phase F's role for this repo's deploys will trust it too.
-  The bucket and distribution arrive as weak cross-stack references, so `HarpguruSite` gains
-  only two outputs. The role is named, `harpguru-pages-deploy`. The provider is the native
-  `AWS::IAM::OIDCProvider`, with no thumbprints and no custom resource.
-- **Smoke test, `scripts/smoke-deploy-role.sh`:** read-only. It reads the provider and the
-  trust policy, and asks IAM's policy simulator what the role may do: list, put and delete in
-  the pages bucket and invalidate the distribution, but not read objects, touch the site's
-  bucket, invalidate another distribution or change this one. The simulator can't present a
-  GitHub token, so the trust policy's real test is `harpguru`'s first workflow run.
+  provider is one per issuer per account, and Phase F's role for this repo's deploys will
+  trust it too. The bucket and distribution arrive as weak cross-stack references, so
+  `HarpguruSite` gains only two outputs. The role is named, `harpguru-pages-deploy`. The
+  provider is the native `AWS::IAM::OIDCProvider`, with no thumbprints and no custom resource.
+  The role may also `s3:AbortMultipartUpload` on the bucket's objects: the CLI uploads files
+  over 8 MB in parts, and when one fails it aborts, which would otherwise be denied and leave
+  the parts in the bucket, billed, with no lifecycle rule to remove them.
+- **Smoke test, `scripts/smoke-deploy-role.sh`:** read-only. It reads the provider and the trust
+  policy, and asks IAM's policy simulator what the role may do: list, put, delete and abort
+  uploads in the pages bucket and invalidate the distribution, but not read objects, touch the
+  site's bucket, invalidate another distribution or change this one. The simulator can't present
+  a GitHub token, so the trust policy's real test is `harpguru`'s first workflow run.
 
 **3 · `1-request-logs`.** CloudFront's standard logs, delivered to an S3 bucket in the workload
 account, with a lifecycle rule deleting them after the retention the user chooses.
@@ -192,3 +195,6 @@ $0.10 per million, and a few megabytes of logs a month. No new fixed monthly cha
 - 2026-11-08: **the provider and role get a stack of their own, `HarpguruGitHub`**, rather than
   joining `HarpguruSite`: the provider is account-wide and outlives any one site. Proposed by
   the agent.
+- 2026-11-08: **the deploy role may also abort multipart uploads** in the pages bucket, beyond
+  the planned list, put and delete, so a failed upload of a file over 8 MB leaves nothing
+  billed behind. Proposed by the agent in the branch review, accepted by the user.

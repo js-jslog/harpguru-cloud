@@ -66,6 +66,7 @@ echo "What it may do"
 simulate allowed s3:ListBucket "arn:aws:s3:::$PAGES"
 simulate allowed s3:PutObject "arn:aws:s3:::$PAGES/t/any/index.html"
 simulate allowed s3:DeleteObject "arn:aws:s3:::$PAGES/w/any.js"
+simulate allowed s3:AbortMultipartUpload "arn:aws:s3:::$PAGES/w/any.js"
 simulate allowed cloudfront:CreateInvalidation "arn:aws:cloudfront::$ACCOUNT:distribution/$DISTRIBUTION"
 
 echo "What it may not"

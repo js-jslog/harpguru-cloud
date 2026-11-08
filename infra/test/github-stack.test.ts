@@ -102,12 +102,13 @@ test('only a token for the harpguru.com environment of js-jslog/harpguru may ass
   )
 })
 
-test('it may list, put and delete in the pages bucket, and invalidate the distribution, and nothing else', () => {
+test('it may list, put, delete and abort uploads in the pages bucket, and invalidate the distribution, and nothing else', () => {
   const { template, site } = synth()
   const statements = permissions(template)
   expect(statements.every((s) => s.Effect === 'Allow')).toBe(true)
   expect(statements.flatMap(actions).sort()).toEqual([
     'cloudfront:CreateInvalidation',
+    's3:AbortMultipartUpload',
     's3:DeleteObject',
     's3:ListBucket',
     's3:PutObject',
@@ -127,7 +128,7 @@ test('it may list, put and delete in the pages bucket, and invalidate the distri
       actions(s)[0].startsWith('s3:') ? pagesBucket : distribution
     )
   }
-  // Objects, not the bucket, for put and delete; the bucket, for list.
+  // Objects, not the bucket, for put, delete and abort; the bucket, for list.
   const list = statements.find((s) => actions(s).includes('s3:ListBucket'))!
   expect(imported(list.Resource)).not.toContain('/*')
   const write = statements.find((s) => actions(s).includes('s3:PutObject'))!

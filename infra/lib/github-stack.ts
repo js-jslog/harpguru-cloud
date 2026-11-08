@@ -68,7 +68,9 @@ export class GitHubStack extends Stack {
     })
 
     // What `aws s3 sync --delete` needs: list to compare, put and delete to
-    // change. On the pages bucket only: the site's bucket stays this repo's.
+    // change, and abort, so a failed multipart upload, which the CLI uses for
+    // files over 8 MB, doesn't leave its parts in the bucket to be billed. On
+    // the pages bucket only: the site's bucket stays this repo's.
     this.pagesDeployRole.addToPolicy(
       new PolicyStatement({
         actions: ['s3:ListBucket'],
@@ -77,7 +79,7 @@ export class GitHubStack extends Stack {
     )
     this.pagesDeployRole.addToPolicy(
       new PolicyStatement({
-        actions: ['s3:PutObject', 's3:DeleteObject'],
+        actions: ['s3:PutObject', 's3:DeleteObject', 's3:AbortMultipartUpload'],
         resources: [props.pagesBucket.arnForObjects('*')],
       })
     )

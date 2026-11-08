@@ -1160,17 +1160,18 @@ the issuer's published keys, and the trust policy's conditions test its **claims
 request or, as here, an **environment**. A role has two policies: the trust policy says who may
 become it, and its permissions policies say what it may then do.
 
-**Here:** Phase B's step 2, `HarpguruGitHub`, holds the provider, with `sts.amazonaws.com` as its
-one audience, and the role `harpguru-pages-deploy`. Its trust policy accepts only
+**Here:** Phase B's step 2, `HarpguruGitHub`, holds the provider, with `sts.amazonaws.com` as
+its one audience, and the role `harpguru-pages-deploy`. Its trust policy accepts only
 `repo:js-jslog/harpguru:environment:harpguru.com`, with `StringEquals`, so no wildcard reaches
 the subject. An environment rather than a branch: its protection rules in GitHub decide who may
-deploy. The role may list, put and delete in the pages bucket, and invalidate the one
-distribution; nothing on the site's own bucket. Sessions last an hour at most. The provider is
-one per issuer per account, so Phase F's role for this repo's own deploys will trust the same
-one. It is the native `AWS::IAM::OIDCProvider`, given no thumbprint: IAM records one itself,
-and since July 2023 doesn't use it for GitHub, checking GitHub's certificate against its own
-trusted root CAs. CDK's older `OpenIdConnectProvider` makes a custom resource to do the same
-job. No charge. *(PR `1-deploy-role`)*
+deploy. The role may list, put and delete in the pages bucket, abort a failed multipart upload
+so its parts aren't left billed, and invalidate the one distribution; nothing on the site's own
+bucket. Sessions last an hour at most. The provider is one per issuer per account, so Phase F's
+role for this repo's own deploys will trust the same one. It is the native
+`AWS::IAM::OIDCProvider`, given no thumbprint: IAM records one itself, and since July 2023
+doesn't use it for GitHub, checking GitHub's certificate against its own trusted root CAs. CDK's
+older `OpenIdConnectProvider` makes a custom resource to do the same job. No charge. *(PR
+`1-deploy-role`)*
 
 **Say it:** "CI has no AWS keys: GitHub signs a token saying which repo and environment the job
 runs in, and STS swaps it for an hour of a role whose trust policy accepts only that subject."
