@@ -19,13 +19,13 @@ Update this table in the PR that moves a row. **You** means the user.
 | — | `1-phase-b-plan`: this file | **merged** 2026-11-07 | — |
 | 1 | `1-pages`: the pages bucket, the `/t/`, `/s/`, `/e/` and `/w/` behaviours, their function, cache and headers policies | **merged** and deployed 2026-11-07; verified in a browser before the merge | — |
 | 2 | `1-deploy-role`: the GitHub OIDC provider and the role `harpguru`'s workflow assumes | **merged** and deployed 2026-11-08; deployed and smoke-tested from the branch before the merge | — |
-| 2a | GitHub settings in `js-jslog/harpguru`: the `harpguru.com` environment, and a variable holding `HarpguruGitHub`'s `PagesDeployRoleArn` output | **waiting on you**; not needed until `harpguru`'s deploy workflow exists | you |
+| 2a | GitHub settings in `js-jslog/harpguru`: the `harpguru.com` environment, and variables holding the role's ARN, the pages bucket and the distribution ID | **done** 2026-11-09, by you; untested until `harpguru`'s first deploy workflow run | — |
 | 3 | `1-request-logs`: CloudFront access logs to S3, kept 90 days | **merged** and deployed 2026-11-09; deployed and smoke-tested from the branch before the merge | — |
 | 4 | `1-aasa-browser-marker`: `/s/*` excludes the open-in-browser marker | planned | the app side naming the marker |
 
 **Next up, as of 2026-11-09:** #4, which waits on the app side naming its marker; nothing else
-in this plan is unblocked. Still open from #2: you make #2a's settings, and the trust policy has
-no real test until `harpguru`'s first deploy workflow run. That workflow is `harpguru`'s work,
+in this plan is unblocked. Still open from #2: the trust policy and #2a's settings have no real
+test until `harpguru`'s first deploy workflow run. That workflow is `harpguru`'s work,
 and deploys the widget once it exists.
 
 ## The work in `harpguru`, for reference
@@ -51,9 +51,9 @@ Not tracked here, but it shapes what is built here. From the roadmap's Phase B:
   CloudFront keeps copies a day otherwise.
 - #2: the deploy job runs in the GitHub environment `harpguru.com`, with `id-token: write`
   permission, and assumes the role with `aws-actions/configure-aws-credentials` in
-  `eu-west-2`. The role's ARN is `HarpguruGitHub`'s `PagesDeployRoleArn` output, kept in a
-  GitHub variable; the bucket name and distribution ID are `HarpguruSite`'s
-  `PagesBucketName` and `DistributionId` outputs. The role can list but not read objects:
+  `eu-west-2`. The role's ARN, the bucket name and the distribution ID are the environment's
+  variables `AWS_PAGES_DEPLOY_ROLE_ARN`, `AWS_PAGES_BUCKET` and `AWS_DISTRIBUTION_ID`, made in
+  #2a. The role can list but not read objects:
   `aws s3 sync --delete` needs only that, comparing by size and time from the listing.
 - #4: the open-in-browser marker.
 
@@ -223,10 +223,19 @@ $0.10 per million, and a few megabytes of logs a month. No new fixed monthly cha
 
 ## Inputs needed from the user
 
-- **#2a, the GitHub settings**, above. Needed before `harpguru`'s first deploy workflow run,
-  not before #3. The ARN contains the account ID, so it goes in a GitHub variable, never a file;
-  `aws cloudformation describe-stacks --stack-name HarpguruGitHub --profile harpguru --query 'Stacks[0].Outputs'`
-  prints it.
+- Received 2026-11-09: **#2a, the GitHub settings, are made.** The `harpguru.com` environment
+  in `js-jslog/harpguru` holds three environment variables, which the deploy workflow reads as
+  `${{ vars.<name> }}`:
+
+  | Variable | Value, from |
+  | --- | --- |
+  | `AWS_PAGES_DEPLOY_ROLE_ARN` | `HarpguruGitHub`'s `PagesDeployRoleArn` output |
+  | `AWS_PAGES_BUCKET` | `HarpguruSite`'s `PagesBucketName` output |
+  | `AWS_DISTRIBUTION_ID` | `HarpguruSite`'s `DistributionId` output |
+
+  Variables, not secrets: none is secret, but the ARN carries the account ID, so none goes in
+  either repo's files. The bucket and distribution are variables too, because the role can't
+  read stack outputs.
 - Received 2026-11-07: #2's GitHub environment is **`harpguru.com`**; #3's logs are kept
   **90 days**.
 

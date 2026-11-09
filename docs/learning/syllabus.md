@@ -44,7 +44,8 @@ in the `harpguru` repo and hasn't been deployed, so those paths answer 404 for n
 `1-deploy-role`, is **merged and deployed**, on 2026-11-08, again from its branch before the
 merge: `HarpguruGitHub`, GitHub's OIDC provider and the role `harpguru`'s deploy workflow will
 assume to fill that bucket, with no access keys. Nothing has used the role yet: the workflow
-doesn't exist, and step 2a, the two settings I make in GitHub, is still waiting on me. Step 3,
+doesn't exist. Step 2a, the GitHub environment and its three variables, I made on 2026-11-09;
+it too is untested until the workflow's first run. Step 3,
 `1-request-logs`, is **merged and deployed**, on 2026-11-09, again from its branch before the
 merge: CloudFront's request logs, delivered from a new stack in `us-east-1`,
 `HarpguruRequestLogsEdge`, to a third bucket in `HarpguruSite`, which deletes them after 90
@@ -425,8 +426,8 @@ records are in the zone but in no template, and who wrote them; where a
 - **Covers:** Phase B's step 2, `1-deploy-role`: `HarpguruGitHub`, in the workload account in
   London, holding GitHub's OIDC identity provider and one role, `harpguru-pages-deploy`, which
   `harpguru`'s deploy workflow will assume to upload the widget and clear CloudFront's cache.
-  Also what OIDC stands for, and what step 2a, the settings made in GitHub rather than in AWS,
-  will be: explain it, but don't test me on it, because it isn't made yet. Numbered 28 because
+  Also what OIDC stands for, and step 2a, the environment and variables I made in GitHub
+  rather than in AWS on 2026-11-09, untested until the workflow's first run. Numbered 28 because
   topics are numbered as they are added; it belongs with the must-own topics.
 - **Why must own:** "no access keys anywhere" is a security property I chose, and this is
   where a machine outside AWS gets in. Its trust policy and its permissions are the whole of
@@ -441,9 +442,10 @@ records are in the zone but in no template, and who wrote them; where a
   added; how long its credentials last; why the provider and role are a stack of their own
   rather than part of `HarpguruSite`, and who else will trust the provider; why the provider
   arrived in Phase B rather than Phase F; why it was given no thumbprint, and what IAM did
-  anyway; where the role's ARN goes and why not in either repo; what the smoke test proved,
-  what it couldn't, and what will prove the rest; what a refusal on the workflow's first run
-  would mean.
+  anyway; where the role's ARN goes and why not in either repo, what the environment's three
+  variables hold, and why the bucket and distribution are variables too; what the smoke test
+  proved, what it couldn't, and what will prove the rest; what a refusal on the workflow's first
+  run would mean.
 - **Sources:** `docs/aws-concepts.md` "IAM OIDC federation" and "IAM users";
   `docs/plans/phase-b.md` "Status", "The work in `harpguru`, for reference", "Steps" (item 2),
   "Inputs needed from the user" and "Decisions" (the 2026-11-07 entry about the OIDC provider,
@@ -720,8 +722,7 @@ These are worth your time if they interest you. Skipping them leaves no gap.
 
 - The CloudWatch alarm that would catch the canary failing on the AWS side; the app's side of
   the links, its associated domains and intent filters, which Phase B adds; the widget itself
-  and its deploy workflow, in the `harpguru` repo; Phase B's step 2a, the GitHub environment and
-  variable, not yet made, though topic 28 explains what it will be; Phase B's step 4, the
+  and its deploy workflow, in the `harpguru` repo; Phase B's step 4, the
   browser marker in the AASA file, which is planned in `docs/plans/phase-b.md` but not built;
   and everything in phases C–F, including Phase D's counting of the request logs. Some of these
   already have concept entries, written ahead of the work; read them as reading ahead, and do
