@@ -1,6 +1,6 @@
 # Syllabus
 
-**As of 2026-11-08.** Covers all of Phase A, steps 0–8, and Phase B's steps 1 and 2. Phase A is
+**As of 2026-11-09.** Covers all of Phase A, steps 0–8, and Phase B's steps 1, 2 and 3. Phase A is
 the SSO login, the CDK app skeleton, the $10 budget, and the workload account with its OU and
 guardrails, including step 3a, which switches SCPs on through a custom resource, and step 3b,
 which imported the console-made permission set into a stack and listed everything CDK doesn't
@@ -44,12 +44,15 @@ in the `harpguru` repo and hasn't been deployed, so those paths answer 404 for n
 `1-deploy-role`, is **merged and deployed**, on 2026-11-08, again from its branch before the
 merge: `HarpguruGitHub`, GitHub's OIDC provider and the role `harpguru`'s deploy workflow will
 assume to fill that bucket, with no access keys. Nothing has used the role yet: the workflow
-doesn't exist, and step 2a, the two settings I make in GitHub, is still waiting on me. Steps 3
-and 4 are planned, not built. The status table in `docs/plans/phase-b.md` says the same.
+doesn't exist, and step 2a, the two settings I make in GitHub, is still waiting on me. Step 3,
+`1-request-logs`, is **merged and deployed**, on 2026-11-09, again from its branch before the
+merge: CloudFront's request logs, delivered from a new stack in `us-east-1`,
+`HarpguruRequestLogsEdge`, to a third bucket in `HarpguruSite`, which deletes them after 90
+days. The smoke test saw a request's line land about 100 seconds after it was made. Step 4 is
+planned, not built. The status table in `docs/plans/phase-b.md` says the same.
 
-**Priority now: topic 28**, GitHub's way in; it is the newest must-own topic. Then topic 27,
-Phase B's design and the widget's paths, if it is still shaky, and topic 26, CloudFront's
-mechanics, which step 1 extended.
+**Priority now: topic 29**, the request logs; it is the newest must-own topic. Then topic 28,
+GitHub's way in, if it is still shaky, and topic 27, Phase B's design and the widget's paths.
 
 Each topic gives its tier and why, what I should be able to answer, and its sources. The
 sources hold the facts; this file deliberately does not restate them. Sources are named by
@@ -450,6 +453,36 @@ records are in the zone but in no template, and who wrote them; where a
   `roadmap-planning/aws-pathway-findings.md` "Phase B step 2 deployed: the deploy role,
   2026-11-08".
 
+### 29. Request logs: what each visit leaves behind, and for how long
+
+- **Covers:** Phase B's step 3, `1-request-logs`: CloudFront's standard logs (v2), delivered
+  through CloudWatch Logs' vended delivery by `HarpguruRequestLogsEdge`, in `us-east-1`, to the
+  `RequestLogs` bucket in `HarpguruSite`, in London, which deletes each file after 90 days.
+  What a log line holds, which fields were chosen, the bucket policy that lets the delivery
+  write, and what the deploy showed. Numbered 29 because topics are numbered as they are added;
+  it belongs with the must-own topics.
+- **Why must own:** the logs hold viewers' IP addresses, which are personal data, and keeping
+  them 90 days was my choice. Who may write to the bucket, and what is kept and for how long,
+  are a privacy and security property I should defend unprompted. They are also what Phase D
+  will count, since every setup and embed is a URL.
+- **Be able to answer:** what a request's log line records, and why it is personal data; why 90
+  days, and what deletes the files; why cookies are left out, and why the country and the
+  behaviour's path pattern are added; why standard logging (v2) and not the legacy logging;
+  what the three delivery resources are, and why they are in `us-east-1` while the bucket stays
+  in London; what the bucket policy lets the delivery do, which two conditions narrow it, and
+  why CDK writes those statements rather than leaving the delivery to add its own; why JSON
+  rather than Parquet, and what it would take to change; how the files are laid out, and why
+  the folder names suit Athena; what the deploy showed about how soon a line lands, the files'
+  form, and which field holds the site's name; what it costs, and why the two guides disagree.
+- **Sources:** `docs/aws-concepts.md` "CloudFront standard logs and vended log delivery" and
+  "S3 buckets, bucket policies and lifecycle rules"; `docs/plans/phase-b.md` "Steps" (item 3)
+  and "Decisions" (the two 2026-11-09 entries, and the 2026-11-07 entry about the 90 days);
+  `infra/lib/request-logs-stack.ts`; `infra/lib/site-stack.ts`;
+  `infra/test/request-logs-stack.test.ts`; `infra/scripts/smoke-request-logs.sh`;
+  `roadmap-planning/aws-pathway-findings.md` "Phase B step 3 facts: CloudFront's request logs,
+  checked 2026-11-09" and "Phase B step 3 deployed: what the request logs look like,
+  2026-11-09".
+
 ## Should understand
 
 ### 15. Regions, environments and bootstrap
@@ -495,15 +528,18 @@ records are in the zone but in no template, and who wrote them; where a
   script's `--pause` holds the placeholders up for it; and how the CSP was checked against a
   real web export before any widget existed, and what that check could not prove. And from
   step 2: how the role's permissions were checked with IAM's policy simulator, why that is
-  read-only, and why it can't test a trust policy.
+  read-only, and why it can't test a trust policy. And from step 3: how a smoke test proves a
+  log delivery end to end, by making a marked request and waiting for its line, and why it
+  prints that line without four of its fields.
 - **Sources:** `infra/README.md`; `infra/test/app.ts`; `infra/test/budget-stack.test.ts`;
   `infra/test/accounts-stack.test.ts`; `infra/test/guardrails-stack.test.ts`;
   `infra/test/policy-types-stack.test.ts`; `infra/test/trail-stack.test.ts`;
   `infra/test/config-stack.test.ts`; `infra/test/guardduty-stack.test.ts`;
   `infra/test/site-stack.test.ts`; `infra/scripts/smoke-site.sh`;
   `infra/scripts/smoke-pages.sh`; `infra/test/github-stack.test.ts`;
-  `infra/scripts/smoke-deploy-role.sh`; `docs/plans/phase-a.md` "Steps" (item 8);
-  `docs/plans/phase-b.md` "Steps" (items 1 and 2);
+  `infra/scripts/smoke-deploy-role.sh`; `infra/test/request-logs-stack.test.ts`;
+  `infra/scripts/smoke-request-logs.sh`; `docs/plans/phase-a.md` "Steps" (item 8);
+  `docs/plans/phase-b.md` "Steps" (items 1, 2 and 3);
   `roadmap-planning/aws-pathway-findings.md` "What a web export needs from a content security
   policy, checked 2026-11-07".
 
@@ -527,13 +563,15 @@ records are in the zone but in no template, and who wrote them; where a
   when it did. And step 8's, the other way: how the site in London reads the certificate's ARN
   from `us-east-1`, what `HarpguruCertificate` gained for it, and why deploying the site
   deployed the certificate and zone stacks first. And Phase B step 2's two, in London: what
-  `HarpguruGitHub` reads from `HarpguruSite`, and what `HarpguruSite` gained for it.
+  `HarpguruGitHub` reads from `HarpguruSite`, and what `HarpguruSite` gained for it. And
+  step 3's, from `us-east-1` back to London: why the logs bucket needed a name fixed when CDK
+  synthesises, what failed without it, and why the distribution's ID needed no such thing.
 - **Sources:** `docs/aws-concepts.md` "Cross-stack references" and
   "Apps, stacks and constructs"; `docs/plans/phase-a.md` "Decisions" and "Steps" (items 3, 4b,
   7 and 8); `infra/bin/harpguru.ts`; `infra/lib/config-stack.ts`;
   `infra/lib/certificate-stack.ts`; `infra/test/certificate-stack.test.ts`;
   `infra/lib/site-stack.ts`; `infra/test/site-stack.test.ts`; `infra/lib/github-stack.ts`;
-  `docs/plans/phase-b.md` "Steps" (item 2).
+  `infra/lib/request-logs-stack.ts`; `docs/plans/phase-b.md` "Steps" (items 2 and 3).
 
 ### 20. How I get into the new account
 
@@ -573,7 +611,8 @@ records are in the zone but in no template, and who wrote them; where a
   `AWS:SourceAccount` each narrow a grant to, and which bucket uses which; why the
   findings topic's grant to EventBridge needed an `aws:SourceArn` CDK didn't give it; and how
   the site bucket's grant to CloudFront is narrowed to one distribution, and what a grant
-  without it would allow.
+  without it would allow; and which principal writes the request logs, and why its grant uses
+  both conditions.
 - **Sources:** `docs/aws-concepts.md` "Service-linked roles",
   "S3 buckets, bucket policies and lifecycle rules", "EventBridge rules and SNS topics" and
   "Origin Access Control (OAC)"; `infra/lib/config-stack.ts`; `infra/lib/trail-stack.ts`;
@@ -680,8 +719,8 @@ These are worth your time if they interest you. Skipping them leaves no gap.
 - The CloudWatch alarm that would catch the canary failing on the AWS side; the app's side of
   the links, its associated domains and intent filters, which Phase B adds; the widget itself
   and its deploy workflow, in the `harpguru` repo; Phase B's step 2a, the GitHub environment and
-  variable, not yet made, though topic 28 explains what it will be; Phase B's steps 3 and 4, the
-  request logs and the browser marker in the AASA file, which are planned in
-  `docs/plans/phase-b.md` but not built; and everything in phases C–F. Some of these already
-  have concept entries, written ahead of the work; read them as reading ahead, and do not test
+  variable, not yet made, though topic 28 explains what it will be; Phase B's step 4, the
+  browser marker in the AASA file, which is planned in `docs/plans/phase-b.md` but not built;
+  and everything in phases C–F, including Phase D's counting of the request logs. Some of these
+  already have concept entries, written ahead of the work; read them as reading ahead, and do not test
   me on them.

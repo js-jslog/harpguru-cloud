@@ -20,11 +20,11 @@ Update this table in the PR that moves a row. **You** means the user.
 | 1 | `1-pages`: the pages bucket, the `/t/`, `/s/`, `/e/` and `/w/` behaviours, their function, cache and headers policies | **merged** and deployed 2026-11-07; verified in a browser before the merge | — |
 | 2 | `1-deploy-role`: the GitHub OIDC provider and the role `harpguru`'s workflow assumes | **merged** and deployed 2026-11-08; deployed and smoke-tested from the branch before the merge | — |
 | 2a | GitHub settings in `js-jslog/harpguru`: the `harpguru.com` environment, and a variable holding `HarpguruGitHub`'s `PagesDeployRoleArn` output | **waiting on you**; not needed until `harpguru`'s deploy workflow exists | you |
-| 3 | `1-request-logs`: CloudFront access logs to S3, kept 90 days | **deployed** 2026-11-09 from the branch, smoke test passed; PR open, **waiting on you** to merge it | you |
+| 3 | `1-request-logs`: CloudFront access logs to S3, kept 90 days | **merged** and deployed 2026-11-09; deployed and smoke-tested from the branch before the merge | — |
 | 4 | `1-aasa-browser-marker`: `/s/*` excludes the open-in-browser marker | planned | the app side naming the marker |
 
-**Next up, as of 2026-11-09:** #3 is deployed, its smoke test passed and its PR is open; you
-merge it. After that, #4 waits on the app side naming its marker. Still open from #2: you make
+**Next up, as of 2026-11-09:** #4, which waits on the app side naming its marker; nothing
+else in this plan is unblocked. Still open from #2: you make
 #2a's settings, and the trust policy has no real test until `harpguru`'s first deploy workflow
 run. That workflow is `harpguru`'s work, and deploys the widget once it exists.
 
