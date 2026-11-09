@@ -70,8 +70,9 @@ export const REQUEST_LOG_FIELDS = [
 ]
 
 export type RequestLogsStackProps = StackProps & {
-  // Both from HarpguruSite in London, as weak references: plain outputs
-  // there, read across regions with Fn::GetStackOutput.
+  // Both from HarpguruSite in London. The distribution's ID is a weak
+  // reference, an output there read across regions with Fn::GetStackOutput;
+  // the bucket's name is fixed at synthesis, so it arrives as a plain string.
   distribution: IDistribution
   bucket: IBucket
 }

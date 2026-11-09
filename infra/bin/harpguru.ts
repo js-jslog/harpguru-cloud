@@ -195,8 +195,9 @@ new GitHubStack(app, 'HarpguruGitHub', {
 
 // The site's request logs: CloudFront's standard logs, delivered through
 // CloudWatch Logs to HarpguruSite's logs bucket in London. The delivery must
-// be made in us-east-1, so it is a stack of its own there, reading the
-// distribution and the bucket as weak references across regions.
+// be made in us-east-1, so it is a stack of its own there. It reads the
+// distribution's ID as a weak reference across regions; the bucket's name is
+// fixed when CDK synthesises, so it arrives as a plain string.
 new RequestLogsStack(app, 'HarpguruRequestLogsEdge', {
   env: workloadEnv(config, EDGE_REGION),
   description: "harpguru.com's request logs, delivered to the London bucket",

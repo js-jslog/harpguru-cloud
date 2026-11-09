@@ -834,10 +834,10 @@ day unless the origin's `Cache-Control` says otherwise. A cache policy's compani
 **Here:** every behaviour uses `CachingOptimized`, the default behaviour included, where it was
 already CDK's default. It matters for the widget's pages from Phase B's step 1: a page's
 configuration is in its query string, which only the page's own script reads, so
-`/t/country?k=C` and `/t/country?k=D` are one cached copy, and S3 never sees the query. Request
-logs, planned for Phase B's step 3, will still record it. The cache key is made after the
-viewer-request function has run, so every `/s/` path, mapped to `/s/index.html`, also shares
-one copy.
+`/t/country?k=C` and `/t/country?k=D` are one cached copy, and S3 never sees the query. The
+request logs, since Phase B's step 3, still record it, in `cs-uri-query`: their smoke test finds
+its marker there. The cache key is made after the viewer-request function has run, so every
+`/s/` path, mapped to `/s/index.html`, also shares one copy.
 
 **Say it:** "The cache key should hold only what changes the response. Static pages that read
 their own query string in the browser key on the path alone, so a thousand variants are one
@@ -1041,23 +1041,25 @@ attached to the bucket and says who may do what to it, including services such a
 **Block Public Access** overrides any policy that would make the bucket public. A **lifecycle
 rule** deletes or moves objects once they reach a given age, without anything running.
 
-**Here:** the trail's bucket in step 4a. Public access is blocked, it accepts only TLS, and
-its policy lets `cloudtrail.amazonaws.com` write under `AWSLogs/`, but only for this trail.
-That last part is an `aws:SourceArn` condition naming the trail. A grant to a service
-principal trusts that service acting for **anyone**, and the condition narrows it to acting for
-this trail: the guard against the **confused deputy**, a trusted service tricked into acting
-for someone else. Here the path already does most of that work, since CloudTrail writes under
-the trail's own account ID and the policy grants only ours; the condition is the second lock
-AWS recommends. CDK adds it to the Organization's statement but not to the management
-account's own, so the stack adds it there. Config's bucket, in step 4b, uses
-`AWS:SourceAccount` instead, as the Config guide recommends: it narrows each grant to Config
-acting for this account, rather than for one named resource. A lifecycle rule deletes logs after 365 days. Step 8's site bucket meets the same ideas again,
-with CloudFront as the reader; see [Origin Access Control](#origin-access-control-oac).
-Phase B's step 3 adds a bucket for the site's request logs, which uses both conditions:
-`aws:SourceAccount`, and `aws:SourceArn` naming its one delivery source. Its lifecycle rule
-deletes each file after 90 days, because the logs hold IP addresses; see
-[CloudFront standard logs](#cloudfront-standard-logs-and-vended-log-delivery).
-*(PRs `1-org-trail`, `1-site`, `1-request-logs`)*
+**Here:** the trail's bucket in step 4a. Public access is blocked, it accepts only TLS, and its
+policy lets `cloudtrail.amazonaws.com` write under `AWSLogs/`, but only for this trail. That
+last part is an `aws:SourceArn` condition naming the trail. A grant to a service principal
+trusts that service acting for **anyone**, and the condition narrows it to acting for this
+trail: the guard against the **confused deputy**, a trusted service tricked into acting for
+someone else. Here the path already does most of that work, since CloudTrail writes under the
+trail's own account ID and the policy grants only ours; the condition is the second lock AWS
+recommends. CDK adds it to the Organization's statement but not to the management account's own,
+so the stack adds it there. Config's bucket, in step 4b, uses `AWS:SourceAccount` instead, as
+the Config guide recommends: it narrows each grant to Config acting for this account, rather
+than for one named resource. A lifecycle rule deletes logs after 365 days. Step 8's site bucket
+meets the same ideas again, with CloudFront as the reader; see [Origin Access
+Control](#origin-access-control-oac). Phase B's step 3 adds a bucket for the site's request
+logs, which uses both conditions, as the CloudWatch Logs guide's statements do:
+`aws:SourceAccount`, so only deliveries for this account may write, and `aws:SourceArn`, so only
+its one delivery source may, not another delivery made in the same account. Its lifecycle rule
+deletes each file after 90 days, because the logs hold IP addresses; see [CloudFront standard
+logs](#cloudfront-standard-logs-and-vended-log-delivery). *(PRs `1-org-trail`, `1-site`,
+`1-request-logs`)*
 
 **Say it:** "An identity policy says what a principal may do; a bucket policy says who may
 touch this bucket. A service like CloudTrail has no identity in your account, so a resource
@@ -1233,7 +1235,7 @@ lifecycle rule decides how long the personal data in them is kept."
 
 **See it:** what CloudFront can deliver, and its default fields:
 `aws logs describe-configuration-templates --service cloudfront --log-types ACCESS_LOGS --region us-east-1 --profile harpguru --query 'configurationTemplates[].[deliveryDestinationType,allowedOutputFormats]'`.
-The delivery itself, once deployed:
+The delivery itself:
 `aws logs describe-deliveries --region us-east-1 --profile harpguru`. The newest files:
 `aws s3 ls "s3://$(aws cloudformation describe-stacks --stack-name HarpguruSite --profile harpguru --query "Stacks[0].Outputs[?OutputKey=='RequestLogsBucketName'].OutputValue" --output text)/cloudfront/" --recursive --profile harpguru | tail -5`.
 `scripts/smoke-request-logs.sh` makes a request and waits for its line.
