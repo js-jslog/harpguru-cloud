@@ -23,10 +23,10 @@ Update this table in the PR that moves a row. **You** means the user.
 | 3 | `1-request-logs`: CloudFront access logs to S3, kept 90 days | **merged** and deployed 2026-11-09; deployed and smoke-tested from the branch before the merge | — |
 | 4 | `1-aasa-browser-marker`: `/s/*` excludes the open-in-browser marker | planned | the app side naming the marker |
 
-**Next up, as of 2026-11-09:** #4, which waits on the app side naming its marker; nothing
-else in this plan is unblocked. Still open from #2: you make
-#2a's settings, and the trust policy has no real test until `harpguru`'s first deploy workflow
-run. That workflow is `harpguru`'s work, and deploys the widget once it exists.
+**Next up, as of 2026-11-09:** #4, which waits on the app side naming its marker; nothing else
+in this plan is unblocked. Still open from #2: you make #2a's settings, and the trust policy has
+no real test until `harpguru`'s first deploy workflow run. That workflow is `harpguru`'s work,
+and deploys the widget once it exists.
 
 ## The work in `harpguru`, for reference
 
@@ -163,9 +163,10 @@ account, with a lifecycle rule deleting them after the retention the user choose
   bucket here has switched off. The account had no delivery source yet.
 - **Built 2026-11-09.** The bucket, `RequestLogs`, is in `HarpguruSite`, beside the
   distribution: private, TLS only, SSE-S3, ACLs off, and a lifecycle rule deleting each file
-  after 90 days, and clearing any upload left unfinished after a day. The delivery is a new stack, `HarpguruRequestLogsEdge`, in `us-east-1`, reading
-  the distribution's ID from London as a weak reference; `HarpguruSite` already publishes it, for
-  `HarpguruGitHub`, so it gains only the bucket, its policy and a `RequestLogsBucketName` output.
+  after 90 days, and clearing any upload left unfinished after a day. The delivery is a new
+  stack, `HarpguruRequestLogsEdge`, in `us-east-1`, reading the distribution's ID from London as
+  a weak reference; `HarpguruSite` already publishes it, for `HarpguruGitHub`, so it gains only
+  the bucket, its policy and a `RequestLogsBucketName` output.
   - **Where:** under `cloudfront/` in the bucket, one Hive-style folder per day,
     `cloudfront/year=2026/month=11/day=09/`, so Phase D's Athena table can take its
     partitions from the path. For CloudFront, a prefix on the destination replaces the default

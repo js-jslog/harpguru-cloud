@@ -1,7 +1,7 @@
 # Syllabus
 
-**As of 2026-11-09.** Covers all of Phase A, steps 0–8, and Phase B's steps 1, 2 and 3. Phase A is
-the SSO login, the CDK app skeleton, the $10 budget, and the workload account with its OU and
+**As of 2026-11-09.** Covers all of Phase A, steps 0–8, and Phase B's steps 1, 2 and 3. Phase A
+is the SSO login, the CDK app skeleton, the $10 budget, and the workload account with its OU and
 guardrails, including step 3a, which switches SCPs on through a custom resource, and step 3b,
 which imported the console-made permission set into a stack and listed everything CDK doesn't
 manage. Phase A's step 1 is the skeleton and deploys nothing itself; the rest are **deployed**:
@@ -466,15 +466,15 @@ records are in the zone but in no template, and who wrote them; where a
   are a privacy and security property I should defend unprompted. They are also what Phase D
   will count, since every setup and embed is a URL.
 - **Be able to answer:** what a request's log line records, and why it is personal data; who
-  chose 90 days, the case for a short retention, and what deletes the files; why cookies are left out, and why the country and the
-  behaviour's path pattern are added; why standard logging (v2) and not the legacy logging;
-  what the three delivery resources are, and why they are in `us-east-1` while the bucket stays
-  in London; what the bucket policy lets the delivery do, how `aws:SourceAccount`,
-  `aws:SourceArn` and the `cloudfront/` prefix each narrow it, and
-  why CDK writes those statements rather than leaving the delivery to add its own; why JSON
-  rather than Parquet, and what it would take to change; how the files are laid out, and why
-  the folder names suit Athena; what the deploy showed about how soon a line lands, the files'
-  form, and which field holds the site's name; what it costs, and what the two guides each say.
+  chose 90 days, the case for a short retention, and what deletes the files; why cookies are
+  left out, and why the country and the behaviour's path pattern are added; why standard logging
+  (v2) and not the legacy logging; what the three delivery resources are, and why they are in
+  `us-east-1` while the bucket stays in London; what the bucket policy lets the delivery do, how
+  `aws:SourceAccount`, `aws:SourceArn` and the `cloudfront/` prefix each narrow it, and why CDK
+  writes those statements rather than leaving the delivery to add its own; why JSON rather than
+  Parquet, and what it would take to change; how the files are laid out, and why the folder
+  names suit Athena; what the deploy showed about how soon a line lands, the files' form, and
+  which field holds the site's name; what it costs, and what the two guides each say.
 - **Sources:** `docs/aws-concepts.md` "CloudFront standard logs and vended log delivery" and
   "S3 buckets, bucket policies and lifecycle rules"; `docs/plans/phase-b.md` "Steps" (item 3)
   and "Decisions" (the two 2026-11-09 entries, and the 2026-11-07 entry about the 90 days);
@@ -724,5 +724,5 @@ These are worth your time if they interest you. Skipping them leaves no gap.
   variable, not yet made, though topic 28 explains what it will be; Phase B's step 4, the
   browser marker in the AASA file, which is planned in `docs/plans/phase-b.md` but not built;
   and everything in phases C–F, including Phase D's counting of the request logs. Some of these
-  already have concept entries, written ahead of the work; read them as reading ahead, and do not test
-  me on them.
+  already have concept entries, written ahead of the work; read them as reading ahead, and do
+  not test me on them.
