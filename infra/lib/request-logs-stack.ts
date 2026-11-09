@@ -95,8 +95,8 @@ export class RequestLogsStack extends Stack {
       logType: 'ACCESS_LOGS',
     })
 
-    // JSON, a format Athena reads as it is, and readable by eye. The format can't be changed once made; another
-    // means a new destination.
+    // JSON, a format Athena reads as it is, and readable by eye. The format
+    // can't be changed once made; another means a new destination.
     const destination = new CfnDeliveryDestination(this, 'Destination', {
       name: 'harpguru-request-logs-s3',
       destinationResourceArn: `${props.bucket.bucketArn}/${REQUEST_LOG_PREFIX}`,

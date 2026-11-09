@@ -20,13 +20,13 @@ Update this table in the PR that moves a row. **You** means the user.
 | 1 | `1-pages`: the pages bucket, the `/t/`, `/s/`, `/e/` and `/w/` behaviours, their function, cache and headers policies | **merged** and deployed 2026-11-07; verified in a browser before the merge | — |
 | 2 | `1-deploy-role`: the GitHub OIDC provider and the role `harpguru`'s workflow assumes | **merged** and deployed 2026-11-08; deployed and smoke-tested from the branch before the merge | — |
 | 2a | GitHub settings in `js-jslog/harpguru`: the `harpguru.com` environment, and a variable holding `HarpguruGitHub`'s `PagesDeployRoleArn` output | **waiting on you**; not needed until `harpguru`'s deploy workflow exists | you |
-| 3 | `1-request-logs`: CloudFront access logs to S3, kept 90 days | **deployed** 2026-11-09 from the branch, smoke test passed; **waiting on you** to open and merge the PR | you |
+| 3 | `1-request-logs`: CloudFront access logs to S3, kept 90 days | **deployed** 2026-11-09 from the branch, smoke test passed; PR open, **waiting on you** to merge it | you |
 | 4 | `1-aasa-browser-marker`: `/s/*` excludes the open-in-browser marker | planned | the app side naming the marker |
 
-**Next up, as of 2026-11-09:** #3 is deployed and its smoke test passed; you open and merge
-its PR. After that, #4 waits on the app side naming its marker. Still open from #2: you make #2a's settings, and the trust policy has no real
-test until `harpguru`'s first deploy workflow run. That workflow is `harpguru`'s work, and
-deploys the widget once it exists.
+**Next up, as of 2026-11-09:** #3 is deployed, its smoke test passed and its PR is open; you
+merge it. After that, #4 waits on the app side naming its marker. Still open from #2: you make
+#2a's settings, and the trust policy has no real test until `harpguru`'s first deploy workflow
+run. That workflow is `harpguru`'s work, and deploys the widget once it exists.
 
 ## The work in `harpguru`, for reference
 
@@ -187,16 +187,15 @@ account, with a lifecycle rule deleting them after the retention the user choose
 - **Smoke test, `scripts/smoke-request-logs.sh`:** reads the source, delivery and destination in
   `us-east-1`, the bucket's lifecycle rule and policy in London, then requests
   `/?smoke-request-logs=<marker>` and waits, 20 minutes by default, for that request's line to
-  land. It checks the folders, that the line is
-  JSON and which fields it has, and prints it without the IP address, port, forwarded-for
-  address or user agent.
+  land. It checks the folders, that the line is JSON and which fields it has, and prints it
+  without the IP address, port, forwarded-for address or user agent.
 - **Deployed 2026-11-09 from the branch, and the smoke test passed.** `HarpguruSite` took 28
   seconds and `HarpguruRequestLogsEdge` 11. What the deploy showed:
   - **The request's line landed about 100 seconds after it was made**, in
     `cloudfront/year=2026/month=11/day=09/<distribution id>.2026-11-09-14.<id>.gz`: named by
-    the hour and an ID, so an hour may have several files; gzip-compressed, `Content-Type: application/x-gzip`,
-    encrypted with SSE-S3.
-  - **Making the delivery wrote an empty `cloudfront/` object**, two minutes before the request,
+    the hour and an ID, so an hour may have several files; gzip-compressed,
+    `Content-Type: application/x-gzip`, encrypted with SSE-S3.
+  - **Making the delivery wrote an empty `cloudfront/` object**, about a minute and a half before the request,
     seemingly a test write. Being empty, it adds no rows.
   - **Every value is a string**, numbers included (`"sc-bytes": "1982"`), and an empty field is
     `"-"`. Phase D's table casts them.
@@ -218,7 +217,7 @@ this step adds that path's behaviour instead.
 
 ## Cost
 
-Near nothing over Phase A: a second bucket's storage, CloudFront Function invocations at
+Near nothing over Phase A: two more buckets' storage, CloudFront Function invocations at
 $0.10 per million, and a few megabytes of logs a month. No new fixed monthly charge.
 
 ## Inputs needed from the user
