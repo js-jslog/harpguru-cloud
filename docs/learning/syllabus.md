@@ -44,8 +44,8 @@ in the `harpguru` repo and hasn't been deployed, so those paths answer 404 for n
 `1-deploy-role`, is **merged and deployed**, on 2026-11-08, again from its branch before the
 merge: `HarpguruGitHub`, GitHub's OIDC provider and the role `harpguru`'s deploy workflow will
 assume to fill that bucket, with no access keys. Nothing has used the role yet: the workflow
-doesn't exist. Step 2a, the GitHub environment and its three variables, I made on 2026-11-09;
-it too is untested until the workflow's first run. Step 3,
+doesn't exist. Step 2a, the GitHub environment, restricted to `master`, and its three
+variables, I made on 2026-11-09; it too is untested until the workflow's first run. Step 3,
 `1-request-logs`, is **merged and deployed**, on 2026-11-09, again from its branch before the
 merge: CloudFront's request logs, delivered from a new stack in `us-east-1`,
 `HarpguruRequestLogsEdge`, to a third bucket in `HarpguruSite`, which deletes them after 90

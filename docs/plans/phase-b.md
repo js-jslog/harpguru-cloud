@@ -224,8 +224,9 @@ $0.10 per million, and a few megabytes of logs a month. No new fixed monthly cha
 ## Inputs needed from the user
 
 - Received 2026-11-09: **#2a, the GitHub settings, are made.** The `harpguru.com` environment
-  in `js-jslog/harpguru` holds three environment variables, which the deploy workflow reads as
-  `${{ vars.<name> }}`:
+  in `js-jslog/harpguru` is restricted to deployments from `master`, so, since the role trusts
+  only jobs in that environment, only `master` can deploy. It holds three environment
+  variables, which the deploy workflow reads as `${{ vars.<name> }}`:
 
   | Variable | Value, from |
   | --- | --- |
