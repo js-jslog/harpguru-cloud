@@ -17,10 +17,9 @@ export const REQUEST_LOG_SOURCE_NAME = 'harpguru-request-logs'
 // keeps the account ID out of the keys.
 export const REQUEST_LOG_PREFIX = 'cloudfront'
 
-// One folder per day, written Hive's way, expected to be year=2026/month=11/
-// day=09, so that Phase D's Athena table can take its partitions from the
-// path. AWS's documentation shows only {yyyy} becoming year=; the smoke test
-// checks the rest.
+// One folder per day, written Hive's way: year=2026/month=11/day=09, as the
+// deploy of 2026-11-09 showed, so that Phase D's Athena table can take its
+// partitions from the path.
 export const REQUEST_LOG_SUFFIX = '{yyyy}/{MM}/{dd}'
 
 // Kept 90 days, the user's choice: they hold viewers' IP addresses, which

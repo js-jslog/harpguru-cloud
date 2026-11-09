@@ -1213,13 +1213,13 @@ resources: a **delivery source**, the thing producing logs, here a distribution 
 `ACCESS_LOGS`; a **delivery destination**, where they go and in what format; and a **delivery**
 joining the two, with the fields to keep and, for S3, the folder layout. The service principal
 `delivery.logs.amazonaws.com` does the writing, so the bucket's policy must admit it. Lines
-arrive in files, some time after the request rather than at once. The older
+arrive in files, some time after the request rather than at once: here about 100 seconds. The older
 **legacy** logging writes straight to a bucket, but with ACLs, which modern buckets switch off.
 
 **Here:** Phase B's step 3. CloudFront's three resources must be made in `us-east-1`, whatever
 the bucket's region, so they are `HarpguruRequestLogsEdge`, and the bucket stays in London in
 `HarpguruSite`, with a lifecycle rule deleting each file after 90 days: the lines hold IP
-addresses, which are personal data. JSON, filed by day in Hive-style folders, expected to be
+addresses, which are personal data. Gzipped JSON, filed by day in Hive-style folders,
 `cloudfront/year=…/month=…/day=…/`, which Phase D's Athena table can take its partitions from. The fields are CloudFront's
 defaults, without cookies and with the country and the matched behaviour's path pattern. The
 bucket's policy, written by CDK, admits only this account's one source, `harpguru-request-logs`,
