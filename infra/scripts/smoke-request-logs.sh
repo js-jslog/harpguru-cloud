@@ -9,9 +9,9 @@
 # It reads the delivery's three parts in us-east-1 and the bucket's rules in
 # London, then makes one request to harpguru.com with a marker in its query
 # string and waits for that request's log line to land in the bucket: 20
-# minutes by default, or --wait's number. Nothing is written but the request
-# and its log. The line is printed without its IP address, port or user agent,
-# so the output can be pasted.
+# minutes by default, or --wait's number. Nothing is written but the request,
+# its log and a temporary file. The line is printed without its IP address,
+# port, forwarded-for address or user agent, so the output can be pasted.
 set -uo pipefail
 
 WAIT_MINUTES=20
@@ -85,12 +85,14 @@ expiry=$(aws s3api get-bucket-lifecycle-configuration --bucket "$BUCKET" \
 # The delivery adds its own statement to the bucket policy if it finds none it
 # recognises. CDK's are meant to be recognised; this says whether they were.
 sids=$(aws s3api get-bucket-policy --bucket "$BUCKET" --query Policy --output text |
-  jq -r '[.Statement[].Sid // "(none)"] | sort | join(", ")')
+  jq -r '[.Statement[] | .Sid // "(none)"] | sort | join(", ")')
 [[ "$sids" == "(none), AWSLogDeliveryAclCheck, AWSLogDeliveryWrite" ]] &&
   pass "the policy is CDK's alone: TLS only, and the delivery's two statements" ||
   fail "policy statements: $sids; the delivery may have added its own"
 
 echo "One request, end to end"
+FILE=$(mktemp)
+trap 'rm -f "$FILE"' EXIT
 MARKER="smoke-$(date -u +%Y%m%dT%H%M%S)-$RANDOM"
 STARTED=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 status=$(curl -s -o /dev/null -w '%{http_code}' "https://harpguru.com/?smoke-request-logs=$MARKER")
@@ -107,9 +109,15 @@ while ((SECONDS < deadline)) && [[ -z "$found" ]]; do
     --query "Contents[?LastModified>='$STARTED'].Key" --output text 2>/dev/null)
   for key in $keys; do
     [[ "$key" == None || " $seen " == *" $key "* ]] && continue
+    # Downloaded first: whether the files are compressed is only known by
+    # looking, and a pipe can't be read twice. A failed download is retried.
+    aws s3 cp "s3://$BUCKET/$key" "$FILE" --only-show-errors || continue
     seen="$seen $key"
-    line=$(aws s3 cp "s3://$BUCKET/$key" - 2>/dev/null | { gzip -dc 2>/dev/null || cat; } |
-      grep -F "$MARKER" | head -n 1)
+    if gzip -t "$FILE" 2>/dev/null; then
+      line=$(gzip -dc "$FILE" | grep -F "$MARKER" | head -n 1)
+    else
+      line=$(grep -F "$MARKER" "$FILE" | head -n 1)
+    fi
     if [[ -n "$line" ]]; then
       found=$key
       break

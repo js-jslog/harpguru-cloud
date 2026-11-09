@@ -17,8 +17,10 @@ export const REQUEST_LOG_SOURCE_NAME = 'harpguru-request-logs'
 // keeps the account ID out of the keys.
 export const REQUEST_LOG_PREFIX = 'cloudfront'
 
-// One folder per day, written Hive's way, year=2026/month=11/day=09, so that
-// Phase D's Athena table can take its partitions from the path.
+// One folder per day, written Hive's way, expected to be year=2026/month=11/
+// day=09, so that Phase D's Athena table can take its partitions from the
+// path. AWS's documentation shows only {yyyy} becoming year=; the smoke test
+// checks the rest.
 export const REQUEST_LOG_SUFFIX = '{yyyy}/{MM}/{dd}'
 
 // Kept 90 days, the user's choice: they hold viewers' IP addresses, which
@@ -94,8 +96,7 @@ export class RequestLogsStack extends Stack {
       logType: 'ACCESS_LOGS',
     })
 
-    // JSON, one object per request: readable with zcat, and a format
-    // Athena reads as it is. The format can't be changed once made; another
+    // JSON, a format Athena reads as it is, and readable by eye. The format can't be changed once made; another
     // means a new destination.
     const destination = new CfnDeliveryDestination(this, 'Destination', {
       name: 'harpguru-request-logs-s3',

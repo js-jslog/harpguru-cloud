@@ -615,12 +615,14 @@ for each. *(PR `1-deploy-role`)*
 
 Phase B's step 3 adds `HarpguruRequestLogsEdge`, in `us-east-1`, which reads the distribution's
 ID from `HarpguruSite`'s existing output, so London gained no output for it. The logs bucket it
-writes to taught a rule: a resource used from **another region or account** must have a
-**physical name**, its real name in AWS, that CDK knows at synthesis. Normally CloudFormation
-picks the name at deploy time, too late to write into another region's template, and `cdk synth`
-fails with `CannotUseCrossEnvironment`. `bucketName: PhysicalName.GENERATE_IF_NEEDED` makes CDK
-derive a stable one from the stack and the construct's path, which the other stack then holds
-as a plain string. *(PR `1-request-logs`)*
+writes to taught a rule: many CDK constructs, `Bucket` among them, refuse to be used from
+**another region or account** unless their **physical name**, their real name in AWS, is known
+when CDK synthesises; otherwise `cdk synth` fails with `CannotUseCrossEnvironment`. The rule is
+meant for other accounts, where no reference can reach, and CDK applies it to other regions too.
+The distribution's ID needed no such thing, because `Distribution` builds its ARN from the ID,
+which crosses as an ordinary weak reference. `bucketName: PhysicalName.GENERATE_IF_NEEDED` makes
+CDK derive a stable name from the stack and the construct's path, which the other stack then
+holds as a plain string. *(PR `1-request-logs`)*
 
 **Say it:** "A strong reference locks the producer while it's consumed; a weak one just reads
 its output at deploy time, so stability has to come from somewhere else, like termination
@@ -1051,7 +1053,11 @@ account's own, so the stack adds it there. Config's bucket, in step 4b, uses
 `AWS:SourceAccount` instead, as the Config guide recommends: it narrows each grant to Config
 acting for this account, rather than for one named resource. A lifecycle rule deletes logs after 365 days. Step 8's site bucket meets the same ideas again,
 with CloudFront as the reader; see [Origin Access Control](#origin-access-control-oac).
-*(PRs `1-org-trail`, `1-site`)*
+Phase B's step 3 adds a bucket for the site's request logs, which uses both conditions:
+`aws:SourceAccount`, and `aws:SourceArn` naming its one delivery source. Its lifecycle rule
+deletes each file after 90 days, because the logs hold IP addresses; see
+[CloudFront standard logs](#cloudfront-standard-logs-and-vended-log-delivery).
+*(PRs `1-org-trail`, `1-site`, `1-request-logs`)*
 
 **Say it:** "An identity policy says what a principal may do; a bucket policy says who may
 touch this bucket. A service like CloudTrail has no identity in your account, so a resource
@@ -1207,14 +1213,14 @@ resources: a **delivery source**, the thing producing logs, here a distribution 
 `ACCESS_LOGS`; a **delivery destination**, where they go and in what format; and a **delivery**
 joining the two, with the fields to keep and, for S3, the folder layout. The service principal
 `delivery.logs.amazonaws.com` does the writing, so the bucket's policy must admit it. Lines
-arrive minutes after the request, not at once, in files rather than one per request. The older
+arrive in files, some time after the request rather than at once. The older
 **legacy** logging writes straight to a bucket, but with ACLs, which modern buckets switch off.
 
 **Here:** Phase B's step 3. CloudFront's three resources must be made in `us-east-1`, whatever
 the bucket's region, so they are `HarpguruRequestLogsEdge`, and the bucket stays in London in
 `HarpguruSite`, with a lifecycle rule deleting each file after 90 days: the lines hold IP
-addresses, which are personal data. JSON, under `cloudfront/year=…/month=…/day=…/`, Hive-style
-folders that Phase D's Athena table can take its partitions from. The fields are CloudFront's
+addresses, which are personal data. JSON, filed by day in Hive-style folders, expected to be
+`cloudfront/year=…/month=…/day=…/`, which Phase D's Athena table can take its partitions from. The fields are CloudFront's
 defaults, without cookies and with the country and the matched behaviour's path pattern. The
 bucket's policy, written by CDK, admits only this account's one source, `harpguru-request-logs`,
 and only under `cloudfront/`; left to itself, the delivery would add its own statement, which the

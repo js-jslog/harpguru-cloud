@@ -158,9 +158,12 @@ export class SiteStack extends Stack {
     // bucket that ignores ACLs accepts.
     //
     // Its name is fixed when CDK synthesises, not left to CloudFormation: a
-    // stack in another region refers to it, and CDK can't hand an unknown
-    // name across regions. GENERATE_IF_NEEDED makes one from the stack's name
-    // and the bucket's path, and keeps it from deploy to deploy.
+    // stack in another region uses its ARN, and CDK's Bucket refuses that
+    // unless the name is known, a rule meant for other accounts, where no
+    // reference can reach, and applied to other regions too. The
+    // distribution's ID crosses as a weak reference, because Distribution
+    // builds its ARN from the ID, without the rule. GENERATE_IF_NEEDED makes
+    // a name from the stack's name and the bucket's path, the same each deploy.
     this.requestLogsBucket = privateBucket('RequestLogs', {
       bucketName: PhysicalName.GENERATE_IF_NEEDED,
       objectOwnership: ObjectOwnership.BUCKET_OWNER_ENFORCED,
