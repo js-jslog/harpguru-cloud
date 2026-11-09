@@ -46,7 +46,8 @@ the account ID, it fetches it with `aws sts get-caller-identity`.
 [S3 buckets, bucket policies and lifecycle rules](#s3-buckets-bucket-policies-and-lifecycle-rules) ·
 [Config](#config) · [GuardDuty](#guardduty) ·
 [EventBridge rules and SNS topics](#eventbridge-rules-and-sns-topics) ·
-[IAM OIDC federation](#iam-oidc-federation)
+[IAM OIDC federation](#iam-oidc-federation) ·
+[CloudFront standard logs and vended log delivery](#cloudfront-standard-logs-and-vended-log-delivery)
 
 ---
 
@@ -611,6 +612,15 @@ reads the certificate's ARN from `us-east-1`, and `HarpguruCertificate` gained o
 *(PRs `1-certificate`, `1-site`)* Phase B's step 2 adds two in London: `HarpguruGitHub` reads
 the pages bucket's ARN and the distribution's ID from `HarpguruSite`, which gained an output
 for each. *(PR `1-deploy-role`)*
+
+Phase B's step 3 adds `HarpguruRequestLogsEdge`, in `us-east-1`, which reads the distribution's
+ID from `HarpguruSite`'s existing output, so London gained no output for it. The logs bucket it
+writes to taught a rule: a resource used from **another region or account** must have a
+**physical name**, its real name in AWS, that CDK knows at synthesis. Normally CloudFormation
+picks the name at deploy time, too late to write into another region's template, and `cdk synth`
+fails with `CannotUseCrossEnvironment`. `bucketName: PhysicalName.GENERATE_IF_NEEDED` makes CDK
+derive a stable one from the stack and the construct's path, which the other stack then holds
+as a plain string. *(PR `1-request-logs`)*
 
 **Say it:** "A strong reference locks the producer while it's consumed; a weak one just reads
 its output at deploy time, so stability has to come from somewhere else, like termination
@@ -1184,3 +1194,40 @@ for who may assume it, and
 `aws iam list-role-policies --role-name harpguru-pages-deploy --profile harpguru` for the name
 of its inline policy, to read with `aws iam get-role-policy`. `scripts/smoke-deploy-role.sh`
 asks IAM's policy simulator what the role may and may not do.
+
+### Request logs
+
+#### CloudFront standard logs and vended log delivery
+
+**What:** CloudFront writes a line for every request it serves: when, which edge, the path and
+query string, the status, the referrer, the viewer's IP address and country, and more. **Standard
+logging (v2)** delivers those lines through CloudWatch Logs' **vended logs**, the shared way many
+AWS services hand their logs to S3, CloudWatch Logs or Firehose. One delivery is three
+resources: a **delivery source**, the thing producing logs, here a distribution and the log type
+`ACCESS_LOGS`; a **delivery destination**, where they go and in what format; and a **delivery**
+joining the two, with the fields to keep and, for S3, the folder layout. The service principal
+`delivery.logs.amazonaws.com` does the writing, so the bucket's policy must admit it. Lines
+arrive minutes after the request, not at once, in files rather than one per request. The older
+**legacy** logging writes straight to a bucket, but with ACLs, which modern buckets switch off.
+
+**Here:** Phase B's step 3. CloudFront's three resources must be made in `us-east-1`, whatever
+the bucket's region, so they are `HarpguruRequestLogsEdge`, and the bucket stays in London in
+`HarpguruSite`, with a lifecycle rule deleting each file after 90 days: the lines hold IP
+addresses, which are personal data. JSON, under `cloudfront/year=…/month=…/day=…/`, Hive-style
+folders that Phase D's Athena table can take its partitions from. The fields are CloudFront's
+defaults, without cookies and with the country and the matched behaviour's path pattern. The
+bucket's policy, written by CDK, admits only this account's one source, `harpguru-request-logs`,
+and only under `cloudfront/`; left to itself, the delivery would add its own statement, which the
+next deploy would remove. Every setup and embed is a URL, so these lines are what Phase D counts.
+*(PR `1-request-logs`)*
+
+**Say it:** "CloudFront's logs travel through CloudWatch's vended delivery, a source, a destination
+and a delivery joining them, made in us-east-1 but writing to a bucket in any region, and a
+lifecycle rule decides how long the personal data in them is kept."
+
+**See it:** what CloudFront can deliver, and its default fields:
+`aws logs describe-configuration-templates --service cloudfront --log-types ACCESS_LOGS --region us-east-1 --profile harpguru --query 'configurationTemplates[].[deliveryDestinationType,allowedOutputFormats]'`.
+The delivery itself, once deployed:
+`aws logs describe-deliveries --region us-east-1 --profile harpguru`. The newest files:
+`aws s3 ls "s3://$(aws cloudformation describe-stacks --stack-name HarpguruSite --profile harpguru --query "Stacks[0].Outputs[?OutputKey=='RequestLogsBucketName'].OutputValue" --output text)/cloudfront/" --recursive --profile harpguru | tail -5`.
+`scripts/smoke-request-logs.sh` makes a request and waits for its line.

@@ -41,14 +41,15 @@ const distributionConfig = (template: Template) => {
   return distribution.Properties.DistributionConfig
 }
 
-// The site's bucket, and from Phase B the widget pages' bucket, built alike.
-// CDK's own bucket for the upload's assets is not in this stack.
+// The site's bucket, and from Phase B the widget pages' bucket and the
+// request logs' bucket, built alike. CDK's own bucket for the upload's assets
+// is not in this stack.
 describe('the buckets', () => {
-  test('there are two, and both block all public access', () => {
+  test('there are three, and all block all public access', () => {
     const buckets = Object.values(synth().findResources('AWS::S3::Bucket')) as {
       Properties: Record<string, any>
     }[]
-    expect(buckets).toHaveLength(2)
+    expect(buckets).toHaveLength(3)
     for (const bucket of buckets) {
       expect(bucket.Properties.PublicAccessBlockConfiguration).toEqual({
         BlockPublicAcls: true,
@@ -59,11 +60,30 @@ describe('the buckets', () => {
     }
   })
 
-  test('both take only TLS, and are readable only by CloudFront for this distribution', () => {
-    const template = synth()
+  test('all take only TLS', () => {
     const policies = Object.values(
-      template.findResources('AWS::S3::BucketPolicy')
+      synth().findResources('AWS::S3::BucketPolicy')
     ) as { Properties: { PolicyDocument: { Statement: any[] } } }[]
+    expect(policies).toHaveLength(3)
+    for (const policy of policies) {
+      expect(policy.Properties.PolicyDocument.Statement).toContainEqual(
+        expect.objectContaining({
+          Effect: 'Deny',
+          Condition: { Bool: { 'aws:SecureTransport': 'false' } },
+        })
+      )
+    }
+  })
+
+  test('the site and the pages are readable only by CloudFront for this distribution', () => {
+    const template = synth()
+    const policies = Object.entries(
+      template.findResources('AWS::S3::BucketPolicy')
+    )
+      .filter(([id]) => !id.startsWith('RequestLogs'))
+      .map(([, p]) => p) as {
+      Properties: { PolicyDocument: { Statement: any[] } }
+    }[]
     expect(policies).toHaveLength(2)
     for (const policy of policies) {
       expect(policy.Properties.PolicyDocument.Statement).toEqual(

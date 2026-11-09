@@ -1,5 +1,11 @@
 import { join } from 'node:path'
-import { CfnOutput, Duration, Stack, type StackProps } from 'aws-cdk-lib'
+import {
+  CfnOutput,
+  Duration,
+  PhysicalName,
+  Stack,
+  type StackProps,
+} from 'aws-cdk-lib'
 import type { ICertificate } from 'aws-cdk-lib/aws-certificatemanager'
 import {
   type BehaviorOptions,
@@ -25,12 +31,25 @@ import {
   RecordTarget,
 } from 'aws-cdk-lib/aws-route53'
 import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets'
-import { BlockPublicAccess, Bucket, BucketEncryption } from 'aws-cdk-lib/aws-s3'
+import { PolicyStatement, ServicePrincipal } from 'aws-cdk-lib/aws-iam'
+import {
+  BlockPublicAccess,
+  Bucket,
+  BucketEncryption,
+  type BucketProps,
+  ObjectOwnership,
+} from 'aws-cdk-lib/aws-s3'
 import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment'
 import type { Construct } from 'constructs'
 import { WWW_DOMAIN } from './certificate-stack'
+import { EDGE_REGION } from './config'
 import { DOMAIN } from './dns-stack'
 import { EMBED_PARTNER_ORIGINS } from './partners'
+import {
+  REQUEST_LOG_PREFIX,
+  REQUEST_LOG_RETENTION_DAYS,
+  REQUEST_LOG_SOURCE_NAME,
+} from './request-logs-stack'
 
 // The files the site serves, uploaded as they are.
 export const SITE_DIR = join(__dirname, '..', 'site')
@@ -105,28 +124,93 @@ export type SiteStackProps = StackProps & {
 //
 // From Phase B it also serves the widget's pages, /t/, /s/ and /e/, and their
 // bundle, /w/, from a second bucket. harpguru's deploy workflow fills that
-// one; nothing in this repo writes to it.
+// one; nothing in this repo writes to it. A third bucket holds the
+// distribution's request logs, which HarpguruRequestLogsEdge delivers.
 //
 // Not termination protected: everything in it is rebuilt from this repo, or
-// from harpguru's. Both buckets are retained, CDK's default, so a deleted
-// stack leaves their files.
+// from harpguru's, except the logs. All three buckets are retained, CDK's
+// default, so a deleted stack leaves their files.
 export class SiteStack extends Stack {
   readonly distribution: Distribution
   readonly pagesBucket: Bucket
+  readonly requestLogsBucket: Bucket
 
   constructor(scope: Construct, id: string, props: SiteStackProps) {
     super(scope, id, props)
 
-    const privateBucket = (id: string) =>
+    const privateBucket = (id: string, props: BucketProps = {}) =>
       new Bucket(this, id, {
         blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
         enforceSSL: true,
         encryption: BucketEncryption.S3_MANAGED,
+        ...props,
       })
     const bucket = privateBucket('Content')
     // The widget's pages. A bucket of their own, because the site's upload
     // below deletes anything in its bucket it didn't put there.
     this.pagesBucket = privateBucket('Pages')
+
+    // The request logs, in London with everything else, though the delivery
+    // that writes them must be made in us-east-1. Each file is deleted
+    // REQUEST_LOG_RETENTION_DAYS after it lands. SSE-S3 rather than a KMS
+    // key, which would need its own policy for the delivery and costs monthly.
+    // ACLs stay off: the delivery sends bucket-owner-full-control, which a
+    // bucket that ignores ACLs accepts.
+    //
+    // Its name is fixed when CDK synthesises, not left to CloudFormation: a
+    // stack in another region refers to it, and CDK can't hand an unknown
+    // name across regions. GENERATE_IF_NEEDED makes one from the stack's name
+    // and the bucket's path, and keeps it from deploy to deploy.
+    this.requestLogsBucket = privateBucket('RequestLogs', {
+      bucketName: PhysicalName.GENERATE_IF_NEEDED,
+      objectOwnership: ObjectOwnership.BUCKET_OWNER_ENFORCED,
+      lifecycleRules: [
+        {
+          id: 'expire-request-logs',
+          expiration: Duration.days(REQUEST_LOG_RETENTION_DAYS),
+          abortIncompleteMultipartUploadAfter: Duration.days(1),
+        },
+      ],
+    })
+    // Written by CloudWatch Logs' delivery service, acting for this
+    // account's one delivery source, and only under the prefix it writes to.
+    // Without these statements the delivery would add its own to this policy
+    // when it was made, and the next deploy here would take them away again.
+    // The bucket check, GetBucketAcl and ListBucket, only keeps the delivery's
+    // probes from showing in CloudTrail as AccessDenied.
+    const fromRequestLogDelivery = {
+      StringEquals: { 'aws:SourceAccount': this.account },
+      ArnLike: {
+        'aws:SourceArn': `arn:aws:logs:${EDGE_REGION}:${this.account}:delivery-source:${REQUEST_LOG_SOURCE_NAME}`,
+      },
+    }
+    const logDelivery = new ServicePrincipal('delivery.logs.amazonaws.com')
+    this.requestLogsBucket.addToResourcePolicy(
+      new PolicyStatement({
+        sid: 'AWSLogDeliveryAclCheck',
+        principals: [logDelivery],
+        actions: ['s3:GetBucketAcl', 's3:ListBucket'],
+        resources: [this.requestLogsBucket.bucketArn],
+        conditions: fromRequestLogDelivery,
+      })
+    )
+    this.requestLogsBucket.addToResourcePolicy(
+      new PolicyStatement({
+        sid: 'AWSLogDeliveryWrite',
+        principals: [logDelivery],
+        actions: ['s3:PutObject'],
+        resources: [
+          this.requestLogsBucket.arnForObjects(`${REQUEST_LOG_PREFIX}/*`),
+        ],
+        conditions: {
+          ...fromRequestLogDelivery,
+          StringEquals: {
+            ...fromRequestLogDelivery.StringEquals,
+            's3:x-amz-acl': 'bucket-owner-full-control',
+          },
+        },
+      })
+    )
 
     // The same on every response: HSTS for a year, without subdomains, which
     // this policy can't speak for, or the preload list, which is hard to
@@ -308,6 +392,9 @@ export class SiteStack extends Stack {
     new CfnOutput(this, 'BucketName', { value: bucket.bucketName })
     new CfnOutput(this, 'PagesBucketName', {
       value: this.pagesBucket.bucketName,
+    })
+    new CfnOutput(this, 'RequestLogsBucketName', {
+      value: this.requestLogsBucket.bucketName,
     })
   }
 }

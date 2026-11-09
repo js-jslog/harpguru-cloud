@@ -18,6 +18,7 @@ import { GuardDutyStack } from '../lib/guardduty-stack'
 import { GuardrailsStack } from '../lib/guardrails-stack'
 import { IdentityStack } from '../lib/identity-stack'
 import { PolicyTypesStack } from '../lib/policy-types-stack'
+import { RequestLogsStack } from '../lib/request-logs-stack'
 import { SiteStack } from '../lib/site-stack'
 import { applyProjectTags } from '../lib/tags'
 import { TrailStack } from '../lib/trail-stack'
@@ -190,4 +191,15 @@ new GitHubStack(app, 'HarpguruGitHub', {
   description: "GitHub's OIDC provider and the role harpguru's deploys assume",
   pagesBucket: site.pagesBucket,
   distribution: site.distribution,
+})
+
+// The site's request logs: CloudFront's standard logs, delivered through
+// CloudWatch Logs to HarpguruSite's logs bucket in London. The delivery must
+// be made in us-east-1, so it is a stack of its own there, reading the
+// distribution and the bucket as weak references across regions.
+new RequestLogsStack(app, 'HarpguruRequestLogsEdge', {
+  env: workloadEnv(config, EDGE_REGION),
+  description: "harpguru.com's request logs, delivered to the London bucket",
+  distribution: site.distribution,
+  bucket: site.requestLogsBucket,
 })
