@@ -404,7 +404,7 @@ records are in the zone but in no template, and who wrote them; where a
   never share a page; why hand-editing a URL is accepted rather than guarded; why the pages get
   a bucket of their own, and what would happen to them in the site's bucket; why one function
   on every behaviour, and what would break without it; why the cache key leaves out the query
-  string, and how configurations will still be counted once step 3's logs exist; why the embed
+  string, and where step 3's logs still record each configuration; why the embed
   policy leaves out `X-Frame-Options`, what `frame-ancestors 'self'` allows, and where the
   partner list lives and why there; why the widget's styles need `'unsafe-inline'` but its
   scripts need no `eval`; what the `harpguru` side has to do for these paths to work; how step
@@ -465,15 +465,16 @@ records are in the zone but in no template, and who wrote them; where a
   them 90 days was my choice. Who may write to the bucket, and what is kept and for how long,
   are a privacy and security property I should defend unprompted. They are also what Phase D
   will count, since every setup and embed is a URL.
-- **Be able to answer:** what a request's log line records, and why it is personal data; why 90
-  days, and what deletes the files; why cookies are left out, and why the country and the
+- **Be able to answer:** what a request's log line records, and why it is personal data; who
+  chose 90 days, the case for a short retention, and what deletes the files; why cookies are left out, and why the country and the
   behaviour's path pattern are added; why standard logging (v2) and not the legacy logging;
   what the three delivery resources are, and why they are in `us-east-1` while the bucket stays
-  in London; what the bucket policy lets the delivery do, which two conditions narrow it, and
+  in London; what the bucket policy lets the delivery do, how `aws:SourceAccount`,
+  `aws:SourceArn` and the `cloudfront/` prefix each narrow it, and
   why CDK writes those statements rather than leaving the delivery to add its own; why JSON
   rather than Parquet, and what it would take to change; how the files are laid out, and why
   the folder names suit Athena; what the deploy showed about how soon a line lands, the files'
-  form, and which field holds the site's name; what it costs, and why the two guides disagree.
+  form, and which field holds the site's name; what it costs, and what the two guides each say.
 - **Sources:** `docs/aws-concepts.md` "CloudFront standard logs and vended log delivery" and
   "S3 buckets, bucket policies and lifecycle rules"; `docs/plans/phase-b.md` "Steps" (item 3)
   and "Decisions" (the two 2026-11-09 entries, and the 2026-11-07 entry about the 90 days);
@@ -616,7 +617,8 @@ records are in the zone but in no template, and who wrote them; where a
 - **Sources:** `docs/aws-concepts.md` "Service-linked roles",
   "S3 buckets, bucket policies and lifecycle rules", "EventBridge rules and SNS topics" and
   "Origin Access Control (OAC)"; `infra/lib/config-stack.ts`; `infra/lib/trail-stack.ts`;
-  `infra/lib/guardduty-stack.ts`; `infra/lib/site-stack.ts`; `docs/outside-cdk.md`.
+  `infra/lib/guardduty-stack.ts`; `infra/lib/site-stack.ts`; `docs/outside-cdk.md`;
+  `docs/plans/phase-b.md` "Steps" (item 3).
 
 ### 23. When a deploy rolls back: Config's deadlock
 

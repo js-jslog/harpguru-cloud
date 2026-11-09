@@ -163,7 +163,7 @@ account, with a lifecycle rule deleting them after the retention the user choose
   bucket here has switched off. The account had no delivery source yet.
 - **Built 2026-11-09.** The bucket, `RequestLogs`, is in `HarpguruSite`, beside the
   distribution: private, TLS only, SSE-S3, ACLs off, and a lifecycle rule deleting each file
-  after 90 days. The delivery is a new stack, `HarpguruRequestLogsEdge`, in `us-east-1`, reading
+  after 90 days, and clearing any upload left unfinished after a day. The delivery is a new stack, `HarpguruRequestLogsEdge`, in `us-east-1`, reading
   the distribution's ID from London as a weak reference; `HarpguruSite` already publishes it, for
   `HarpguruGitHub`, so it gains only the bucket, its policy and a `RequestLogsBucketName` output.
   - **Where:** under `cloudfront/` in the bucket, one Hive-style folder per day,

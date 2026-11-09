@@ -139,7 +139,7 @@ else
       <<<"$line" >/dev/null &&
       pass "it carries the country and the behaviour, and no cookies" ||
       fail "fields: $(jq -c 'keys' <<<"$line")"
-    echo "  The line, without the IP address, port and user agent:"
+    echo "  The line, without the IP address, port, forwarded-for address and user agent:"
     jq 'del(."c-ip", ."c-port", ."x-forwarded-for", ."cs(User-Agent)")' <<<"$line" | sed 's/^/    /'
   else
     fail "the line is not JSON: it starts '${line:0:60}'"
