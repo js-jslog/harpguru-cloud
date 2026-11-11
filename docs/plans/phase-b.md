@@ -29,6 +29,11 @@ remaining work is `harpguru`'s step 7, the app changes: the share button, `assoc
 the Android intent filter matching `/s/` exactly, and the link picker. Its device test needs #4
 live, and needs Apple's CDN to have fetched the new AASA file.
 
+**Once this branch merges, refresh the learning material** with the `refresh-learning` skill,
+from `master`. It teaches only what has been built, and steps 2 to 4, the first deploy and the
+request logs' real lines have all landed since the last refresh, 2026-11-09. Refresh again at
+Phase B's close, after step 7's release, when deep links work end to end.
+
 ## The work in `harpguru`, for reference
 
 Not tracked here, but it shapes what is built here. From the roadmap's Phase B:
