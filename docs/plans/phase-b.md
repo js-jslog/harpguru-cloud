@@ -30,8 +30,9 @@ the Android intent filter matching `/s/` exactly, and the link picker. Its devic
 live, and needs Apple's CDN to have fetched the new AASA file.
 
 **Once this branch merges, refresh the learning material** with the `refresh-learning` skill,
-from `master`. It teaches only what has been built, and steps 2 to 4, the first deploy and the
-request logs' real lines have all landed since the last refresh, 2026-11-09. Refresh again at
+from `master`. It teaches only what has been built. Since the syllabus last changed, 2026-11-09:
+#4, the widget's first real deploy through the deploy role, live pages and their log lines,
+and the `Cache-Control` and revalidation concept entry. Refresh again at
 Phase B's close, after step 7's release, when deep links work end to end.
 
 ## The work in `harpguru`, for reference
