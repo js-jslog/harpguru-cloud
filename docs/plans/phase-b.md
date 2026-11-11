@@ -22,7 +22,7 @@ Update this table in the PR that moves a row. **You** means the user.
 | 2a | GitHub settings in `js-jslog/harpguru`: the `harpguru.com` environment, and variables holding the role's ARN, the pages bucket and the distribution ID | **done** 2026-11-09, by you; proven by `harpguru`'s first deploy, 2026-11-11 | — |
 | — | `harpguru`'s first deploy of the widget, on #182's merge | **verified** 2026-11-11: below, under "The first deploy" | — |
 | 3 | `1-request-logs`: CloudFront access logs to S3, kept 90 days | **merged** and deployed 2026-11-09; deployed and smoke-tested from the branch before the merge | — |
-| 4 | `1-aasa-browser-marker`: the AASA's `/s/*` becomes exactly `/s/`, leaving out the marker `/s/web` | built 2026-11-11; deploy pending | you: `cdk deploy HarpguruSite` from the branch |
+| 4 | `1-aasa-browser-marker`: the AASA's `/s/*` becomes exactly `/s/`, leaving out the marker `/s/web` | deployed 2026-11-11 from the branch; smoke-tested | you: merging |
 
 **Next up, as of 2026-11-11:** with #4 merged, every step of this plan is done. Phase B's
 remaining work is `harpguru`'s step 7, the app changes: the share button, `associatedDomains` and
@@ -231,6 +231,12 @@ chooses to open a setup in the browser, must not open the app.
   `https://app-site-association.cdn-apple.com/a/v1/harpguru.com`, which said
   `Cache-Control: max-age=21600` on 2026-11-11 and still held `/s/*`. Check it there before a
   device test of step 7.
+- **Deployed 2026-11-11, from the branch**, before merging: 45 seconds of stack time. Only the
+  two file uploads ran again, both taking the new zip of `site/`; the distribution and buckets
+  were untouched. The AASA upload's invalidation of `/*` completed at 22:02. Then
+  `scripts/smoke-site.sh` passed, its new check included, the served file being
+  `[{"/":"/s/"}]`, and `scripts/smoke-pages.sh` passed, leaving the bucket's 13 real objects as
+  they were. Apple's CDN still held `/s/*` a minute later, as expected.
 
 **The first deploy, 2026-11-11.** `harpguru`'s #182 merged to `master`, and its
 `deploy-widget.yml` ran 21:43:31 to 21:44:34 UTC, successfully: build 40 seconds, deploy 16.
