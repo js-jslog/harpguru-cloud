@@ -255,17 +255,20 @@ chooses to open a setup in the browser, must not open the app.
 - **The live pages load with no CSP violation**, in headless Chromium 131 at 1280×720 and
   390×844, listening for `securitypolicyviolation` events, console errors and failed requests:
   `/t/major-diatonic`, `/s/?t=major-diatonic&k=C&p=2&s=blues`, the same at `/s/web`, and
-  `/e/?t=major-diatonic&k=C&p=1&s=major`. Each fetched the page and the bundle, and nothing else.
+  `/e/?t=major-diatonic&k=C&p=1&s=major`. Each fetched the page and the bundle, and nothing
+  else; headless Chromium doesn't fetch the icon, the site bucket's `/icon.png`, which `curl`
+  found served as `image/png`.
   `/t/no-such-tuning` returns the site's 404 page, with a 404. A page on `http://localhost`
   framing `/e/` was refused under `frame-ancestors 'self'`, and framing `/s/` under
   `'none'`.
 - **The request logs record those views**, query strings included, about two minutes later.
   `cs-uri-stem` is the path the viewer asked for, `/s/web` or `/t/major-diatonic`, not the
   object the function mapped it to, and `cache-behavior-path-pattern` names the behaviour.
-- **What the logs don't see:** the pages rewrite their own address after loading, with no
-  request. `/t/major-diatonic` became `?p=2`, its first preset, and `s=blues` became the
-  degrees it stands for, `d=1,3b,4,5b,5,7b`. The logs keep the URL as it was opened, which is
-  what Phase D wants to count.
+- **What the logs don't see:** the pages correct their own address after loading, with
+  `history.replaceState` and no request, as `harpguru`'s URL format intends ("reading is
+  lenient, writing is canonical"). `/t/major-diatonic` became `?p=2`, its first preset, and
+  `s=blues` became the degrees it stands for, `d=1,3b,4,5b,5,7b`. The logs keep the URL as it
+  was opened, which is what Phase D wants to count.
 - **`no-cache` pages are revalidated, not refetched**: `CachingOptimized`'s minimum TTL of one
   second holds them that long, then CloudFront asks S3, and an unchanged page is a
   `RefreshHit`.
