@@ -270,8 +270,8 @@ chooses to open a setup in the browser, must not open the app.
   second holds them that long, then CloudFront asks S3, and an unchanged page is a
   `RefreshHit`.
 - **`assetlinks.json` carries the fingerprint received on 2026-11-06 as Play's app signing
-  key**, and Google's Digital Asset Links API returns it for `com.jslog.harpguru`. Whether it is
-  the app signing key and not the upload key can only be read in Play Console.
+  key**, not the upload key, and Google's Digital Asset Links API returns it for
+  `com.jslog.harpguru`.
 
 ## Cost
 
