@@ -1,7 +1,7 @@
 # Phase B — The public harpface
 
 The detailed plan for `harpguru-cloud`'s half of Phase B of the
-[roadmap](https://github.com/js-jslog/harpguru/blob/178-build-the-harp-face-widget/roadmap-planning/roadmap.md#phase-b--the-public-harpface--30-hrs--both-repos).
+[roadmap](https://github.com/js-jslog/harpguru/blob/master/roadmap-planning/roadmap.md#phase-b--the-public-harpface--30-hrs--both-repos).
 The roadmap says what the phase is and why; this file says how this repo's part is being done
 and how far it has got. **Ships:** harpguru.com serving the widget's three page types, `/t/`,
 `/s/` and `/e/`, deployed from `harpguru` by a GitHub workflow holding no AWS keys.
@@ -19,14 +19,15 @@ Update this table in the PR that moves a row. **You** means the user.
 | — | `1-phase-b-plan`: this file | **merged** 2026-11-07 | — |
 | 1 | `1-pages`: the pages bucket, the `/t/`, `/s/`, `/e/` and `/w/` behaviours, their function, cache and headers policies | **merged** and deployed 2026-11-07; verified in a browser before the merge | — |
 | 2 | `1-deploy-role`: the GitHub OIDC provider and the role `harpguru`'s workflow assumes | **merged** and deployed 2026-11-08; deployed and smoke-tested from the branch before the merge | — |
-| 2a | GitHub settings in `js-jslog/harpguru`: the `harpguru.com` environment, and variables holding the role's ARN, the pages bucket and the distribution ID | **done** 2026-11-09, by you; untested until `harpguru`'s first deploy workflow run | — |
+| 2a | GitHub settings in `js-jslog/harpguru`: the `harpguru.com` environment, and variables holding the role's ARN, the pages bucket and the distribution ID | **done** 2026-11-09, by you; proven by `harpguru`'s first deploy, 2026-11-11 | — |
+| — | `harpguru`'s first deploy of the widget, on #182's merge | **verified** 2026-11-11: below, under "The first deploy" | — |
 | 3 | `1-request-logs`: CloudFront access logs to S3, kept 90 days | **merged** and deployed 2026-11-09; deployed and smoke-tested from the branch before the merge | — |
-| 4 | `1-aasa-browser-marker`: `/s/*` excludes the open-in-browser marker | planned | the app side naming the marker |
+| 4 | `1-aasa-browser-marker`: the AASA's `/s/*` becomes exactly `/s/`, leaving out the marker `/s/web` | built 2026-11-11; deploy pending | you: `cdk deploy HarpguruSite` from the branch |
 
-**Next up, as of 2026-11-09:** #4, which waits on the app side naming its marker; nothing else
-in this plan is unblocked. Still open from #2: the trust policy and #2a's settings have no real
-test until `harpguru`'s first deploy workflow run. That workflow is `harpguru`'s work,
-and deploys the widget once it exists.
+**Next up, as of 2026-11-11:** with #4 merged, every step of this plan is done. Phase B's
+remaining work is `harpguru`'s step 7, the app changes: the share button, `associatedDomains` and
+the Android intent filter matching `/s/` exactly, and the link picker. Its device test needs #4
+live, and needs Apple's CDN to have fetched the new AASA file.
 
 ## The work in `harpguru`, for reference
 
@@ -55,7 +56,8 @@ Not tracked here, but it shapes what is built here. From the roadmap's Phase B:
   variables `AWS_PAGES_DEPLOY_ROLE_ARN`, `AWS_PAGES_BUCKET` and `AWS_DISTRIBUTION_ID`, made in
   #2a. The role can list but not read objects:
   `aws s3 sync --delete` needs only that, comparing by size and time from the listing.
-- #4: the open-in-browser marker.
+- #4: the open-in-browser marker. **Named 2026-11-09: the path `/s/web`**, in the findings
+  doc's "Phase B: the open-in-browser marker".
 
 ## Steps
 
@@ -210,11 +212,60 @@ account, with a lifecycle rule deleting them after the retention the user choose
 - **Cost:** CloudFront's guide says delivery to S3 is free, and CloudWatch's says vended delivery
   to S3 is billed per GB. At a few megabytes a month either is nothing; the bill will say which.
 
-**4 · `1-aasa-browser-marker`.** The `/s/*` component in `apple-app-site-association` gains an
-exclusion for the marker the app adds when the user chooses to open a setup in the browser.
-Nothing else in this repo changes: Android's paths live in the app's intent filters. Whether
-Android can exclude by query parameter is unverified; if not, the marker becomes a path, and
-this step adds that path's behaviour instead.
+**4 · `1-aasa-browser-marker`.** The open-in-browser marker, which the app adds when the user
+chooses to open a setup in the browser, must not open the app.
+
+- **The marker is the path `/s/web`**, decided in `harpguru` on 2026-11-09: Android can't
+  exclude by query parameter below Android 15, so a query marker was ruled out, and with it the
+  planned exclusion. A setup link is always `/s/?<params>`, path exactly `/s/`.
+- **So the change is one line of the AASA file:** the component `{ "/": "/s/*" }` becomes
+  `{ "/": "/s/" }`, an exact path. A component with no `?` matcher ignores the query, so
+  `/s/?<anything>` opens the app and `/s/web?<anything>` doesn't. No new behaviour:
+  CloudFront already maps every `/s/` path to the one shell. Android's side is the app's intent
+  filter, matching `android:path="/s/"`, in `harpguru`'s step 7.
+- **Safe to ship before the app:** v18.5.0 has no `associatedDomains`, so nothing claims the
+  links yet.
+- **`scripts/smoke-site.sh` now checks the served AASA is this repo's**, compared as JSON, so a
+  deploy that changed it can be seen to have reached the edge.
+- **Apple doesn't fetch the file from the site.** Devices read it from Apple's CDN,
+  `https://app-site-association.cdn-apple.com/a/v1/harpguru.com`, which said
+  `Cache-Control: max-age=21600` on 2026-11-11 and still held `/s/*`. Check it there before a
+  device test of step 7.
+
+**The first deploy, 2026-11-11.** `harpguru`'s #182 merged to `master`, and its
+`deploy-widget.yml` ran 21:43:31 to 21:44:34 UTC, successfully: build 40 seconds, deploy 16.
+`release.yml` ran beside it and tagged `v18.5.0`. Checked from here the same evening:
+
+- **The trust policy's first real test passed.** CloudTrail in `eu-west-2` holds one
+  `AssumeRoleWithWebIdentity`, at 21:44:22, by a `WebIdentityUser` named
+  `repo:js-jslog/harpguru:environment:harpguru.com`, from `token.actions.githubusercontent.com`,
+  audience `sts.amazonaws.com`, for `harpguru-pages-deploy`, session `GitHubActions`, with no
+  error. None in `us-east-1`: the action uses the regional endpoint.
+- **The pages bucket holds 13 objects**: one bundle file,
+  `w/_expo/static/js/web/index-<hash>.js`, 1.8 MB, `public, max-age=31536000, immutable`;
+  `s/index.html`, `e/index.html` and ten `t/<slug>/index.html`, each `no-cache`. All
+  `text/…` as they should be, and SSE-S3.
+- **The invalidation ran**: `/e/*`, `/t/*` and `/s/*`, created 21:44:30, `Completed`.
+- **The live pages load with no CSP violation**, in headless Chromium 131 at 1280×720 and
+  390×844, listening for `securitypolicyviolation` events, console errors and failed requests:
+  `/t/major-diatonic`, `/s/?t=major-diatonic&k=C&p=2&s=blues`, the same at `/s/web`, and
+  `/e/?t=major-diatonic&k=C&p=1&s=major`. Each fetched the page and the bundle, and nothing else.
+  `/t/no-such-tuning` returns the site's 404 page, with a 404. A page on `http://localhost`
+  framing `/e/` was refused under `frame-ancestors 'self'`, and framing `/s/` under
+  `'none'`.
+- **The request logs record those views**, query strings included, about two minutes later.
+  `cs-uri-stem` is the path the viewer asked for, `/s/web` or `/t/major-diatonic`, not the
+  object the function mapped it to, and `cache-behavior-path-pattern` names the behaviour.
+- **What the logs don't see:** the pages rewrite their own address after loading, with no
+  request. `/t/major-diatonic` became `?p=2`, its first preset, and `s=blues` became the
+  degrees it stands for, `d=1,3b,4,5b,5,7b`. The logs keep the URL as it was opened, which is
+  what Phase D wants to count.
+- **`no-cache` pages are revalidated, not refetched**: `CachingOptimized`'s minimum TTL of one
+  second holds them that long, then CloudFront asks S3, and an unchanged page is a
+  `RefreshHit`.
+- **`assetlinks.json` carries the fingerprint received on 2026-11-06 as Play's app signing
+  key**, and Google's Digital Asset Links API returns it for `com.jslog.harpguru`. Whether it is
+  the app signing key and not the upload key can only be read in Play Console.
 
 ## Cost
 

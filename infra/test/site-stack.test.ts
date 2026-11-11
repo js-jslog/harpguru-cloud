@@ -352,14 +352,16 @@ describe('the files', () => {
     expect(aasa.Properties.DistributionPaths).toEqual(['/*'])
   })
 
-  test('the AASA file lets the app claim /s/* links', () => {
+  // Exactly /s/, whatever the query: /s/web?… is the open-in-browser marker,
+  // and must stay in the browser.
+  test('the AASA file lets the app claim /s/ links, and only /s/', () => {
     const aasa = JSON.parse(readFileSync(join(SITE_DIR, AASA_PATH), 'utf8'))
     expect(aasa).toEqual({
       applinks: {
         details: [
           {
             appIDs: ['6XJN2H9VQM.com.jslog.harpguru'],
-            components: [{ '/': '/s/*' }],
+            components: [{ '/': '/s/' }],
           },
         ],
       },

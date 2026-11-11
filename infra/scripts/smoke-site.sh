@@ -34,6 +34,15 @@ for path in .well-known/apple-app-site-association .well-known/assetlinks.json; 
   fi
 done
 
+# The served AASA is this repo's, so a deploy that changed it has reached the
+# edge. Compared as JSON, so whitespace doesn't matter.
+aasa_file="$(dirname "$0")/../site/.well-known/apple-app-site-association"
+if diff <(jq -S . "$aasa_file") <(curl -sS --max-time 15 "https://$HOST/.well-known/apple-app-site-association" | jq -S .) >/dev/null 2>&1; then
+  pass "the AASA served is this repo's: $(jq -c '.applinks.details[0].components' "$aasa_file")"
+else
+  fail "the AASA served differs from site/.well-known/apple-app-site-association"
+fi
+
 echo "The landing page"
 IFS='|' read -r status type _ <<<"$(probe "https://$HOST/")"
 [[ "$status" == 200 && "$type" == text/html* ]] && pass "/: 200, $type" || fail "/: status $status, '$type'"

@@ -39,8 +39,8 @@ cache stamp is, because the tutor's fetch tool caches by URL.
 - **`docs/aws-concepts.md` is the user's study companion.** Every PR that introduces an
   AWS concept adds its entry in that same PR. Keep entries short: what it is, how it is
   used here, one sentence worth saying in an interview, and a command to see it for real.
-- **Findings go to `/harpguru`**, on the branch tracking this work (currently
-  `178-build-the-harp-face-widget`). They never go here. See the orientation file for the
+- **Findings go to `/harpguru`**, on a branch off its `master` (since #182 merged
+  `178-build-the-harp-face-widget` on 2026-11-11), which the user opens a PR for. They never go here. See the orientation file for the
   push rules.
 - **Keep account IDs, portal URLs and email addresses out of the repo.** They are not
   secrets, but the repo is public. `aws sts get-caller-identity` recovers the account;
