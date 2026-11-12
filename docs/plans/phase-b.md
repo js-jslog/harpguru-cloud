@@ -151,8 +151,9 @@ role. No access keys anywhere.
   checks. **Re-checked 2026-11-12:** the script has 14 checks, and all 14 passed, abort
   included. `HarpguruGitHub` was created once, at 21:42 that evening, after abort was added at
   21:33, and the live role's policy lists `s3:AbortMultipartUpload`, so the role has had it
-  from the start; the 13 was a miscount. Given no thumbprint, IAM recorded one itself. CDK's approval prompt for the
-  IAM changes can't be answered from Claude Code's `!` prompt, so the deploy ran with
+  from the start; the 13 was a miscount. Given no thumbprint, IAM recorded one itself. CDK's
+  approval prompt for the IAM changes can't be answered from Claude Code's `!` prompt, so the
+  deploy ran with
   `--require-approval never`, after the diff was read.
 - **Smoke test, `scripts/smoke-deploy-role.sh`:** read-only. It reads the provider and the trust
   policy, and asks IAM's policy simulator what the role may do: list, put, delete and abort

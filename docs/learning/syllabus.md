@@ -425,13 +425,13 @@ records are in the zone but in no template, and who wrote them; where a
   policy, framing included; why `/t/` serves only some tunings, and what a slug without a page
   gets; and why a page's address changes after it loads, with no new request.
 - **Sources:** `docs/plans/phase-b.md` "Status", "The work in `harpguru`, for reference",
-  "Steps" (item 1) and "Decisions"; `roadmap-planning/roadmap.md` "Locked decisions" (the entry
+  "Steps" (item 1, and the paragraph "The first deploy, 2026-11-11") and "Decisions";
+  `roadmap-planning/roadmap.md` "Locked decisions" (the entry
   on the widget's frozen scope), "Phase B — The public harpface" (what each page type is for)
   and "Settled since writing" (the three 2026-11-07 entries); `docs/aws-concepts.md` "Cache
   policies and the cache key" and "Response headers policies"; `infra/lib/site-stack.ts`;
   `infra/lib/partners.ts`; `infra/lib/functions/viewer-request.js`;
-  `infra/test/site-stack.test.ts`; `infra/scripts/smoke-pages.sh`; `docs/plans/phase-b.md`
-  "Steps" (the paragraph "The first deploy, 2026-11-11");
+  `infra/test/site-stack.test.ts`; `infra/scripts/smoke-pages.sh`;
   `roadmap-planning/aws-pathway-findings.md` "Phase B step 1 deployed: the widget's paths,
   2026-11-07", "What a web export needs from a content security policy, checked 2026-11-07",
   "Phase B: the widget built, and checked under the live CSP, 2026-11-09" (its paragraph "Where
@@ -466,14 +466,13 @@ records are in the zone but in no template, and who wrote them; where a
   policy, where CloudTrail records it, and what it names as the user; what a refusal would have
   meant.
 - **Sources:** `docs/aws-concepts.md` "IAM OIDC federation" and "IAM users";
-  `docs/plans/phase-b.md` "Status", "The work in `harpguru`, for reference", "Steps" (item 2),
-  "Inputs needed from the user" and "Decisions" (the 2026-11-07 entry about the OIDC provider,
-  and the two 2026-11-08 entries); `roadmap-planning/roadmap.md` "How the two connect";
-  `infra/lib/github-stack.ts`; `infra/test/github-stack.test.ts`;
-  `infra/scripts/smoke-deploy-role.sh`; `docs/outside-cdk.md` "Not AWS";
-  `docs/plans/phase-b.md` "Steps" (the paragraph "The first deploy, 2026-11-11");
-  `roadmap-planning/aws-pathway-findings.md` "Phase B step 2 deployed: the deploy role,
-  2026-11-08".
+  `docs/plans/phase-b.md` "Status", "The work in `harpguru`, for reference", "Steps" (item 2,
+  and the paragraph "The first deploy, 2026-11-11"), "Inputs needed from the user" and
+  "Decisions" (the 2026-11-07 entry about the OIDC provider, and the two 2026-11-08 entries);
+  `roadmap-planning/roadmap.md` "How the two connect"; `infra/lib/github-stack.ts`;
+  `infra/test/github-stack.test.ts`; `infra/scripts/smoke-deploy-role.sh`; `docs/outside-cdk.md`
+  "Not AWS"; `roadmap-planning/aws-pathway-findings.md` "Phase B step 2 deployed: the deploy
+  role, 2026-11-08".
 
 ### 29. Request logs: what each visit leaves behind, and for how long
 
@@ -500,15 +499,14 @@ records are in the zone but in no template, and who wrote them; where a
   records, the one asked for or the object it was mapped to, how `/s/web` can be counted apart
   from `/s/`, and what a page's own address changes after loading leave out of the logs; what
   it costs, and what the two guides each say.
-- **Sources:** `docs/aws-concepts.md` "CloudFront standard logs and vended log delivery" and
-  "S3 buckets, bucket policies and lifecycle rules"; `docs/plans/phase-b.md` "Steps" (item 3)
-  and "Decisions" (the two 2026-11-09 entries, and the 2026-11-07 entry about the 90 days);
-  `infra/lib/request-logs-stack.ts`; `infra/lib/site-stack.ts`;
-  `infra/test/request-logs-stack.test.ts`; `infra/scripts/smoke-request-logs.sh`;
-  `docs/plans/phase-b.md` "Steps" (the paragraph "The first deploy, 2026-11-11");
-  `roadmap-planning/aws-pathway-findings.md` "Phase B step 3 facts: CloudFront's request logs,
-  checked 2026-11-09" and "Phase B step 3 deployed: what the request logs look like,
-  2026-11-09".
+- **Sources:** `docs/aws-concepts.md` "CloudFront standard logs and vended log delivery" and "S3
+  buckets, bucket policies and lifecycle rules"; `docs/plans/phase-b.md` "Steps" (item 3, and
+  the paragraph "The first deploy, 2026-11-11") and "Decisions" (the two 2026-11-09 entries, and
+  the 2026-11-07 entry about the 90 days); `infra/lib/request-logs-stack.ts`;
+  `infra/lib/site-stack.ts`; `infra/test/request-logs-stack.test.ts`;
+  `infra/scripts/smoke-request-logs.sh`; `roadmap-planning/aws-pathway-findings.md` "Phase B
+  step 3 facts: CloudFront's request logs, checked 2026-11-09" and "Phase B step 3 deployed:
+  what the request logs look like, 2026-11-09".
 
 ### 30. Links that open the app, and the one that mustn't
 
@@ -759,8 +757,7 @@ records are in the zone but in no template, and who wrote them; where a
   "CloudFront Functions", "Route 53 alias records" and
   "Custom resources"; `infra/lib/site-stack.ts`; `infra/lib/functions/viewer-request.js`;
   `infra/test/site-stack.test.ts`; `docs/plans/phase-a.md` "Steps" (item 8);
-  `docs/plans/phase-b.md` "Steps" (item 1);
-  `docs/plans/phase-b.md` "Steps" (the paragraph "The first deploy, 2026-11-11");
+  `docs/plans/phase-b.md` "Steps" (item 1, and the paragraph "The first deploy, 2026-11-11");
   `roadmap-planning/aws-pathway-findings.md` "Step 8 deployed: harpguru.com, 2026-11-06" and
   "Phase B step 1 deployed: the widget's paths, 2026-11-07".
 

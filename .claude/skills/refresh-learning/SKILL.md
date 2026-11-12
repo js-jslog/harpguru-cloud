@@ -92,10 +92,10 @@ Read both files before changing anything, so you keep their intent.
    must print nothing. Give the owner the new opening message in the hand-over.
 5. **Check the links and names.** Every URL must point at a file that exists: check this repo's
    paths with `git ls-files`, and the `harpguru` paths on `origin/master` in `/harpguru`, or on
-   a findings branch if one is named, after fetching. Every quoted name in the syllabus must be a heading in the file it names; a
-   reference to something that is not a heading says where it sits, such as "Steps" (item 2).
-   Check that each named section actually answers the questions that cite it. Report any that
-   do not resolve.
+   a findings branch if one is named, after fetching. Every quoted name in the syllabus must be
+   a heading in the file it names; a reference to something that is not a heading says where it
+   sits, such as "Steps" (item 2). Check that each named section actually answers the questions
+   that cite it. Report any that do not resolve.
 6. **Dry-run a session from the README, with a fresh agent.** You know what the files mean,
    so your own reading hides their gaps; the first fresh dry run, on 2026-10-18, found a cited
    section that did not exist on the fetched branch, a stale concept entry and five bad
