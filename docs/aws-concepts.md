@@ -847,8 +847,35 @@ cached object."
 `aws cloudfront get-cache-policy --id 658327ea-f89d-4fab-a63d-7e88639e58f6 --profile harpguru --query 'CachePolicy.CachePolicyConfig.{Name:Name,DefaultTTL:DefaultTTL,QueryStrings:ParametersInCacheKeyAndForwardedToOrigin.QueryStringsConfig.QueryStringBehavior}'`.
 The query string left out of the key, once a tuning page is there: run
 `curl -s -o /dev/null https://harpguru.com/t/country?k=C`, then
-`curl -sI https://harpguru.com/t/country?k=D | grep -i '^x-cache:'`, which says `Hit`. Until
-`harpguru` deploys the widget, `infra/scripts/smoke-pages.sh` does the same with a placeholder.
+`curl -sI https://harpguru.com/t/country?k=D | grep -i '^x-cache:'`, which says `Hit` or
+`RefreshHit` (see the next entry). `infra/scripts/smoke-pages.sh` does the same with a
+placeholder.
+
+#### `Cache-Control` from the origin, and revalidation
+
+**What:** within the cache policy's minimum and maximum TTLs, CloudFront keeps a copy as long as
+the object's own `Cache-Control` says, set as metadata when it is uploaded to S3. A long
+`max-age` with `immutable` suits a file whose name holds a hash of its contents: a new version is
+a new name, so the old copy never needs dropping. `no-cache` means "check before reusing", not
+"don't keep": under a policy whose minimum TTL is above zero, CloudFront holds the copy for that
+minimum, then asks the origin whether it changed. An unchanged object comes back as
+`304 Not Modified`, with no body, and the response says `x-cache: RefreshHit`. With a minimum of
+zero, `no-cache` isn't cached at all.
+
+**Here:** `harpguru`'s deploy workflow sets both on upload, since its first run on 2026-11-11:
+the bundle under `/w/` is `public, max-age=31536000, immutable`, a year, and every page is
+`no-cache`. `CachingOptimized`'s minimum TTL is one second, so a page is reused for a second,
+then revalidated with S3, which keeps a deploy visible at once even before its invalidation of
+`/t/*`, `/s/*` and `/e/*` finishes. Browsers follow the same headers, so a returning visitor
+re-checks the small page and keeps the 1.8 MB bundle. *(Seen live in PR `1-aasa-browser-marker`)*
+
+**Say it:** "Hashed assets are cached for a year as immutable, and the HTML that names them is
+no-cache, so CloudFront revalidates it with a cheap 304 and a deploy shows immediately."
+
+**See it:** the metadata on the objects:
+`aws s3api head-object --profile harpguru --bucket "$(aws cloudformation describe-stacks --stack-name HarpguruSite --profile harpguru --query "Stacks[0].Outputs[?OutputKey=='PagesBucketName'].OutputValue" --output text)" --key t/country/index.html --query CacheControl`.
+At the edge: `curl -sI https://harpguru.com/t/country | grep -iE '^(cache-control|x-cache):'`,
+run twice a few seconds apart, where the second says `RefreshHit`.
 
 #### Origin Access Control (OAC)
 
@@ -1201,7 +1228,10 @@ runs in, and STS swaps it for an hour of a role whose trust policy accepts only 
 for who may assume it, and
 `aws iam list-role-policies --role-name harpguru-pages-deploy --profile harpguru` for the name
 of its inline policy, to read with `aws iam get-role-policy`. `scripts/smoke-deploy-role.sh`
-asks IAM's policy simulator what the role may and may not do.
+asks IAM's policy simulator what the role may and may not do. A real assumption, as CloudTrail
+recorded it, with the token's subject as the user name; the first was `harpguru`'s deploy of
+2026-11-11, and CloudTrail's lookup reaches back 90 days:
+`aws cloudtrail lookup-events --profile harpguru --region eu-west-2 --lookup-attributes AttributeKey=EventName,AttributeValue=AssumeRoleWithWebIdentity --query 'Events[].[EventTime,Username]'`.
 
 ### Request logs
 

@@ -3,7 +3,7 @@
     "details": [
       {
         "appIDs": ["6XJN2H9VQM.com.jslog.harpguru"],
-        "components": [{ "/": "/s/*" }]
+        "components": [{ "/": "/s/" }]
       }
     ]
   }

@@ -650,7 +650,8 @@ zone, which now holds nine record sets. The template, as deployed, reads the zon
   - **The landing page**: the app icon from the app repo, one line on what the app does,
     taken from the roadmap's description, and links to the App Store, Google Play and the
     YouTube channel. Safari on iOS also offers the app through a smart app banner.
-  - **`apple-app-site-association`**: app ID `6XJN2H9VQM.com.jslog.harpguru`, claiming `/s/*`.
+  - **`apple-app-site-association`**: app ID `6XJN2H9VQM.com.jslog.harpguru`, claiming `/s/*`;
+    exactly `/s/` since Phase B's #4, 2026-11-11.
     The current `components` format only, which iOS 13 and later read.
   - **`assetlinks.json`**: package `com.jslog.harpguru` and the Play **app signing** key's
     SHA-256 fingerprint, received 2026-11-06. Not the upload key: Play re-signs every
