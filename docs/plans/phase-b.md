@@ -26,8 +26,8 @@ Update this table in the PR that moves a row. **You** means the user.
 
 **Next up, as of 2026-11-11:** with #4 merged, every step of this plan is done. Phase B's
 remaining work is `harpguru`'s step 7, the app changes: the share button, `associatedDomains` and
-the Android intent filter matching `/s/` exactly, and the link picker. Its device test needs #4
-live, and needs Apple's CDN to have fetched the new AASA file.
+the Android intent filter matching `/s/` exactly, and the link picker. #4 is live, and Apple's CDN
+has carried it since 2026-11-12 at the latest, so nothing here holds up its device test.
 
 **Once this branch merges, refresh the learning material** with the `refresh-learning` skill,
 from `master`. It teaches only what has been built. Since the syllabus last changed, 2026-11-09:
@@ -242,7 +242,9 @@ chooses to open a setup in the browser, must not open the app.
   were untouched. The AASA upload's invalidation of `/*` completed at 22:02. Then
   `scripts/smoke-site.sh` passed, its new check included, the served file being
   `[{"/":"/s/"}]`, and `scripts/smoke-pages.sh` passed, leaving the bucket's 13 real objects as
-  they were. Apple's CDN still held `/s/*` a minute later, as expected.
+  they were. Apple's CDN still held `/s/*` a minute later, as expected, and carried
+  `[{"/":"/s/"}]` when next checked, 2026-11-12 09:17 UTC; when it changed in between isn't
+  known.
 
 **The first deploy, 2026-11-11.** `harpguru`'s #182 merged to `master`, and its
 `deploy-widget.yml` ran 21:43:31 to 21:44:34 UTC, successfully: build 40 seconds, deploy 16.
