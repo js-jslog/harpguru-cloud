@@ -148,8 +148,9 @@ role. No access keys anywhere.
   leave the parts in the bucket, billed, with no lifecycle rule to remove them.
 - **Deployed 2026-11-08**, from the branch, before merging: 43 seconds of stack time.
   `HarpguruSite` gained only its two outputs. `scripts/smoke-deploy-role.sh` passed all 13
-  checks; it has 14 since the abort check was added the same evening, and a run of all 14 is
-  not yet recorded. Given no thumbprint, IAM recorded one itself. CDK's approval prompt for the
+  checks. It has 14 now, the abort check included; abort was added at 21:33 the same evening,
+  before this record was written, and whether the deployed role and the recorded run had it is
+  not recorded. A read of the live role settles it. Given no thumbprint, IAM recorded one itself. CDK's approval prompt for the
   IAM changes can't be answered from Claude Code's `!` prompt, so the deploy ran with
   `--require-approval never`, after the diff was read.
 - **Smoke test, `scripts/smoke-deploy-role.sh`:** read-only. It reads the provider and the trust
