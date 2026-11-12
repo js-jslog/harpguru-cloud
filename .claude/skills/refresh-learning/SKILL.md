@@ -41,11 +41,12 @@ Facts the tutor's fetch tool imposes, which the README's design depends on:
 
 Facts about the sources:
 
-- **The `harpguru` sources are read from the findings branch, not `master`.** Findings are
-  committed to the branch `CLAUDE.md` names (currently `178-build-the-harp-face-widget`), so
-  that branch is ahead of `master`. Use that branch in the two `harpguru` URLs, and change it
-  when `CLAUDE.md` does. When the branch is merged or deleted those URLs 404, so check on every
-  refresh that the branch still exists on `origin`.
+- **The `harpguru` sources are read from `master`.** Since #182 merged
+  `178-build-the-harp-face-widget` on 2026-11-11, findings go on short branches off `master`
+  that the owner merges, as `CLAUDE.md` says, so `master` is where they settle. Refresh after
+  those branches merge. If `CLAUDE.md` ever names a long-lived findings branch again, read the
+  two `harpguru` URLs from it instead, and check on every refresh that it still exists on
+  `origin`: a merged or deleted branch makes them 404.
 - **Every other source is written for the owner or the coding agent**, and contains
   instructions and links that are not for the tutor. The README tells the tutor to read their
   content only. Keep that, rather than editing those files for the tutor's sake.
@@ -76,8 +77,8 @@ Read both files before changing anything, so you keep their intent.
    a batch, and its path and one line on what it is in "The N sources". Keep them in the same
    order.
    - **Add** every path the syllabus names that is missing, with its full raw URL (on `master`,
-     or on the findings branch for `harpguru` files). Place it by importance: sources for
-     *must own* topics above those only cited by lower tiers.
+     including the `harpguru` files, unless a findings branch is named above). Place it by
+     importance: sources for *must own* topics above those only cited by lower tiers.
    - **Remove** every entry the syllabus no longer names, not only files that were deleted.
      Every source is pasted and fetched every session, so an unused entry costs every session.
    - **Rebatch** in that order, at most 25 per batch, and update every count that depends on
@@ -90,8 +91,8 @@ Read both files before changing anything, so you keep their intent.
    `grep -oE 'https://raw\.githubusercontent\.com/[^ )\`]+' docs/learning/*.md | grep -v '?v=<stamp>'`
    must print nothing. Give the owner the new opening message in the hand-over.
 5. **Check the links and names.** Every URL must point at a file that exists: check this repo's
-   paths with `git ls-files`, and the `harpguru` paths on the findings branch in `/harpguru`
-   after fetching. Every quoted name in the syllabus must be a heading in the file it names; a
+   paths with `git ls-files`, and the `harpguru` paths on `origin/master` in `/harpguru`, or on
+   a findings branch if one is named, after fetching. Every quoted name in the syllabus must be a heading in the file it names; a
    reference to something that is not a heading says where it sits, such as "Steps" (item 2).
    Check that each named section actually answers the questions that cite it. Report any that
    do not resolve.

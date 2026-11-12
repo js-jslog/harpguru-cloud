@@ -1,6 +1,6 @@
 # Syllabus
 
-**As of 2026-11-09.** Covers all of Phase A, steps 0–8, and Phase B's steps 1, 2 and 3. Phase A
+**As of 2026-11-12.** Covers all of Phase A, steps 0–8, and Phase B's steps 1 to 4. Phase A
 is the SSO login, the CDK app skeleton, the $10 budget, and the workload account with its OU and
 guardrails, including step 3a, which switches SCPs on through a custom resource, and step 3b,
 which imported the console-made permission set into a stack and listed everything CDK doesn't
@@ -39,21 +39,31 @@ setup link is a URL that describes the setup itself, so there is no setup databa
 `1-pages`, is **merged and deployed**, on 2026-11-07, deployed from its branch before the merge:
 `HarpguruSite` gained a second private bucket for the widget's pages, served under `/w/`, `/t/`,
 `/s/` and `/e/`, with one function on every path, a cache that ignores the query string, and
-headers that let only partners frame the embeds. The bucket is empty: the widget itself is built
-in the `harpguru` repo and hasn't been deployed, so those paths answer 404 for now. Step 2,
+headers that let only partners frame the embeds. Step 2,
 `1-deploy-role`, is **merged and deployed**, on 2026-11-08, again from its branch before the
-merge: `HarpguruGitHub`, GitHub's OIDC provider and the role `harpguru`'s deploy workflow will
-assume to fill that bucket, with no access keys. Nothing has used the role yet: the workflow
-doesn't exist. Step 2a, the GitHub environment, restricted to `master`, and its three
-variables, I made on 2026-11-09; it too is untested until the workflow's first run. Step 3,
+merge: `HarpguruGitHub`, GitHub's OIDC provider and the role `harpguru`'s deploy workflow
+assumes to fill that bucket, with no access keys. Step 2a, the GitHub environment, restricted
+to `master`, and its three variables, I made on 2026-11-09. Step 3,
 `1-request-logs`, is **merged and deployed**, on 2026-11-09, again from its branch before the
 merge: CloudFront's request logs, delivered from a new stack in `us-east-1`,
 `HarpguruRequestLogsEdge`, to a third bucket in `HarpguruSite`, which deletes them after 90
-days. The smoke test saw a request's line land about 100 seconds after it was made. Step 4 is
-planned, not built. The status table in `docs/plans/phase-b.md` says the same.
+days. The smoke test saw a request's line land about 100 seconds after it was made.
 
-**Priority now: topic 29**, the request logs; it is the newest must-own topic. Then topic 28,
-GitHub's way in, if it is still shaky, and topic 27, Phase B's design and the widget's paths.
+**The widget is live since 2026-11-11.** The `harpguru` repo built it, and its deploy workflow
+ran for the first time when that work merged to its `master`: it assumed the deploy role, the
+first real test of steps 2 and 2a, filled the pages bucket and cleared the cache. I verified
+it from here the same evening: CloudTrail's record of the role being assumed, the bucket's
+objects and their caching headers, the live pages in a browser under the content security
+policy, and their lines in the request logs. Step 4, `1-aasa-browser-marker`, is **merged and
+deployed**: deployed 2026-11-11 from its branch, merged 2026-11-12. The AASA file now claims
+exactly `/s/`, so the app's open-in-browser link, `/s/web`, stays in the browser; Apple's own
+copy of the file had caught up by 2026-11-12. That completes this repo's Phase B plan. The app
+doesn't claim any links yet: its side is Phase B's step 7, in the `harpguru` repo, not built.
+The status table in `docs/plans/phase-b.md` says the same.
+
+**Priority now: topic 30**, the links that open the app and the one that mustn't; it is the
+newest must-own topic. Then topic 28, GitHub's way in, now that it has been used for real, and
+topic 29, the request logs, now that they hold real visits.
 
 Each topic gives its tier and why, what I should be able to answer, and its sources. The
 sources hold the facts; this file deliberately does not restate them. Sources are named by
@@ -372,7 +382,8 @@ records are in the zone but in no template, and who wrote them; where a
   served (over HTTPS, 200, `application/json`, no redirect); why the AASA file needs its type
   set by hand, and how that is done; how the `www` redirect is kept away from them; why the
   fingerprint is the Play app signing key's, not the upload key's, and why publishing it is
-  safe; why neither file does anything yet; why the security headers are a response headers
+  safe; why neither file does anything yet (topic 30 has what the AASA file claims, and why);
+  why the security headers are a response headers
   policy and the redirect a function; what HSTS was set to, and why not subdomains or preload;
   what the CSP allows, and why so little; why the stack isn't termination protected, and what
   happens to the bucket if it is deleted; how the site was shown to work, and what Apple and
@@ -409,25 +420,32 @@ records are in the zone but in no template, and who wrote them; where a
   policy leaves out `X-Frame-Options`, what `frame-ancestors 'self'` allows, and where the
   partner list lives and why there; why the widget's styles need `'unsafe-inline'` but its
   scripts need no `eval`; what the `harpguru` side has to do for these paths to work; how step
-  1 was shown to work before any widget existed, the browser included; and why its paths answer
-  404 today.
+  1 was shown to work before any widget existed, the browser included; what the widget's first
+  deploy put in the bucket, and how the live pages were checked against the content security
+  policy, framing included; why `/t/` serves only some tunings, and what a slug without a page
+  gets; and why a page's address changes after it loads, with no new request.
 - **Sources:** `docs/plans/phase-b.md` "Status", "The work in `harpguru`, for reference",
   "Steps" (item 1) and "Decisions"; `roadmap-planning/roadmap.md` "Locked decisions" (the entry
   on the widget's frozen scope), "Phase B — The public harpface" (what each page type is for)
   and "Settled since writing" (the three 2026-11-07 entries); `docs/aws-concepts.md` "Cache
   policies and the cache key" and "Response headers policies"; `infra/lib/site-stack.ts`;
   `infra/lib/partners.ts`; `infra/lib/functions/viewer-request.js`;
-  `infra/test/site-stack.test.ts`; `infra/scripts/smoke-pages.sh`;
+  `infra/test/site-stack.test.ts`; `infra/scripts/smoke-pages.sh`; `docs/plans/phase-b.md`
+  "Steps" (the paragraph "The first deploy, 2026-11-11");
   `roadmap-planning/aws-pathway-findings.md` "Phase B step 1 deployed: the widget's paths,
-  2026-11-07" and "What a web export needs from a content security policy, checked 2026-11-07".
+  2026-11-07", "What a web export needs from a content security policy, checked 2026-11-07",
+  "Phase B: the widget built, and checked under the live CSP, 2026-11-09" (its paragraph "Where
+  Phase B stands, 2026-11-11", items 2 and 3), "Phase B: the URL format, decided 2026-11-09"
+  and "Phase B: what `/t/` offers, decided 2026-11-09".
 
 ### 28. GitHub's way in: OIDC federation and the deploy role
 
 - **Covers:** Phase B's step 2, `1-deploy-role`: `HarpguruGitHub`, in the workload account in
   London, holding GitHub's OIDC identity provider and one role, `harpguru-pages-deploy`, which
-  `harpguru`'s deploy workflow will assume to upload the widget and clear CloudFront's cache.
-  Also what OIDC stands for, and step 2a, the environment and variables I made in GitHub
-  rather than in AWS on 2026-11-09, untested until the workflow's first run. Numbered 28 because
+  `harpguru`'s deploy workflow assumes to upload the widget and clear CloudFront's cache.
+  Also what OIDC stands for; step 2a, the environment and variables I made in GitHub rather
+  than in AWS on 2026-11-09; and the workflow's first run, on 2026-11-11, which assumed the
+  role for real. Numbered 28 because
   topics are numbered as they are added; it belongs with the must-own topics.
 - **Why must own:** "no access keys anywhere" is a security property I chose, and this is
   where a machine outside AWS gets in. Its trust policy and its permissions are the whole of
@@ -444,14 +462,16 @@ records are in the zone but in no template, and who wrote them; where a
   arrived in Phase B rather than Phase F; why it was given no thumbprint, and what IAM did
   anyway; where the role's ARN goes and why not in either repo, what the environment's three
   variables hold, and why the bucket and distribution are variables too; what the smoke test
-  proved, what it couldn't, and what will prove the rest; what a refusal on the workflow's first
-  run would mean.
+  proved and what it couldn't; how the first real run was shown to have come through the trust
+  policy, where CloudTrail records it, and what it names as the user; what a refusal would have
+  meant.
 - **Sources:** `docs/aws-concepts.md` "IAM OIDC federation" and "IAM users";
   `docs/plans/phase-b.md` "Status", "The work in `harpguru`, for reference", "Steps" (item 2),
   "Inputs needed from the user" and "Decisions" (the 2026-11-07 entry about the OIDC provider,
   and the two 2026-11-08 entries); `roadmap-planning/roadmap.md` "How the two connect";
   `infra/lib/github-stack.ts`; `infra/test/github-stack.test.ts`;
   `infra/scripts/smoke-deploy-role.sh`; `docs/outside-cdk.md` "Not AWS";
+  `docs/plans/phase-b.md` "Steps" (the paragraph "The first deploy, 2026-11-11");
   `roadmap-planning/aws-pathway-findings.md` "Phase B step 2 deployed: the deploy role,
   2026-11-08".
 
@@ -476,15 +496,49 @@ records are in the zone but in no template, and who wrote them; where a
   writes those statements rather than leaving the delivery to add its own; why JSON rather than
   Parquet, and what it would take to change; how the files are laid out, and why the folder
   names suit Athena; what the deploy showed about how soon a line lands, the files' form, and
-  which field holds the site's name; what it costs, and what the two guides each say.
+  which field holds the site's name; for a real visit to a widget page, which path a line
+  records, the one asked for or the object it was mapped to, how `/s/web` can be counted apart
+  from `/s/`, and what a page's own address changes after loading leave out of the logs; what
+  it costs, and what the two guides each say.
 - **Sources:** `docs/aws-concepts.md` "CloudFront standard logs and vended log delivery" and
   "S3 buckets, bucket policies and lifecycle rules"; `docs/plans/phase-b.md` "Steps" (item 3)
   and "Decisions" (the two 2026-11-09 entries, and the 2026-11-07 entry about the 90 days);
   `infra/lib/request-logs-stack.ts`; `infra/lib/site-stack.ts`;
   `infra/test/request-logs-stack.test.ts`; `infra/scripts/smoke-request-logs.sh`;
+  `docs/plans/phase-b.md` "Steps" (the paragraph "The first deploy, 2026-11-11");
   `roadmap-planning/aws-pathway-findings.md` "Phase B step 3 facts: CloudFront's request logs,
   checked 2026-11-09" and "Phase B step 3 deployed: what the request logs look like,
   2026-11-09".
+
+### 30. Links that open the app, and the one that mustn't
+
+- **Covers:** Phase B's step 4, `1-aasa-browser-marker`: the `/s/` setup links the app will
+  claim, through the AASA file for iPhones and the app's own intent filter for Android; the
+  open-in-browser marker `/s/web`, and why it is a path; the AASA's component becoming the exact
+  path `/s/`; why it shipped before the app; how iPhones get the file, through Apple's CDN
+  rather than from harpguru.com; and `assetlinks.json`'s fingerprint, which Android's check
+  relies on. Numbered 30 because topics are numbered as they are added; it belongs with the
+  must-own topics.
+- **Why must own:** whether a link opens the app or the browser is decided entirely by these
+  files, and the marker's form was a decision forced by a platform limit that isn't obvious.
+  A wrong pattern would send people round in a loop, from the app's "open in the browser" back
+  into the app, or leave the links unclaimed.
+- **Be able to answer:** what a setup link looks like, and what `/s/web` is for; why the marker
+  is a path and not a query parameter, and what Android can't do below version 15; what the AASA
+  component was and what it is now, and why an exact path leaves `/s/web` out though the query
+  is anything; what claims the links on Android, and why nothing in this repo changes for it;
+  why CloudFront needed no new behaviour for `/s/web`; why it was safe to ship before the app;
+  where an iPhone actually reads the file from, how long that copy is kept, and what that meant
+  for testing; how the deploy was checked, and what the new smoke check compares; what happens
+  to a hand-typed `/s?…`; why the fingerprint must be the Play app signing key's, and how it was
+  confirmed that Google reads it; what is still missing before any link opens the app.
+- **Sources:** `docs/plans/phase-b.md` "Status", "The work in `harpguru`, for reference" and
+  "Steps" (item 4, and the last item under the paragraph "The first deploy, 2026-11-11");
+  `roadmap-planning/aws-pathway-findings.md` "Phase B: the open-in-browser marker, decided
+  2026-11-09 (unblocks harpguru-cloud #4)" and "Phase B: the widget built, and checked under the
+  live CSP, 2026-11-09" (its paragraph "Where Phase B stands, 2026-11-11", items 3 and 4);
+  `infra/test/site-stack.test.ts`; `infra/scripts/smoke-site.sh`; `docs/plans/phase-a.md`
+  "Steps" (item 8).
 
 ## Should understand
 
@@ -533,7 +587,9 @@ records are in the zone but in no template, and who wrote them; where a
   step 2: how the role's permissions were checked with IAM's policy simulator, why that is
   read-only, and why it can't test a trust policy. And from step 3: how a smoke test proves a
   log delivery end to end, by making a marked request and waiting for its line, and why it
-  prints that line without four of its fields.
+  prints that line without four of its fields. And from step 4: how `smoke-site.sh` shows that
+  a changed `.well-known` file has reached the edge, and why that is not yet what an iPhone
+  sees.
 - **Sources:** `infra/README.md`; `infra/test/app.ts`; `infra/test/budget-stack.test.ts`;
   `infra/test/accounts-stack.test.ts`; `infra/test/guardrails-stack.test.ts`;
   `infra/test/policy-types-stack.test.ts`; `infra/test/trail-stack.test.ts`;
@@ -694,12 +750,17 @@ records are in the zone but in no template, and who wrote them; where a
   function runs before the cache key is made, and what that means for every `/s/` path; how
   the function maps `/t/<slug>`, and what it leaves alone; why the redirect had to be in the
   same function as the mapping; what CloudFormation did with the old function during the
-  deploy; and why a 404 under `/e/` carries the default behaviour's headers.
+  deploy; and why a 404 under `/e/` carries the default behaviour's headers. From the widget's
+  first deploy: who sets each file's `Cache-Control`, and why the bundle is cached a year as
+  immutable while the pages are `no-cache`; what `no-cache` does under `CachingOptimized`, and
+  what `RefreshHit` means; and which paths a deploy invalidates.
 - **Sources:** `docs/aws-concepts.md` "CloudFront distributions, behaviours and caching",
-  "Cache policies and the cache key", "CloudFront Functions", "Route 53 alias records" and
+  "Cache policies and the cache key", "`Cache-Control` from the origin, and revalidation",
+  "CloudFront Functions", "Route 53 alias records" and
   "Custom resources"; `infra/lib/site-stack.ts`; `infra/lib/functions/viewer-request.js`;
   `infra/test/site-stack.test.ts`; `docs/plans/phase-a.md` "Steps" (item 8);
   `docs/plans/phase-b.md` "Steps" (item 1);
+  `docs/plans/phase-b.md` "Steps" (the paragraph "The first deploy, 2026-11-11");
   `roadmap-planning/aws-pathway-findings.md` "Step 8 deployed: harpguru.com, 2026-11-06" and
   "Phase B step 1 deployed: the widget's paths, 2026-11-07".
 
@@ -721,9 +782,10 @@ These are worth your time if they interest you. Skipping them leaves no gap.
 ## Not yet built, so not for study
 
 - The CloudWatch alarm that would catch the canary failing on the AWS side; the app's side of
-  the links, its associated domains and intent filters, which Phase B adds; the widget itself
-  and its deploy workflow, in the `harpguru` repo; Phase B's step 4, the
-  browser marker in the AASA file, which is planned in `docs/plans/phase-b.md` but not built;
-  and everything in phases C–F, including Phase D's counting of the request logs. Some of these
+  the links, its associated domains, intent filters, share button and link picker, which is
+  Phase B's step 7 in the `harpguru` repo; and everything in phases C–F, including Phase D's
+  counting of the request logs. The widget's own code and its deploy workflow are built and
+  live, but they are in the `harpguru` repo, which isn't a source: learn them by what they did
+  here, as the plan and findings record it. Some of these
   already have concept entries, written ahead of the work; read them as reading ahead, and do
   not test me on them.
