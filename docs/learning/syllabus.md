@@ -67,9 +67,9 @@ topic 29, the request logs, now that they hold real visits.
 
 Each topic gives its tier and why, what I should be able to answer, and its sources. The
 sources hold the facts; this file deliberately does not restate them. Sources are named by
-path, as listed in the README's sources, and a quoted name is a heading inside that
-file. The tiers are defined
-in the README, and the tiering here is a proposal, to be argued with.
+path, as listed in the README's sources, and a quoted name after a path is a heading, or a
+bold item or paragraph, inside that file. The tiers are defined in the README, and the tiering
+here is a proposal, to be argued with.
 
 ---
 
@@ -526,7 +526,7 @@ records are in the zone but in no template, and who wrote them; where a
 - **Be able to answer:** what a setup link looks like, and what `/s/web` is for; why the marker
   is a path and not a query parameter, and what Android can't do below version 15; what the AASA
   component was and what it is now, and why an exact path leaves `/s/web` out though the query
-  is anything; what claims the links on Android, and why nothing in this repo changes for it;
+  is anything; what claims the links on Android, and where that lives;
   why CloudFront needed no new behaviour for `/s/web`; why it was safe to ship before the app;
   where an iPhone actually reads the file from, how long that copy is kept, and what that meant
   for testing; how the deploy was checked, and what the new smoke check compares; what happens

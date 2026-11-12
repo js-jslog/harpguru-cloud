@@ -22,18 +22,16 @@ Update this table in the PR that moves a row. **You** means the user.
 | 2a | GitHub settings in `js-jslog/harpguru`: the `harpguru.com` environment, and variables holding the role's ARN, the pages bucket and the distribution ID | **done** 2026-11-09, by you; proven by `harpguru`'s first deploy, 2026-11-11 | — |
 | — | `harpguru`'s first deploy of the widget, on #182's merge | **verified** 2026-11-11: below, under "The first deploy" | — |
 | 3 | `1-request-logs`: CloudFront access logs to S3, kept 90 days | **merged** and deployed 2026-11-09; deployed and smoke-tested from the branch before the merge | — |
-| 4 | `1-aasa-browser-marker`: the AASA's `/s/*` becomes exactly `/s/`, leaving out the marker `/s/web` | deployed 2026-11-11 from the branch; smoke-tested | you: merging |
+| 4 | `1-aasa-browser-marker`: the AASA's `/s/*` becomes exactly `/s/`, leaving out the marker `/s/web` | **merged** 2026-11-12; deployed 2026-11-11 from the branch and smoke-tested before the merge | — |
 
-**Next up, as of 2026-11-11:** with #4 merged, every step of this plan is done. Phase B's
+**Next up, as of 2026-11-12:** #4 merged, so every step of this plan is done. Phase B's
 remaining work is `harpguru`'s step 7, the app changes: the share button, `associatedDomains` and
 the Android intent filter matching `/s/` exactly, and the link picker. #4 is live, and Apple's CDN
 has carried it since 2026-11-12 at the latest, so nothing here holds up its device test.
 
-**Once this branch merges, refresh the learning material** with the `refresh-learning` skill,
-from `master`. It teaches only what has been built. Since the syllabus last changed, 2026-11-09:
-#4, the widget's first real deploy through the deploy role, live pages and their log lines,
-and the `Cache-Control` and revalidation concept entry. Refresh again at
-Phase B's close, after step 7's release, when deep links work end to end.
+**The learning material was refreshed for #4 and the first deploy** on `1-learning-first-deploy`,
+2026-11-12. Refresh it again at Phase B's close, after step 7's release, when deep links work
+end to end.
 
 ## The work in `harpguru`, for reference
 
@@ -133,8 +131,9 @@ role. No access keys anywhere.
 - **Trust:** `token.actions.githubusercontent.com`, audience `sts.amazonaws.com`, subject
   `repo:js-jslog/harpguru:environment:harpguru.com`. An environment rather than a branch, so its
   protection rules in GitHub decide who may deploy, and no other workflow in the repo can.
-- **Permissions:** list, put and delete in the `Pages` bucket only, and
-  `cloudfront:CreateInvalidation` on this distribution only.
+- **Permissions:** list, put and delete in the `Pages` bucket only, abort a multipart upload
+  there (added in the branch review, below), and `cloudfront:CreateInvalidation` on this
+  distribution only.
 - **The role's ARN goes into `harpguru` as a GitHub variable**, not into either repo's files:
   it carries the account ID.
 - **Built 2026-11-08** as a stack of its own, `HarpguruGitHub`, in London beside the site: the
@@ -149,8 +148,9 @@ role. No access keys anywhere.
   leave the parts in the bucket, billed, with no lifecycle rule to remove them.
 - **Deployed 2026-11-08**, from the branch, before merging: 43 seconds of stack time.
   `HarpguruSite` gained only its two outputs. `scripts/smoke-deploy-role.sh` passed all 13
-  checks. Given no thumbprint, IAM recorded one itself. CDK's approval prompt for the IAM
-  changes can't be answered from Claude Code's `!` prompt, so the deploy ran with
+  checks; it has 14 since the abort check was added the same evening, and a run of all 14 is
+  not yet recorded. Given no thumbprint, IAM recorded one itself. CDK's approval prompt for the
+  IAM changes can't be answered from Claude Code's `!` prompt, so the deploy ran with
   `--require-approval never`, after the diff was read.
 - **Smoke test, `scripts/smoke-deploy-role.sh`:** read-only. It reads the provider and the trust
   policy, and asks IAM's policy simulator what the role may do: list, put, delete and abort
@@ -235,8 +235,10 @@ chooses to open a setup in the browser, must not open the app.
   deploy that changed it can be seen to have reached the edge.
 - **Apple doesn't fetch the file from the site.** Devices read it from Apple's CDN,
   `https://app-site-association.cdn-apple.com/a/v1/harpguru.com`, which said
-  `Cache-Control: max-age=21600` on 2026-11-11 and still held `/s/*`. Check it there before a
-  device test of step 7.
+  `Cache-Control: max-age=21600`, six hours, on 2026-11-11 and still held `/s/*`. Phase A's
+  plan allowed "a day" for a change to reach devices, which this neither confirms nor
+  contradicts: the header is how long a fetched copy is reused, not how often Apple fetches.
+  Check it there before a device test of step 7.
 - **Deployed 2026-11-11, from the branch**, before merging: 45 seconds of stack time. Only the
   two file uploads ran again, both taking the new zip of `site/`; the distribution and buckets
   were untouched. The AASA upload's invalidation of `/*` completed at 22:02. Then

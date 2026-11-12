@@ -150,7 +150,7 @@ credentials leak. That's also why `jslog` fails on the three-field page: `jslog`
 IAM user.
 
 **Say it:** "No IAM users and no access keys. Humans come in through Identity Center, and CI
-will come in through OIDC federation."
+comes in through OIDC federation."
 
 **See it:** `aws iam list-users`, which returns an empty list.
 
