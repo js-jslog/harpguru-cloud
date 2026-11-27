@@ -26,9 +26,8 @@ Update this table in the PR that moves a row. **You** means the user.
 | 5 | `1-privacy-notice`: the request logs stop recording IP addresses, and a privacy notice at `/privacy`; pulled forward from Phase D | **merged**; deployed 2026-11-27 from the branch and smoke-tested before the merge | — |
 
 **Next up, as of 2026-11-27:** every step of this plan is done, #5's privacy notice included.
-Phase B's
-remaining work is `harpguru`'s step 7, the app changes: the share button, `associatedDomains` and
-the Android intent filter matching `/s/` exactly, and the link picker. #4 is live, and Apple's CDN
+Phase B's remaining work is `harpguru`'s step 7, the app changes: the share button,
+`associatedDomains` and the Android intent filter matching `/s/` exactly, and the link picker. #4 is live, and Apple's CDN
 has carried it since 2026-11-12 at the latest, so nothing here holds up its device test.
 
 **The learning material was refreshed for #4 and the first deploy** on `1-learning-first-deploy`,
