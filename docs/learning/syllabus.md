@@ -1,6 +1,6 @@
 # Syllabus
 
-**As of 2026-11-12.** Covers all of Phase A, steps 0–8, and Phase B's steps 1 to 4. Phase A
+**As of 2026-11-27.** Covers all of Phase A, steps 0–8, and Phase B's steps 1 to 5. Phase A
 is the SSO login, the CDK app skeleton, the $10 budget, and the workload account with its OU and
 guardrails, including step 3a, which switches SCPs on through a custom resource, and step 3b,
 which imported the console-made permission set into a stack and listed everything CDK doesn't
@@ -57,7 +57,10 @@ objects and their caching headers, the live pages in a browser under the content
 policy, and their lines in the request logs. Step 4, `1-aasa-browser-marker`, is **merged and
 deployed**: deployed 2026-11-11 from its branch, merged 2026-11-12. The AASA file now claims
 exactly `/s/`, so the app's open-in-browser link, `/s/web`, stays in the browser; Apple's own
-copy of the file had caught up by 2026-11-12. That completes this repo's Phase B plan. The app
+copy of the file had caught up by 2026-11-12. Step 5, `1-privacy-notice`, pulled forward from
+Phase D, is **merged and deployed**, deployed from its branch on 2026-11-27: the request logs stop recording viewers' IP
+addresses, and harpguru.com has a privacy notice at `/privacy`. That completes this repo's Phase B
+plan. The app
 doesn't claim any links yet: its side is Phase B's step 7, in the `harpguru` repo, not built.
 The status table in `docs/plans/phase-b.md` says the same.
 
@@ -476,16 +479,17 @@ records are in the zone but in no template, and who wrote them; where a
 
 ### 29. Request logs: what each visit leaves behind, and for how long
 
-- **Covers:** Phase B's step 3, `1-request-logs`: CloudFront's standard logs (v2), delivered
-  through CloudWatch Logs' vended delivery by `HarpguruRequestLogsEdge`, in `us-east-1`, to the
-  `RequestLogs` bucket in `HarpguruSite`, in London, which deletes each file after 90 days.
-  What a log line holds, which fields were chosen, the bucket policy that lets the delivery
-  write, and what the deploy showed. Numbered 29 because topics are numbered as they are added;
-  it belongs with the must-own topics.
-- **Why must own:** the logs hold viewers' IP addresses, which are personal data, and keeping
-  them 90 days was my choice. Who may write to the bucket, and what is kept and for how long,
-  are a privacy and security property I should defend unprompted. They are also what Phase D
-  will count, since every setup and embed is a URL.
+- **Covers:** Phase B's step 3, `1-request-logs`, and step 5, `1-privacy-notice`, which cut the
+  IP address from them and published the site's privacy notice: CloudFront's standard logs (v2),
+  delivered through CloudWatch Logs' vended delivery by `HarpguruRequestLogsEdge`, in
+  `us-east-1`, to the `RequestLogs` bucket in `HarpguruSite`, in London, which deletes each file
+  after 90 days. What a log line holds, which fields were chosen, the bucket policy that lets
+  the delivery write, and what the deploy showed. Numbered 29 because topics are numbered as
+  they are added; it belongs with the must-own topics.
+- **Why must own:** the logs held viewers' IP addresses, which are personal data, until I chose
+  to cut them, and keeping the rest 90 days was my choice too. Who may write to the bucket, and
+  what is kept and for how long, are a privacy and security property I should defend unprompted.
+  They are also what Phase D will count, since every setup and embed is a URL.
 - **Be able to answer:** what a request's log line records, and why it is personal data; who
   chose 90 days, the case for a short retention, and what deletes the files; why cookies are
   left out, and why the country and the behaviour's path pattern are added; why standard logging
@@ -498,13 +502,19 @@ records are in the zone but in no template, and who wrote them; where a
   which field holds the site's name; for a real visit to a widget page, which path a line
   records, the one asked for or the object it was mapped to, how `/s/web` can be counted apart
   from `/s/`, and what a page's own address changes after loading leave out of the logs; what
-  it costs, and what the two guides each say.
+  it costs, and what the two guides each say. From step 5: which three fields carried an IP
+  address, and why all three went; why the user agent and referrer stayed; how the country
+  survives without the address; what happens to the files written before the change; whether
+  the change replaced the delivery; what the privacy notice must say, by the ICO's list, and
+  what lawful basis it gives; and why the data protection fee wasn't due.
 - **Sources:** `docs/aws-concepts.md` "CloudFront standard logs and vended log delivery" and "S3
   buckets, bucket policies and lifecycle rules"; `docs/plans/phase-b.md` "Steps" (item 3, and
   the paragraph "The first deploy, 2026-11-11") and "Decisions" (the two 2026-11-09 entries, and
   the 2026-11-07 entry about the 90 days); `infra/lib/request-logs-stack.ts`;
   `infra/lib/site-stack.ts`; `infra/test/request-logs-stack.test.ts`;
-  `infra/scripts/smoke-request-logs.sh`; `roadmap-planning/aws-pathway-findings.md` "Phase B
+  `infra/scripts/smoke-request-logs.sh`; `docs/plans/phase-b.md` "Steps" (item 5) and
+  "Decisions" (the two 2026-11-27 entries); `roadmap-planning/aws-pathway-findings.md` "Phase B
+  step 5: the privacy notice, and no IP addresses in the logs, 2026-11-27", "Phase B
   step 3 facts: CloudFront's request logs, checked 2026-11-09" and "Phase B step 3 deployed:
   what the request logs look like, 2026-11-09".
 

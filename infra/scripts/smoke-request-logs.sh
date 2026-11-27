@@ -139,7 +139,16 @@ else
       <<<"$line" >/dev/null &&
       pass "it carries the country and the behaviour, and no cookies" ||
       fail "fields: $(jq -c 'keys' <<<"$line")"
-    echo "  The line, without the IP address, port, forwarded-for address and user agent:"
+    # The privacy notice says no IP address is kept, and the country is still
+    # worked out from it at the edge.
+    jq -e '(has("c-ip") or has("x-forwarded-for") or has("c-port")) | not' <<<"$line" >/dev/null &&
+      pass "no IP address, in any of the three fields that carry one" ||
+      fail "an IP field is still logged: $(jq -c 'keys' <<<"$line")"
+    country=$(jq -r '."c-country" // "-"' <<<"$line")
+    [[ "$country" =~ ^[A-Z]{2}$ ]] &&
+      pass "the country is still filled: $country" ||
+      fail "the country is '$country'"
+    echo "  The line, without the user agent:"
     jq 'del(."c-ip", ."c-port", ."x-forwarded-for", ."cs(User-Agent)")' <<<"$line" | sed 's/^/    /'
   else
     fail "the line is not JSON: it starts '${line:0:60}'"

@@ -1250,22 +1250,29 @@ older **legacy** logging writes straight to a bucket, but with ACLs, which moder
 
 **Here:** Phase B's step 3. CloudFront's three resources must be made in `us-east-1`, whatever
 the bucket's region, so they are `HarpguruRequestLogsEdge`, and the bucket stays in London in
-`HarpguruSite`, with a lifecycle rule deleting each file after 90 days: the lines hold IP
-addresses, which are personal data. Gzipped JSON, filed by day in Hive-style folders,
-`cloudfront/year=…/month=…/day=…/`, which Phase D's Athena table can take its partitions from.
-The fields are CloudFront's defaults, without cookies and with the country and the matched behaviour's path pattern. The
-bucket's policy, written by CDK, admits only this account's one source, `harpguru-request-logs`,
-and only under `cloudfront/`; left to itself, the delivery would add its own statement, which the
-next deploy would remove. Every setup and embed is a URL, so these lines are what Phase D counts.
-*(PR `1-request-logs`)*
+`HarpguruSite`, with a lifecycle rule deleting each file after 90 days. Gzipped JSON, filed by
+day in Hive-style folders, `cloudfront/year=…/month=…/day=…/`, which Phase D's Athena table can
+take its partitions from. The fields are CloudFront's defaults, without cookies and with the
+country and the matched behaviour's path pattern. From 2026-11-27, Phase B's step 5, they are
+also without the viewer's IP address, in all three fields that carry it, `c-ip`,
+`x-forwarded-for` and `c-port`: an IP address is personal data, and Phase D counts pages and
+countries, not people. A delivery's fields change in place, with no new delivery, and CloudFront
+still fills `c-country`, working it out from the address at the edge. What is kept, why and for
+how long is in the site's privacy notice, at `/privacy`. The bucket's policy, written by CDK,
+admits only this account's one source, `harpguru-request-logs`, and only under `cloudfront/`;
+left to itself, the delivery would add its own statement, which the next deploy would remove.
+Every setup and embed is a URL, so these lines are what Phase D counts. *(PR `1-request-logs`)*
 
 **Say it:** "CloudFront's logs travel through CloudWatch's vended delivery, a source, a destination
 and a delivery joining them, made in us-east-1 but writing to a bucket in any region, and a
-lifecycle rule decides how long the personal data in them is kept."
+lifecycle rule decides how long they are kept. Choosing the fields at source is the cheapest
+privacy control there is: an IP address that is never written never needs protecting."
 
 **See it:** what CloudFront can deliver, and its default fields:
 `aws logs describe-configuration-templates --service cloudfront --log-types ACCESS_LOGS --region us-east-1 --profile harpguru --query 'configurationTemplates[].[deliveryDestinationType,allowedOutputFormats]'`.
 The delivery itself:
-`aws logs describe-deliveries --region us-east-1 --profile harpguru`. The newest files:
+`aws logs describe-deliveries --region us-east-1 --profile harpguru`, and just its fields, to
+see that no IP field is among them:
+`aws logs describe-deliveries --region us-east-1 --profile harpguru --query 'deliveries[].recordFields'`. The newest files:
 `aws s3 ls "s3://$(aws cloudformation describe-stacks --stack-name HarpguruSite --profile harpguru --query "Stacks[0].Outputs[?OutputKey=='RequestLogsBucketName'].OutputValue" --output text)/cloudfront/" --recursive --profile harpguru | tail -5`.
 `scripts/smoke-request-logs.sh` makes a request and waits for its line.

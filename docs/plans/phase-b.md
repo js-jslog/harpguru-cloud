@@ -23,10 +23,11 @@ Update this table in the PR that moves a row. **You** means the user.
 | — | `harpguru`'s first deploy of the widget, on #182's merge | **verified** 2026-11-11: below, under "The first deploy" | — |
 | 3 | `1-request-logs`: CloudFront access logs to S3, kept 90 days | **merged** and deployed 2026-11-09; deployed and smoke-tested from the branch before the merge | — |
 | 4 | `1-aasa-browser-marker`: the AASA's `/s/*` becomes exactly `/s/`, leaving out the marker `/s/web` | **merged** 2026-11-12; deployed 2026-11-11 from the branch and smoke-tested before the merge | — |
+| 5 | `1-privacy-notice`: the request logs stop recording IP addresses, and a privacy notice at `/privacy`; pulled forward from Phase D | **merged**; deployed 2026-11-27 from the branch and smoke-tested before the merge | — |
 
-**Next up, as of 2026-11-12:** #4 merged, so every step of this plan is done. Phase B's
-remaining work is `harpguru`'s step 7, the app changes: the share button, `associatedDomains` and
-the Android intent filter matching `/s/` exactly, and the link picker. #4 is live, and Apple's CDN
+**Next up, as of 2026-11-27:** every step of this plan is done, #5's privacy notice included.
+Phase B's remaining work is `harpguru`'s step 7, the app changes: the share button,
+`associatedDomains` and the Android intent filter matching `/s/` exactly, and the link picker. #4 is live, and Apple's CDN
 has carried it since 2026-11-12 at the latest, so nothing here holds up its device test.
 
 **The learning material was refreshed for #4 and the first deploy** on `1-learning-first-deploy`,
@@ -289,6 +290,44 @@ chooses to open a setup in the browser, must not open the app.
   key**, not the upload key, and Google's Digital Asset Links API returns it for
   `com.jslog.harpguru`.
 
+**5 · `1-privacy-notice`.** Pulled forward from Phase D, where the roadmap's bullet "A privacy
+notice for harpguru.com, which shouldn't wait for the rest of this phase" (harpguru #187)
+asked for it: the request logs have held viewers' IP addresses since step 3, the pages went live
+on 2026-11-11, and nothing on the site said so. `harpguru`'s v18.6.0 share button sends more
+people to `/s/`.
+
+- **The logs stop recording IP addresses**, in all three fields that carry one: `c-ip`;
+  `x-forwarded-for`, which AWS's field reference says holds "the IP address of the viewer that
+  originated the request" when they come through a proxy; and `c-port`, meaningless without
+  the address. Cookies were already left out at step 3. 31 fields remain. The user agent and
+  referrer stay: Phase D needs them to tell browsers from bots and to count embeds per partner
+  site, and neither names a person alone.
+- **The country stays.** CloudFront works out `c-country` from the address at the edge, "as
+  determined by the viewer's IP address", and nothing in AWS's documentation ties it to `c-ip`
+  being logged. The smoke test now checks both: no IP field in a new line, and a two-letter
+  country.
+- **Changed in place.** `AWS::Logs::Delivery`'s `RecordFields` updates without replacing the
+  delivery: the diff showed an update, and the deploy took 9 seconds. Before it, the live
+  delivery had 34 fields, the three IP fields among them, as the repo said.
+- **The files already written keep their addresses** and age out under the 90-day rule, the
+  last by the end of February 2027. The user's choice: deleting them would lose the first weeks
+  of views, and the notice says when the addresses stopped.
+- **The notice is `site/privacy.html`, served at `https://harpguru.com/privacy`**: the
+  viewer-request function maps that exact path to the file, so the address the app and the pages
+  link to has no extension. The landing page and the 404 page link to it. It covers what the ICO
+  lists as always required, read 2026-11-27: who the controller is and how to reach them, the
+  purposes, the lawful basis and, for legitimate interests, what they are, how long, the rights,
+  the right to object set apart, and the right to complain to the ICO, linked rather than given
+  as an address, since its head office moved in September 2026. Wording approved by the user;
+  not legal advice.
+- **The controller is named, by the user's choice**, and the contact is `contact@harpguru.com`,
+  the site's public role address, already named throughout this repo.
+- **Deployed 2026-11-27, from the branch**, before merging: `HarpguruSite` 84 seconds, the function
+  and the two uploads; `HarpguruRequestLogsEdge` 9 seconds. `scripts/smoke-site.sh` passed,
+  `/privacy` included, and so did `scripts/smoke-request-logs.sh`, with two new checks: its
+  request at 22:08 UTC landed within 6 minutes with no IP field and `c-country` `GB`. The
+  change took effect at once, though AWS allows 12 hours.
+
 ## Cost
 
 Near nothing over Phase A: two more buckets' storage, CloudFront Function invocations at
@@ -352,3 +391,9 @@ $0.10 per million, and a few megabytes of logs a month. No new fixed monthly cha
   fields less cookies, plus the country and the behaviour's path pattern.** JSON over Parquet
   because it can be read by eye, and nothing at this scale needs Parquet's cheaper scans; Phase D
   can change it with a new destination. Proposed by the agent.
+- 2026-11-27: **the request logs drop `c-ip`, `x-forwarded-for` and `c-port`, and keep the user
+  agent and referrer**; the files already written age out rather than being deleted. The user's
+  choices, from options the agent set out, after harpguru's roadmap raised the privacy notice.
+- 2026-11-27: **a privacy notice at `/privacy`**, naming the user as controller, with
+  `contact@harpguru.com` as the contact. The user's choices; wording drafted by the agent,
+  approved by the user.

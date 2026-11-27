@@ -48,6 +48,8 @@ IFS='|' read -r status type _ <<<"$(probe "https://$HOST/")"
 [[ "$status" == 200 && "$type" == text/html* ]] && pass "/: 200, $type" || fail "/: status $status, '$type'"
 IFS='|' read -r status _ _ <<<"$(probe "https://$HOST/no-such-page")"
 [[ "$status" == 404 ]] && pass "a missing page: 404" || fail "a missing page: status $status"
+IFS='|' read -r status type _ <<<"$(probe "https://$HOST/privacy")"
+[[ "$status" == 200 && "$type" == text/html* ]] && pass "/privacy: 200, $type" || fail "/privacy: status $status, '$type'"
 headers=$(curl -sS -I --max-time 15 "https://$HOST/")
 grep -qi '^strict-transport-security:' <<<"$headers" && pass "HSTS header present" || fail "no HSTS header"
 grep -qi '^content-security-policy:' <<<"$headers" && pass "CSP header present" || fail "no CSP header"

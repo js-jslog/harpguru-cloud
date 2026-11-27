@@ -433,6 +433,15 @@ describe('the viewer request function', () => {
     )
   })
 
+  test('maps /privacy to the notice, and nothing else beside it', () => {
+    const event = request('harpguru.com', '/privacy')
+    expect(handler(event).uri).toBe('/privacy.html')
+    for (const uri of ['/privacy/', '/privacy.html', '/privacy-x']) {
+      const other = request('harpguru.com', uri)
+      expect(handler(other).uri).toBe(uri)
+    }
+  })
+
   test('passes the apex through untouched, .well-known included', () => {
     for (const uri of [`/${AASA_PATH}`, '/', '/index.html', '/styles.css']) {
       const event = request('harpguru.com', uri)

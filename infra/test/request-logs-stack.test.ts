@@ -134,10 +134,21 @@ describe('the log delivery, in us-east-1', () => {
     ])
   })
 
-  test('keeps no cookies, and adds the country and the behaviour', () => {
-    expect(REQUEST_LOG_FIELDS).not.toContain('cs(Cookie)')
+  // The privacy notice, site/privacy.html, says none of these is kept.
+  test('keeps no cookies and no IP address, in any field that carries one', () => {
+    for (const field of ['cs(Cookie)', 'c-ip', 'x-forwarded-for', 'c-port']) {
+      expect(REQUEST_LOG_FIELDS).not.toContain(field)
+    }
+  })
+
+  test('keeps what Phase D counts: the path, query, site, country and behaviour', () => {
     expect(REQUEST_LOG_FIELDS).toEqual(
-      expect.arrayContaining(['c-ip', 'cs-uri-query', 'cs(Referer)'])
+      expect.arrayContaining([
+        'cs-uri-stem',
+        'cs-uri-query',
+        'x-host-header',
+        'cs(Referer)',
+      ])
     )
     expect(REQUEST_LOG_FIELDS).toEqual(
       expect.arrayContaining(['c-country', 'cache-behavior-path-pattern'])
