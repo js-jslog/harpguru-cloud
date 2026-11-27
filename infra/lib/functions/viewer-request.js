@@ -10,6 +10,8 @@
 //        /t/<slug>      -> /t/<slug>/index.html, that tuning's page
 //      The query string is left alone. The page reads it after loading; the
 //      cache ignores it.
+//   4. /privacy is mapped to /privacy.html, the privacy notice, so the address
+//      the app and the pages link to carries no extension.
 //
 // Everything else passes through, so the .well-known files are never
 // redirected or rewritten. One function rather than two because a behaviour
@@ -41,6 +43,8 @@ function handler(event) {
     } else if (last.indexOf('.') === -1) {
       request.uri = uri + '/index.html'
     }
+  } else if (uri === '/privacy') {
+    request.uri = '/privacy.html'
   }
   return request
 }

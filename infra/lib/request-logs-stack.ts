@@ -22,22 +22,27 @@ export const REQUEST_LOG_PREFIX = 'cloudfront'
 // partitions from the path.
 export const REQUEST_LOG_SUFFIX = '{yyyy}/{MM}/{dd}'
 
-// Kept 90 days, the user's choice: they hold viewers' IP addresses, which
-// are personal data until Phase D turns them into anonymous counts.
+// Kept 90 days, the user's choice, and said so in the privacy notice,
+// site/privacy.html. They held viewers' IP addresses until the fields below
+// were cut, and the files written before then age out under the same rule.
 export const REQUEST_LOG_RETENTION_DAYS = 90
 
 // CloudFront's default fields for S3 as of 2026-11-09, read from
-// `aws logs describe-configuration-templates`, with two changes. Cookies are
-// left out: harpguru.com sets none, and a log should not keep what it has no
-// use for. The country and the behaviour's path pattern are added: Phase D
-// counts views per page type and where they come from, and neither is a
-// default.
+// `aws logs describe-configuration-templates`, with these changes. Cookies
+// are left out: harpguru.com sets none, and a log should not keep what it has
+// no use for. The viewer's IP address is left out too, from 2026-11-27, in all
+// three fields that carry it: c-ip, x-forwarded-for, which holds it when the
+// viewer comes through a proxy, and c-port, which means nothing without it.
+// Phase D counts pages and countries, not people, and an IP address is
+// personal data. CloudFront works out c-country from the address at the edge
+// whether or not the address is logged. The country and the behaviour's path
+// pattern are added: Phase D counts views per page type and where they come
+// from, and neither is a default.
 export const REQUEST_LOG_FIELDS = [
   'date',
   'time',
   'x-edge-location',
   'sc-bytes',
-  'c-ip',
   'cs-method',
   'cs(Host)',
   'cs-uri-stem',
@@ -51,14 +56,12 @@ export const REQUEST_LOG_FIELDS = [
   'cs-protocol',
   'cs-bytes',
   'time-taken',
-  'x-forwarded-for',
   'ssl-protocol',
   'ssl-cipher',
   'x-edge-response-result-type',
   'cs-protocol-version',
   'fle-status',
   'fle-encrypted-fields',
-  'c-port',
   'time-to-first-byte',
   'x-edge-detailed-result-type',
   'sc-content-type',
