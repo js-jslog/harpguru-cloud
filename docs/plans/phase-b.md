@@ -325,7 +325,9 @@ people to `/s/`.
   the site's public role address, already named throughout this repo.
 - **Deployed 2026-11-27, from the branch**, before merging: `HarpguruSite` 84 seconds, the function
   and the two uploads; `HarpguruRequestLogsEdge` 9 seconds. `scripts/smoke-site.sh` passed,
-  `/privacy` included.
+  `/privacy` included, and so did `scripts/smoke-request-logs.sh`, with two new checks: its
+  request at 22:08 UTC landed within 6 minutes with no IP field and `c-country` `GB`. The
+  change took effect at once, though AWS allows 12 hours.
 
 ## Cost
 
