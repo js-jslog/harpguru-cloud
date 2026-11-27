@@ -120,7 +120,7 @@ links; the links are in the batches.
   and its dated decisions.
 - `docs/plans/phase-b.md`: The Phase B plan: its status table, what the `harpguru` side has to
   do, its steps and its dated decisions, and what the widget's first deploy showed. Steps 1 to 5
-  are deployed, and step 2a, made in GitHub, is done: this repo's part of Phase B is complete.
+  are merged and deployed, and step 2a, made in GitHub, is done: this repo's part of Phase B is complete.
 - `docs/aws-concepts.md`: My study companion: one entry per AWS concept, each with what it is,
   how it is used here, one sentence to say in an interview, and a command to see it.
 - `docs/outside-cdk.md`: Everything in the accounts that no stack manages, why, and a log of

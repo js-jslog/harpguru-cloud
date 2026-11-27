@@ -23,10 +23,10 @@ Update this table in the PR that moves a row. **You** means the user.
 | — | `harpguru`'s first deploy of the widget, on #182's merge | **verified** 2026-11-11: below, under "The first deploy" | — |
 | 3 | `1-request-logs`: CloudFront access logs to S3, kept 90 days | **merged** and deployed 2026-11-09; deployed and smoke-tested from the branch before the merge | — |
 | 4 | `1-aasa-browser-marker`: the AASA's `/s/*` becomes exactly `/s/`, leaving out the marker `/s/web` | **merged** 2026-11-12; deployed 2026-11-11 from the branch and smoke-tested before the merge | — |
-| 5 | `1-privacy-notice`: the request logs stop recording IP addresses, and a privacy notice at `/privacy`; pulled forward from Phase D | deployed 2026-11-27 from the branch; smoke-tested | you: merging |
+| 5 | `1-privacy-notice`: the request logs stop recording IP addresses, and a privacy notice at `/privacy`; pulled forward from Phase D | **merged**; deployed 2026-11-27 from the branch and smoke-tested before the merge | — |
 
-**Next up, as of 2026-11-27:** #5, the privacy notice, waits on its merge; with it, every step
-of this plan is done. Phase B's
+**Next up, as of 2026-11-27:** every step of this plan is done, #5's privacy notice included.
+Phase B's
 remaining work is `harpguru`'s step 7, the app changes: the share button, `associatedDomains` and
 the Android intent filter matching `/s/` exactly, and the link picker. #4 is live, and Apple's CDN
 has carried it since 2026-11-12 at the latest, so nothing here holds up its device test.

@@ -58,7 +58,7 @@ policy, and their lines in the request logs. Step 4, `1-aasa-browser-marker`, is
 deployed**: deployed 2026-11-11 from its branch, merged 2026-11-12. The AASA file now claims
 exactly `/s/`, so the app's open-in-browser link, `/s/web`, stays in the browser; Apple's own
 copy of the file had caught up by 2026-11-12. Step 5, `1-privacy-notice`, pulled forward from
-Phase D, was deployed from its branch on 2026-11-27: the request logs stop recording viewers' IP
+Phase D, is **merged and deployed**, deployed from its branch on 2026-11-27: the request logs stop recording viewers' IP
 addresses, and harpguru.com has a privacy notice at `/privacy`. That completes this repo's Phase B
 plan. The app
 doesn't claim any links yet: its side is Phase B's step 7, in the `harpguru` repo, not built.
